@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
 using SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Client;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Object;
@@ -417,7 +418,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
             {
                 using (NetworkStream networkStream = new NetworkStream(tcpClient.Client))
                 {
-                    byte[] ackPacket = ClassUtility.GetByteArrayFromStringAscii("ACK");
+                    byte[] ackPacket = ClassUtility.GetByteArrayFromStringAscii(ClassPeerPacketSetting.PacketAck);
                     await networkStream.WriteAsync(ackPacket, 0, ackPacket.Length, _cancellationTokenSourcePeerServer.Token);
                     await networkStream.FlushAsync(_cancellationTokenSourcePeerServer.Token);
                 }

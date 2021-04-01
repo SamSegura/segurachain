@@ -1328,8 +1328,24 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
         #region Check Peer numeric keys signatures on packets
 
+        /// <summary>
+        /// Check the peer seed numeric packet signature, compare with the list of peer listed by sovereign updates.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="peerIp"></param>
+        /// <param name="peerUniqueId"></param>
+        /// <param name="objectData"></param>
+        /// <param name="packetNumericHash"></param>
+        /// <param name="packetNumericSignature"></param>
+        /// <param name="peerNetworkSettingObject"></param>
+        /// <param name="cancellation"></param>
+        /// <param name="numericPublicKeyOut"></param>
+        /// <returns></returns>
         public static bool CheckPeerSeedNumericPacketSignature<T>(string peerIp, string peerUniqueId, T objectData, string packetNumericHash, string packetNumericSignature, ClassPeerNetworkSettingObject peerNetworkSettingObject, CancellationTokenSource cancellation, out string numericPublicKeyOut)
         {
+            // Default value.
+            numericPublicKeyOut = string.Empty;
+
             if (peerNetworkSettingObject.PeerEnableSovereignPeerVote)
             {
                 if (!packetNumericHash.IsNullOrEmpty() && !packetNumericSignature.IsNullOrEmpty())
@@ -1343,8 +1359,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     }
                 }
             }
-
-            numericPublicKeyOut = string.Empty;
 
             return false;
         }

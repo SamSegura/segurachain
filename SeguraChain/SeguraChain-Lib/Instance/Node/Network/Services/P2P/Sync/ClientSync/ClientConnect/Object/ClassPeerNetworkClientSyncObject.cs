@@ -436,13 +436,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                                                 {
                                                     if (packetLength > 0)
                                                     {
-                                                        if (packetReceivedBuffer.GetStringFromByteArrayAscii().Contains("ACK"))
+                                                        if (packetReceivedBuffer.GetStringFromByteArrayAscii().Contains(ClassPeerPacketSetting.PacketAck))
                                                         {
                                                             ackPacketReceived = true;
                                                             break;
                                                         }
                                                     }
                                                 }
+
+                                                // Clean up.
+                                                Array.Clear(packetReceivedBuffer, 0, packetReceivedBuffer.Length);
 
                                             }
                                             catch
@@ -570,7 +573,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             }
 
             CancelTaskWaitPeerPacketResponse();
-            CancelTaskListenPeerPacketResponse();
 
             if (PeerPacketReceived == null)
             {

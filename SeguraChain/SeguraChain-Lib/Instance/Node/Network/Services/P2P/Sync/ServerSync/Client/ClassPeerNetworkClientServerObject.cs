@@ -107,7 +107,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
 
         private bool _disposed;
 
-
         ~ClassPeerNetworkClientServerObject()
         {
             Dispose(false);
@@ -317,133 +316,125 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
 
                                     byte[] packetBufferOnReceive = new byte[_peerNetworkSettingObject.PeerMaxPacketBufferSize];
 
-                                    int packetLength;
+                                    int packetLength = await networkStream.ReadAsync(packetBufferOnReceive, 0, packetBufferOnReceive.Length, _cancellationTokenListenPeerPacket.Token);
 
-                                    while ((packetLength = await networkStream.ReadAsync(packetBufferOnReceive, 0, packetBufferOnReceive.Length, _cancellationTokenListenPeerPacket.Token)) > 0)
-                                    {
-                                        if (_clientAskDisconnection || !ClientPeerConnectionStatus)
-                                        {
-                                            ClientPeerConnectionStatus = false;
-                                            break;
-                                        }
-
-                                        if (packetLength > 0)
-                                        {
-                                            ClientPeerLastPacketReceived = ClassUtility.GetCurrentTimestampInSecond();
-
-                                            bool containSeperator = false;
-
-                                            foreach (byte dataByte in packetBufferOnReceive)
-                                            {
-                                                char character = (char)dataByte;
-                                                if (character != '\0')
-                                                {
-
-                                                    if (ClassUtility.CharIsABase64Character(character) || character == ClassPeerPacketSetting.PacketPeerSplitSeperator)
-                                                    {
-                                                        _memoryStreamPacketDataReceived.WriteByte(dataByte);
-                                                    }
-
-                                                    if (character == ClassPeerPacketSetting.PacketPeerSplitSeperator)
-                                                    {
-                                                        containSeperator = true;
-                                                    }
-                                                }
-                                            }
-
-                                            Array.Clear(packetBufferOnReceive, 0, packetBufferOnReceive.Length);
-                                            packetBufferOnReceive = new byte[_peerNetworkSettingObject.PeerMaxPacketBufferSize];
-
-                                            if (_memoryStreamPacketDataReceived.Length > 0 && containSeperator)
-                                            {
-                                                using (var packetSplittedList = ClassUtility.GetEachPacketSplitted(_memoryStreamPacketDataReceived.ToArray(), _cancellationTokenListenPeerPacket, out int countFilled))
-                                                {
-                                                    int countPassed = 0;
-                                                    foreach (string packet in packetSplittedList.GetAll)
-                                                    {
-                                                        if (countPassed <= countFilled)
-                                                        {
-                                                            if (!packet.IsNullOrEmpty())
-                                                            {
-                                                                bool failed = false;
-
-                                                                byte[] base64Packet = null;
-
-                                                                try
-                                                                {
-                                                                    base64Packet = Convert.FromBase64String(packet);
-                                                                }
-                                                                catch
-                                                                {
-                                                                    failed = true;
-                                                                }
-
-                                                                if (!failed && base64Packet.Length > 0)
-                                                                {
-                                                                    _onSendingPacketResponse = true;
-
-                                                                    switch (await HandlePacket(base64Packet))
-                                                                    {
-                                                                        case ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_TYPE_PACKET:
-                                                                        case ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_PACKET:
-                                                                            {
-                                                                                ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
-                                                                                ClientPeerConnectionStatus = false;
-                                                                            }
-                                                                            break;
-                                                                        case ClassPeerNetworkClientServerHandlePacketEnumStatus.EXCEPTION_PACKET:
-                                                                        case ClassPeerNetworkClientServerHandlePacketEnumStatus.SEND_EXCEPTION_PACKET:
-                                                                            {
-                                                                                ClassPeerCheckManager.InputPeerClientAttemptConnect(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
-                                                                                ClientPeerConnectionStatus = false;
-                                                                            }
-                                                                            break;
-                                                                        case ClassPeerNetworkClientServerHandlePacketEnumStatus.VALID_PACKET:
-                                                                            {
-                                                                                ClassPeerCheckManager.InputPeerClientValidPacket(_peerClientIp, _peerUniqueId);
-                                                                                if (_clientAskDisconnection)
-                                                                                {
-                                                                                    ClientPeerConnectionStatus = false;
-                                                                                }
-                                                                            }
-                                                                            break;
-
-                                                                    }
-
-                                                                    if (base64Packet.Length > 0)
-                                                                    {
-                                                                        Array.Clear(base64Packet, 0, base64Packet.Length);
-                                                                    }
-
-                                                                    _onSendingPacketResponse = false;
-                                                                }
-
-                                                            }
-                                                        }
-                                                        countPassed++;
-                                                    }
-                                                }
-                                                _memoryStreamPacketDataReceived.Clear();
-                                            }
-
-                                            if (_memoryStreamPacketDataReceived.Length >= ClassPeerPacketSetting.PacketMaxLengthReceive)
-                                            {
-                                                _memoryStreamPacketDataReceived.Clear();
-                                            }
-                                        }
-
-                                        if (_clientAskDisconnection || !ClientPeerConnectionStatus)
-                                        {
-                                            ClientPeerConnectionStatus = false;
-                                            break;
-                                        }
-                                    }
-
-                                    if (packetLength == 0)
+                                    if (_clientAskDisconnection || !ClientPeerConnectionStatus)
                                     {
                                         ClientPeerConnectionStatus = false;
                                         break;
                                     }
+
+                                    if (packetLength > 0)
+                                    {
+                                        ClientPeerLastPacketReceived = ClassUtility.GetCurrentTimestampInSecond();
+
+                                        bool containSeperator = false;
+
+                                        foreach (byte dataByte in packetBufferOnReceive)
+                                        {
+                                            char character = (char)dataByte;
+                                            if (character != '\0')
+                                            {
+
+                                                if (ClassUtility.CharIsABase64Character(character) || character == ClassPeerPacketSetting.PacketPeerSplitSeperator)
+                                                {
+                                                    _memoryStreamPacketDataReceived.WriteByte(dataByte);
+                                                }
+
+                                                if (character == ClassPeerPacketSetting.PacketPeerSplitSeperator)
+                                                {
+                                                    containSeperator = true;
+                                                }
+                                            }
+                                        }
+
+                                        Array.Clear(packetBufferOnReceive, 0, packetBufferOnReceive.Length);
+                                        packetBufferOnReceive = new byte[_peerNetworkSettingObject.PeerMaxPacketBufferSize];
+
+                                        if (_memoryStreamPacketDataReceived.Length > 0 && containSeperator)
+                                        {
+                                            using (var packetSplittedList = ClassUtility.GetEachPacketSplitted(_memoryStreamPacketDataReceived.ToArray(), _cancellationTokenListenPeerPacket, out int countFilled))
+                                            {
+                                                int countPassed = 0;
+                                                foreach (string packet in packetSplittedList.GetAll)
+                                                {
+                                                    if (countPassed <= countFilled)
+                                                    {
+                                                        if (!packet.IsNullOrEmpty())
+                                                        {
+                                                            bool failed = false;
+
+                                                            byte[] base64Packet = null;
+
+                                                            try
+                                                            {
+                                                                base64Packet = Convert.FromBase64String(packet);
+                                                            }
+                                                            catch
+                                                            {
+                                                                failed = true;
+                                                            }
+
+                                                            if (!failed && base64Packet.Length > 0)
+                                                            {
+                                                                _onSendingPacketResponse = true;
+
+                                                                switch (await HandlePacket(base64Packet))
+                                                                {
+                                                                    case ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_TYPE_PACKET:
+                                                                    case ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_PACKET:
+                                                                        {
+                                                                            ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                                            ClientPeerConnectionStatus = false;
+                                                                        }
+                                                                        break;
+                                                                    case ClassPeerNetworkClientServerHandlePacketEnumStatus.EXCEPTION_PACKET:
+                                                                    case ClassPeerNetworkClientServerHandlePacketEnumStatus.SEND_EXCEPTION_PACKET:
+                                                                        {
+                                                                            ClassPeerCheckManager.InputPeerClientAttemptConnect(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                                            ClientPeerConnectionStatus = false;
+                                                                        }
+                                                                        break;
+                                                                    case ClassPeerNetworkClientServerHandlePacketEnumStatus.VALID_PACKET:
+                                                                        {
+                                                                            ClassPeerCheckManager.InputPeerClientValidPacket(_peerClientIp, _peerUniqueId);
+                                                                            if (_clientAskDisconnection)
+                                                                            {
+                                                                                ClientPeerConnectionStatus = false;
+                                                                            }
+                                                                        }
+                                                                        break;
+
+                                                                }
+
+                                                                if (base64Packet.Length > 0)
+                                                                {
+                                                                    Array.Clear(base64Packet, 0, base64Packet.Length);
+                                                                }
+
+                                                                _onSendingPacketResponse = false;
+                                                            }
+
+                                                        }
+                                                    }
+                                                    countPassed++;
+                                                }
+                                            }
+                                            _memoryStreamPacketDataReceived.Clear();
+                                        }
+
+                                        if (_memoryStreamPacketDataReceived.Length >= ClassPeerPacketSetting.PacketMaxLengthReceive)
+                                        {
+                                            _memoryStreamPacketDataReceived.Clear();
+                                        }
+                                    }
+
+                                    if (_clientAskDisconnection || !ClientPeerConnectionStatus)
+                                    {
+                                        ClientPeerConnectionStatus = false;
+                                        break;
+                                    }
+
 
                                 }
                                 catch

@@ -4,14 +4,12 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using SeguraChain_Lib.Algorithm;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Wallet.Function;
-using SeguraChain_Lib.Instance.Node.Setting.Object;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
@@ -192,6 +190,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         {
             byte[] result = null;
             bool semaphoreUsed = false;
+
             try
             {
                 await _semaphoreDoEncryption.WaitAsync(cancellation.Token);
