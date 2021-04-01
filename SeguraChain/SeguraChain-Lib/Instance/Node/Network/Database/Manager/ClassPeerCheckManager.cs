@@ -43,7 +43,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                                 {
                                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastPacketReceivedTimestamp + peerNetworkSetting.PeerDelayDeleteDeadPeer <= currentTimestamp &&
                                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket + peerNetworkSetting.PeerMaxDelayKeepAliveStats <= currentTimestamp &&
-                                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket == 0)
+                                        (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket >= peerNetworkSetting.PeerMaxInvalidPacket ||
+                                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalAttemptConnection >= peerNetworkSetting.PeerMaxAttemptConnection))
                                     {
                                         long deadTime = currentTimestamp - ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastPacketReceivedTimestamp;
 

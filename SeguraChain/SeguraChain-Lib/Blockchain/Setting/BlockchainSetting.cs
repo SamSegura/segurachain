@@ -102,7 +102,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int BlockDifficultyPrecision = 100000; // The precision put on the difficulty factor calculated.
         public const int GenesisBlockHeight = 1; // The genesis block height.
         public static readonly BigInteger GenesisBlockAmount = 2973370 * CoinDecimal; // The genesis block amount reward has pre-mining.
-        public const string GenesisBlockFinalTransactionHash = "4DD52F21339BBCC74C4CE420370BF20CB3879518E55BC7996DD85B56FEEF44F2F154D4DE35FF6E027DDD86763BAB52E9C9051F77D1323E7B8CD4B76C87DF2AAC"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
+        public const string GenesisBlockFinalTransactionHash = "D8A9D3BB92A8B547ED14161A24D19BAEE48ADC420AC2121FFABFD7E890AE69574B7FD76AEDDED8171C848A860BAAD636F024E28C3477846708EB8E05EE027D37"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
         public const int GenesisBlockTransactionCount = 1; // The maximum of transaction inserted on the genesis block.
         public const int BlockAmountNetworkConfirmations = 2; // The minimum amount of network checks on blocks to do with peers, before to enable the task of confirmations on the block.
         public const int BlockAmountSlowNetworkConfirmations = 5; // This amount increment another amount of network checks, once this one is reach, the network counter increment and this one return back to 0.
@@ -166,7 +166,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerMaxDelayToConnectToTarget = 10; // A maximum of 10 seconds delay on connect to a peer.
         public const int PeerMaxAttemptConnection = 20; // After 20 retries to connect to a peer, the peer target is set has dead pending a certain amount of time.
         public const int PeerBanDelay = 30; // Ban delay pending 30 seconds.
-        public const int PeerDeadDelay = 60; // Dead delay pending 60 seconds.
+        public const int PeerDeadDelay = 15; // Dead delay pending 15 seconds.
         public const int PeerMinValidPacket = 2; // Do not check packet signature after 2 valid packets sent.
         public const int PeerMaxWhiteListPacket = 1000; // Empty valid packet counter of a peer after to have ignoring packet signature 1000 of a peer.
         public const int PeerTaskSyncDelay = 1000;
@@ -192,7 +192,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerDefaultPort = 2400;
         public static readonly Dictionary<string, Dictionary<string, int>> BlockchainStaticPeerList = new Dictionary<string, Dictionary<string, int>>()
         {
-            {"127.0.0.1", new Dictionary<string, int>(){ { "996DDED64046672D168EB5FADCF3DF63BA1CA7EF0B02320507FDC8DCC3DAC4F4036714EEB9DE45C53C1391A39D0E0CF7254CB62031C830837AFF23D7F34A3C73", PeerDefaultPort } }}
+            {"127.0.0.1", new Dictionary<string, int>(){ { "put_the_peer_unique_id_of_the_peer_setting_json_file", PeerDefaultPort } }}
         }; // This is a static peer list who can't be updated, it's usually used once a peer don't have any peer list saved.
 
 

@@ -3575,26 +3575,29 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                         if (IPAddress.TryParse(packetPeerList.PeerIpList[i], out _) && ClassUtility.CheckHexStringFormat(packetPeerList.PeerUniqueIdList[i]) && packetPeerList.PeerUniqueIdList[i].Length == BlockchainSetting.PeerUniqueIdHashLength)
                                         {
                                             bool failed = false;
-                                            if (!ClassPeerCheckManager.CheckPeerClientStatus(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], false, _peerNetworkSettingObject, out bool newPeer))
+                                            bool newPeer = true;
+                                            if (ClassPeerDatabase.ContainsPeer(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i]))
                                             {
-                                                failed = true;
+                                                if (!ClassPeerCheckManager.CheckPeerClientStatus(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], false, _peerNetworkSettingObject, out newPeer))
+                                                {
+                                                    failed = true;
+                                                }
                                             }
                                             if (failed || newPeer)
                                             {
-                                                if (newPeer)
-                                                {
-                                                    if (await SendAskAuthPeerKeys(new ClassPeerNetworkClientSyncObject(packetPeerList.PeerIpList[i], packetPeerList.PeerPortList[i], packetPeerList.PeerUniqueIdList[i], _cancellationTokenServiceSync, _peerNetworkSettingObject, _peerFirewallSettingObject), _peerNetworkSettingObject.ListenApiPort, cancellation, false))
-                                                    {
-                                                        ClassLog.WriteLine("New Peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i] + " successfully registered.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
-                                                        ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
 
-                                                    }
-                                                    else
-                                                    {
-                                                        ClassLog.WriteLine("Can't register peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i], ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
-                                                        ClassPeerCheckManager.InputPeerClientNoPacketConnectionOpened(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], _peerNetworkSettingObject, _peerFirewallSettingObject);
-                                                    }
+                                                if (await SendAskAuthPeerKeys(new ClassPeerNetworkClientSyncObject(packetPeerList.PeerIpList[i], packetPeerList.PeerPortList[i], packetPeerList.PeerUniqueIdList[i], _cancellationTokenServiceSync, _peerNetworkSettingObject, _peerFirewallSettingObject), _peerNetworkSettingObject.ListenApiPort, cancellation, false))
+                                                {
+                                                    ClassLog.WriteLine("New Peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i] + " successfully registered.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
+                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+
                                                 }
+                                                else
+                                                {
+                                                    ClassLog.WriteLine("Can't register peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i], ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
+                                                    ClassPeerCheckManager.InputPeerClientNoPacketConnectionOpened(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                }
+
                                             }
                                         }
                                         else
