@@ -303,7 +303,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                                 // Ignored.  
                             }
 
-                            ClassPeerCheckManager.InputPeerClientAttemptConnect(PeerIpTarget, PeerUniqueIdTarget, _peerNetworkSetting, _peerFirewallSettingObject);
 
                             if (!ClassPeerCheckManager.CheckPeerClientStatus(PeerIpTarget, PeerUniqueIdTarget, false, _peerNetworkSetting, out _))
                             {
@@ -572,12 +571,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                 }
             }
 
+            CancelTaskListenPeerPacketResponse();
             CancelTaskWaitPeerPacketResponse();
 
             if (PeerPacketReceived == null)
             {
                 ClassLog.WriteLine("Peer " + PeerIpTarget + " don't send a response to the packet sent.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY, true);
-                ClassPeerCheckManager.InputPeerClientAttemptConnect(PeerIpTarget, PeerUniqueIdTarget, _peerNetworkSetting, _peerFirewallSettingObject);
                 DisconnectFromTarget();
                 result = false;
             }
@@ -763,9 +762,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                     }
                     catch (SocketException)
                     {
-                        PeerTaskStatus = false;
                         if (!CheckConnection())
                         {
+                            PeerTaskStatus = false;
                             PeerConnectStatus = false;
                         }
                     }

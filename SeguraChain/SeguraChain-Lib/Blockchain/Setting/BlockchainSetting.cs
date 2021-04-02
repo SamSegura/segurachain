@@ -158,7 +158,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         /// </summary>
         public const int PeerMaxNoPacketConnectionAttempt = 40;
         public const int PeerMaxInvalidPacket = 60; // Banned after 60 invalid packets.
-        public const int PeerMaxDelayAwaitResponse = 30; // Await a response from a peer target pending maximum 30 seconds per requests sent.
+        public const int PeerMaxDelayAwaitResponse = 60; // Await a response from a peer target pending maximum 30 seconds per requests sent.
         public const int PeerMaxDelayConnection = 30; // A maximum of 30 seconds on receive a packet.
         public const int PeerMaxTimestampDelayPacket = 180; // Await a maximum of 180 seconds on the timestamp of a packet, above the packet is considered has expired.
         public const int PeerMaxDelayKeepAliveStats = 60; // Keep alive packet stats of a peer pending 60 seconds.
@@ -192,7 +192,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerDefaultPort = 2400;
         public static readonly Dictionary<string, Dictionary<string, int>> BlockchainStaticPeerList = new Dictionary<string, Dictionary<string, int>>()
         {
-            {"127.0.0.1", new Dictionary<string, int>(){ { "put_the_peer_unique_id_of_the_peer_setting_json_file", PeerDefaultPort } }}
+            {"127.0.0.1", new Dictionary<string, int>(){ { "(Not mandatory): put_the_unique_id_from_the_peer_setting_json_file_of_the", PeerDefaultPort } }}
         }; // This is a static peer list who can't be updated, it's usually used once a peer don't have any peer list saved.
 
 

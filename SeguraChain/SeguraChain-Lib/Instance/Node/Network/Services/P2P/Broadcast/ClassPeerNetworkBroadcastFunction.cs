@@ -248,11 +248,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                     if (packetSendObject != null)
                                     {
-                                        if (!await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(packetSendObject), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, true, false))
-                                        {
-                                            ClassPeerCheckManager.InputPeerClientAttemptConnect(peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, peerNetworkSetting, peerFirewallSettingObject);
-                                        }
-                                        else
+                                        if (await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(packetSendObject), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, true, false))
                                         {
                                             if (peerTargetObject.PeerNetworkClientSyncObject.PeerPacketReceived?.PacketOrder == ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE)
                                             {
