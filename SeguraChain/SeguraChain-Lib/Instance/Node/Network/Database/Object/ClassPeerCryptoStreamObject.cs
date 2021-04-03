@@ -35,8 +35,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         private string _publicKey;
         private ECPublicKeyParameters _ecPublicKeyParameters;
 
-        private bool _initialized;
-
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -78,12 +76,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         private void InitializeAesAndEcdsaSign(byte[] key, byte[] iv, string publicKey, string privateKey, bool fromInitialization, CancellationTokenSource cancellation)
         {
             bool semaphoreUsed = false;
-            int countInit = 0;
+
             try
             {
                 _semaphoreUpdateCryptoStream.Wait(cancellation.Token);
                 semaphoreUsed = true;
-                _initialized = false;
 
                 try
                 {
@@ -98,7 +95,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             Mode = CipherMode.CFB,
                             Padding = PaddingMode.PKCS7
                         };
-                        countInit++;
                     }
                     else
                     {
@@ -121,14 +117,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             Mode = CipherMode.CFB,
                             Padding = PaddingMode.PKCS7
                         };
-
-                        countInit++;
                     }
 
                     if (fromInitialization || _encryptCryptoTransform == null)
                     {
                         _encryptCryptoTransform = _aesManaged.CreateEncryptor(key, iv);
-                        countInit++;
                     }
                     else
                     {
@@ -143,14 +136,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                         }
 
                         _encryptCryptoTransform = _aesManaged.CreateEncryptor(key, iv);
-                        countInit++;
 
                     }
 
                     if (fromInitialization || _decryptCryptoTransform == null)
                     {
                         _decryptCryptoTransform = _aesManaged.CreateDecryptor(key, iv);
-                        countInit++;
                     }
                     else
                     {
@@ -164,7 +155,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             // Ignored.
                         }
                         _decryptCryptoTransform = _aesManaged.CreateDecryptor(key, iv);
-                        countInit++;
 
                     }
                     if (!publicKey.IsNullOrEmpty() && !privateKey.IsNullOrEmpty())
@@ -173,7 +163,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                         _ecPrivateKeyParameters = new ECPrivateKeyParameters(new BigInteger(ClassBase58.DecodeWithCheckSum(privateKey, true)), ClassWalletUtility.ECDomain);
                         _publicKey = publicKey;
                         _ecPublicKeyParameters = new ECPublicKeyParameters(ClassWalletUtility.ECParameters.Curve.DecodePoint(ClassBase58.DecodeWithCheckSum(publicKey, false)), ClassWalletUtility.ECDomain);
-                        countInit++;
                     }
                 }
                 catch
@@ -189,10 +178,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                 }
             }
 
-            if (countInit >= 3)
-            {
-                _initialized = true;
-            }
         }
 
         /// <summary>
@@ -204,59 +189,55 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         public async Task<byte[]> EncryptDataProcess(byte[] content, CancellationTokenSource cancellation)
         {
             byte[] result = null;
+            bool semaphoreUsed = false;
 
-            if (_initialized)
+            try
             {
-                bool semaphoreUsed = false;
+                await _semaphoreDoEncryption.WaitAsync(cancellation.Token);
+                semaphoreUsed = true;
 
                 try
                 {
-                    await _semaphoreDoEncryption.WaitAsync(cancellation.Token);
-                    semaphoreUsed = true;
-
-                    try
+                    if (content.Length > 0)
                     {
-                        if (content.Length > 0)
+                        using (MemoryStream memoryStream = new MemoryStream())
                         {
-                            using (MemoryStream memoryStream = new MemoryStream())
+                            using (CryptoStream cryptoStream = new CryptoStream(memoryStream, _encryptCryptoTransform, CryptoStreamMode.Write))
                             {
-                                using (CryptoStream cryptoStream = new CryptoStream(memoryStream, _encryptCryptoTransform, CryptoStreamMode.Write))
+                                await cryptoStream.WriteAsync(content, 0, content.Length, cancellation.Token);
+
+                                if (!cryptoStream.HasFlushedFinalBlock)
                                 {
-                                    await cryptoStream.WriteAsync(content, 0, content.Length, cancellation.Token);
+                                    cryptoStream.FlushFinalBlock();
+                                }
 
-                                    if (!cryptoStream.HasFlushedFinalBlock)
+                                if (!cancellation.IsCancellationRequested)
+                                {
+                                    if (memoryStream.Length > 0)
                                     {
-                                        cryptoStream.FlushFinalBlock();
-                                    }
-
-                                    if (!cancellation.IsCancellationRequested)
-                                    {
-                                        if (memoryStream.Length > 0)
-                                        {
-                                            result = memoryStream.ToArray();
-                                        }
+                                        result = memoryStream.ToArray();
                                     }
                                 }
                             }
                         }
                     }
-                    catch (Exception error)
-                    {
-#if DEBUG
-                        Debug.WriteLine("Error on encrypt data from a peer. Exception: " + error.Message);
-#endif
-                        result = null;
-                    }
                 }
-                finally
+                catch (Exception error)
                 {
-                    if (semaphoreUsed)
-                    {
-                        _semaphoreDoEncryption.Release();
-                    }
+#if DEBUG
+                    Debug.WriteLine("Error on encrypt data from a peer. Exception: " + error.Message);
+#endif
+                    result = null;
                 }
-
             }
+            finally
+            {
+                if (semaphoreUsed)
+                {
+                    _semaphoreDoEncryption.Release();
+                }
+            }
+
             return result;
         }
 
@@ -272,61 +253,58 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
             bool decryptStatus = false;
             bool semaphoreUsed = false;
 
-            if (_initialized)
+            try
             {
+                await _semaphoreDoDecryption.WaitAsync(cancellation.Token);
+                semaphoreUsed = true;
+
                 try
                 {
-                    await _semaphoreDoDecryption.WaitAsync(cancellation.Token);
-                    semaphoreUsed = true;
-
-                    try
+                    if (content.Length > 0)
                     {
-                        if (content.Length > 0)
+                        using (MemoryStream memoryStream = new MemoryStream())
                         {
-                            using (MemoryStream memoryStream = new MemoryStream())
+                            using (CryptoStream cryptoStream = new CryptoStream(memoryStream, _decryptCryptoTransform, CryptoStreamMode.Write))
                             {
-                                using (CryptoStream cryptoStream = new CryptoStream(memoryStream, _decryptCryptoTransform, CryptoStreamMode.Write))
+                                await cryptoStream.WriteAsync(content, 0, content.Length, cancellation.Token);
+
+
+                                if (!cryptoStream.HasFlushedFinalBlock)
                                 {
-                                    await cryptoStream.WriteAsync(content, 0, content.Length, cancellation.Token);
+                                    cryptoStream.FlushFinalBlock();
+                                }
 
 
-                                    if (!cryptoStream.HasFlushedFinalBlock)
+                                if (!cancellation.IsCancellationRequested)
+                                {
+                                    if (memoryStream.Length > 0)
                                     {
-                                        cryptoStream.FlushFinalBlock();
-                                    }
+                                        result = memoryStream.ToArray();
 
-
-                                    if (!cancellation.IsCancellationRequested)
-                                    {
-                                        if (memoryStream.Length > 0)
+                                        if (result.Length > 0)
                                         {
-                                            result = memoryStream.ToArray();
-
-                                            if (result.Length > 0)
-                                            {
-                                                decryptStatus = true;
-                                            }
+                                            decryptStatus = true;
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                    catch (Exception error)
-                    {
-#if DEBUG
-                        Debug.WriteLine("Error on decrypt data from a peer. Exception: " + error.Message);
-#endif
-                        result = null;
-                        decryptStatus = false;
-                    }
                 }
-                finally
+                catch (Exception error)
                 {
-                    if (semaphoreUsed)
-                    {
-                        _semaphoreDoDecryption.Release();
-                    }
+#if DEBUG
+                    Debug.WriteLine("Error on decrypt data from a peer. Exception: " + error.Message);
+#endif
+                    result = null;
+                    decryptStatus = false;
+                }
+            }
+            finally
+            {
+                if (semaphoreUsed)
+                {
+                    _semaphoreDoDecryption.Release();
                 }
             }
 
@@ -343,29 +321,27 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         {
             string signature = string.Empty;
 
-            if (_initialized)
+            if (privateKey != null)
             {
-                if (privateKey != null)
+                var _signerDoSignature = SignerUtilities.GetSigner(BlockchainSetting.SignerName);
+
+                if (privateKey != _privateKey || _ecPrivateKeyParameters == null)
                 {
-                    var _signerDoSignature = SignerUtilities.GetSigner(BlockchainSetting.SignerName);
-
-                    if (privateKey != _privateKey || _ecPrivateKeyParameters == null)
-                    {
-                        _privateKey = privateKey;
-                        _ecPrivateKeyParameters = new ECPrivateKeyParameters(new BigInteger(ClassBase58.DecodeWithCheckSum(privateKey, true)), ClassWalletUtility.ECDomain);
-                    }
-
-                    _signerDoSignature.Init(true, _ecPrivateKeyParameters);
-
-                    _signerDoSignature.BlockUpdate(ClassUtility.GetByteArrayFromHexString(hash), 0, hash.Length / 2);
-
-
-                    signature = Convert.ToBase64String(_signerDoSignature.GenerateSignature());
-
-                    // Reset.
-                    _signerDoSignature.Reset();
+                    _privateKey = privateKey;
+                    _ecPrivateKeyParameters = new ECPrivateKeyParameters(new BigInteger(ClassBase58.DecodeWithCheckSum(privateKey, true)), ClassWalletUtility.ECDomain);
                 }
+
+                _signerDoSignature.Init(true, _ecPrivateKeyParameters);
+
+                _signerDoSignature.BlockUpdate(ClassUtility.GetByteArrayFromHexString(hash), 0, hash.Length / 2);
+
+
+                signature = Convert.ToBase64String(_signerDoSignature.GenerateSignature());
+
+                // Reset.
+                _signerDoSignature.Reset();
             }
+
             return signature;
         }
 
@@ -380,27 +356,24 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         {
             bool result = false;
 
-            if (_initialized)
+            if (publicKey != null)
             {
-                if (publicKey != null)
+                var _signerCheckSignature = SignerUtilities.GetSigner(BlockchainSetting.SignerName);
+
+                if (publicKey != _publicKey || _ecPublicKeyParameters == null)
                 {
-                    var _signerCheckSignature = SignerUtilities.GetSigner(BlockchainSetting.SignerName);
-
-                    if (publicKey != _publicKey || _ecPublicKeyParameters == null)
-                    {
-                        _publicKey = publicKey;
-                        _ecPublicKeyParameters = new ECPublicKeyParameters(ClassWalletUtility.ECParameters.Curve.DecodePoint(ClassBase58.DecodeWithCheckSum(publicKey, false)), ClassWalletUtility.ECDomain);
-                    }
-
-                    _signerCheckSignature.Init(false, _ecPublicKeyParameters);
-
-                    _signerCheckSignature.BlockUpdate(ClassUtility.GetByteArrayFromHexString(hash), 0, hash.Length / 2);
-
-                    result = _signerCheckSignature.VerifySignature(Convert.FromBase64String(signature));
-
-                    // Reset.
-                    _signerCheckSignature.Reset();
+                    _publicKey = publicKey;
+                    _ecPublicKeyParameters = new ECPublicKeyParameters(ClassWalletUtility.ECParameters.Curve.DecodePoint(ClassBase58.DecodeWithCheckSum(publicKey, false)), ClassWalletUtility.ECDomain);
                 }
+
+                _signerCheckSignature.Init(false, _ecPublicKeyParameters);
+
+                _signerCheckSignature.BlockUpdate(ClassUtility.GetByteArrayFromHexString(hash), 0, hash.Length / 2);
+
+                 result = _signerCheckSignature.VerifySignature(Convert.FromBase64String(signature));
+
+                // Reset.
+                _signerCheckSignature.Reset();
             }
 
             return result;

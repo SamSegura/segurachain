@@ -43,7 +43,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         public long PeerLastDeadTimestamp;
         #endregion
 
-
         [JsonIgnore]
         public bool OnUpdateAuthKeys;
 

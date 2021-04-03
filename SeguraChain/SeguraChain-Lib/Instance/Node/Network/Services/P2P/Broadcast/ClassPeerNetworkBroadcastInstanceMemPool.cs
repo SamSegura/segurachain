@@ -23,7 +23,6 @@ using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Instance.Node.Network.Database.Manager;
 using SeguraChain_Lib.Blockchain.Setting;
 using System.Diagnostics;
-using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet.Model;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 {
@@ -1952,6 +1951,19 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             #endregion
 
             #region Internal objects.
+
+            /// <summary>
+            /// Store packet data and set complete status once the packet separator is received.
+            /// </summary>
+            internal class ClassReadPacketSplitted
+            {
+                public List<byte> Packet;
+                public bool Complete;
+                public ClassReadPacketSplitted()
+                {
+                    Packet = new List<byte>();
+                }
+            }
 
             /// <summary>
             /// Store the packet data translated after every checks passed.

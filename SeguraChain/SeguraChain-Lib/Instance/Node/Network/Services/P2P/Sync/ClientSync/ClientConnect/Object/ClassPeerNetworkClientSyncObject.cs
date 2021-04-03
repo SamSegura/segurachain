@@ -160,6 +160,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                     }
 
                     _peerDisconnected = false;
+
+                    #region Wait the ACK packet response.
+
+                    if (!await WaitAckPacket(cancellation))
+                    {
+                        return false;
+                    }
+
+                    #endregion
                 }
 
                 #endregion
@@ -302,7 +311,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
 
                             try
                             {
-                                await Task.Delay(100, cancellationConnect.Token);
+                                await Task.Delay(100, cancellation.Token);
                             }
                             catch
                             {
@@ -374,6 +383,135 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             ClassLog.WriteLine("Failed to connect to peer " + PeerIpTarget, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY);
             ClassPeerCheckManager.InputPeerClientAttemptConnect(PeerIpTarget, PeerUniqueIdTarget, _peerNetworkSetting, _peerFirewallSettingObject);
             return false;
+        }
+
+        /// <summary>
+        /// Wait the ACK packet.
+        /// </summary>
+        /// <param name="cancellation"></param>
+        /// <returns></returns>
+        private async Task<bool> WaitAckPacket(CancellationTokenSource cancellation)
+        {
+            bool ackPacketReceived = false;
+            bool failed = false;
+            long timestampStartConnect = ClassUtility.GetCurrentTimestampInMillisecond();
+
+            using (CancellationTokenSource cancellationAck = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token))
+            {
+
+                #region Task wait ACK packet to received.
+
+                try
+                {
+                    await Task.Factory.StartNew(async () =>
+                    {
+                        if (_peerTcpClient == null)
+                        {
+                            failed = true;
+                        }
+                        else
+                        {
+                            if (_peerTcpClient.Client == null)
+                            {
+                                failed = true;
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    using (NetworkStream networkStream = new NetworkStream(_peerTcpClient.Client))
+                                    {
+                                        while (!ackPacketReceived)
+                                        {
+                                            try
+                                            {
+                                                cancellationAck.Token.ThrowIfCancellationRequested();
+
+                                                byte[] packetReceivedBuffer = new byte[_peerNetworkSetting.PeerMaxPacketBufferSize];
+
+                                                int packetLength = await networkStream.ReadAsync(packetReceivedBuffer, 0, packetReceivedBuffer.Length, cancellationAck.Token);
+
+                                                if (packetLength > 0)
+                                                {
+                                                    if (packetLength > 0)
+                                                    {
+                                                        if (packetReceivedBuffer.GetStringFromByteArrayAscii().Contains(ClassPeerPacketSetting.PacketAck))
+                                                        {
+                                                            ackPacketReceived = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+
+                                                // Clean up.
+                                                Array.Clear(packetReceivedBuffer, 0, packetReceivedBuffer.Length);
+
+                                            }
+                                            catch
+                                            {
+                                                failed = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                catch
+                                {
+                                    failed = true;
+                                }
+                            }
+                        }
+                    }, cancellationAck.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Ignored.
+                }
+
+                #endregion
+
+                while (!ackPacketReceived)
+                {
+                    if (timestampStartConnect + _peerNetworkSetting.PeerMaxSemaphoreConnectAwaitDelay < ClassUtility.GetCurrentTimestampInMillisecond())
+                    {
+                        break;
+                    }
+
+                    if (cancellation.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    if (ackPacketReceived)
+                    {
+                        break;
+                    }
+
+                    if (failed)
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        await Task.Delay(100, cancellation.Token);
+                    }
+                    catch
+                    {
+                        break;
+                    }
+                }
+
+                cancellationAck.Cancel();
+            }
+
+            if (!ackPacketReceived)
+            {
+                DisconnectFromTarget();
+                return false;
+            }
+
+            return true;
         }
 
 
