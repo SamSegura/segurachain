@@ -304,88 +304,51 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
 
                         await Task.Factory.StartNew(async () =>
                         {
-                            if (!cancellationToken.IsCancellationRequested)
+                            bool useSemaphore = false;
+                            bool failed = true;
+
+                            try
                             {
-                                bool useSemaphore = false;
+                                long timestampStartAwait = ClassUtility.GetCurrentTimestampInMillisecond();
 
-                                try
+                                #region Wait the semaphore access availability.
+
+                                while (timestampStartAwait + _peerNetworkSettingObject.PeerMaxSemaphoreConnectAwaitDelay >= ClassUtility.GetCurrentTimestampInMillisecond())
                                 {
-                                    bool available = false;
-                                    long timestampStartAwait = ClassUtility.GetCurrentTimestampInMillisecond();
-
-                                    #region Wait the semaphore access availability.
-
-                                    while (timestampStartAwait + _peerNetworkSettingObject.PeerMaxSemaphoreConnectAwaitDelay >= ClassUtility.GetCurrentTimestampInMillisecond())
+                                    if (await _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.WaitAsync(1000, _cancellationTokenSourcePeerServer.Token))
                                     {
-                                        if (await _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.WaitAsync(10, _cancellationTokenSourcePeerServer.Token))
-                                        {
-                                            available = true;
-                                            useSemaphore = true;
-                                            _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
-                                            useSemaphore = false;
-                                            break;
-                                        }
-                                    }
-
-                                    #endregion
-
-                                    if (available)
-                                    {
-                                        if (ClassUtility.SocketIsConnected(clientPeerTcp))
-                                        {
-
-                                            #region Send ACK packet.
-
-                                            bool ackPacketStatus = await SendAckPacket(clientPeerTcp);
-
-                                            #endregion
-
-                                            if (ackPacketStatus)
-                                            {
-                                                #region Handle the incoming connection to the P2P server.
-                                                await _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].ListenPeerClient();
-                                                #endregion
-                                            }
-                                            else
-                                            {
-                                                CloseTcpClient(clientPeerTcp);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            CloseTcpClient(clientPeerTcp);
-                                            _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
-                                        }
-                                    }
-                                    // Busy.
-                                    else
-                                    {
-                                        #region Force to close the incoming connection and dispose the new object created who handle it on this case.
-
-                                        CloseTcpClient(clientPeerTcp);
-                                        _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
-
-                                        #endregion
+                                        useSemaphore = true;
+                                        break;
                                     }
                                 }
-                                catch
+
+                                #endregion
+
+                                if (useSemaphore)
                                 {
-                                    if (useSemaphore)
-                                    {
-                                        // Ignored, just in case the semaphore is released if he is used.
-                                        _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
-                                    }
+                                    _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
+                                    useSemaphore = false;
+
+                                    failed = false;
+
+                                    #region Handle the incoming connection to the P2P server.
+                                    await _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].HandlePeerClient();
+                                    #endregion
+                                }
+                            }
+                            finally
+                            {
+                                if (failed)
+                                {
                                     CloseTcpClient(clientPeerTcp);
                                     _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
                                 }
-                            }
-                            // Long clean up busy.
-                            else
-                            {
-                                _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
-                                CloseTcpClient(clientPeerTcp);
-                            }
 
+                                if (useSemaphore)
+                                {
+                                    _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
+                                }
+                            }
 
                         }, _cancellationTokenSourcePeerServer.Token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Current).ConfigureAwait(false);
                     }
@@ -405,29 +368,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
                 return ClassPeerNetworkServerHandleConnectionEnum.HANDLE_CLIENT_EXCEPTION;
             }
             return ClassPeerNetworkServerHandleConnectionEnum.VALID_HANDLE;
-        }
-
-        /// <summary>
-        /// Send ACK packet to the incoming connection.
-        /// </summary>
-        /// <param name="tcpClient"></param>
-        /// <returns></returns>
-        private async Task<bool> SendAckPacket(TcpClient tcpClient)
-        {
-            try
-            {
-                using (NetworkStream networkStream = new NetworkStream(tcpClient.Client))
-                {
-                    byte[] ackPacket = ClassUtility.GetByteArrayFromStringAscii(ClassPeerPacketSetting.PacketAck);
-                    await networkStream.WriteAsync(ackPacket, 0, ackPacket.Length, _cancellationTokenSourcePeerServer.Token);
-                    await networkStream.FlushAsync(_cancellationTokenSourcePeerServer.Token);
-                }
-            }
-            catch
-            {
-                return false;
-            }
-            return true;
         }
 
         /// <summary>
