@@ -86,7 +86,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                         if (Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory))
                                         {
                                             isLockedBitmap = true;
-                                            returnedBitmap = _dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory;
+                                            returnedBitmap = ClassGraphicsUtility.CloneBitmap(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
                                         }
                                     }
                                 }
