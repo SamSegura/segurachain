@@ -495,7 +495,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                 _peerUniqueId = packetSendObject.PacketPeerUniqueId;
 
                 bool peerExist = false;
-                bool peerInitialized = false;
 
                 if (!_peerUniqueId.IsNullOrEmpty())
                 {
@@ -503,11 +502,20 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                     {
                         peerExist = true;
                         ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerLastPacketReceivedTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-                        if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject != null &&
-                            ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetInternCryptoStreamObject != null)
+                    }
+                }
+
+                if (!peerExist)
+                {
+                    if (packetSendObject.PacketOrder != ClassPeerEnumPacketSend.ASK_PEER_AUTH_KEYS)
+                    {
+                        await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId)
                         {
-                            peerInitialized = true;
-                        }
+                            PacketOrder = ClassPeerEnumPacketResponse.INVALID_PEER_PACKET,
+                            PacketContent = string.Empty,
+                        }, false);
+
+                        return ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_PACKET;
                     }
                 }
 
@@ -581,39 +589,25 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
 
                             if (ClassUtility.CheckPacketTimestamp(packetSendPeerAuthKeysObject.PacketTimestamp, _peerNetworkSettingObject.PeerMaxTimestampDelayPacket, _peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
                             {
-                                bool forceUpdate = false;
-                                bool doUpdate = false;
+                                bool forceUpdate = !peerExist;
                                 if (peerExist)
                                 {
                                     long timestamp = ClassUtility.GetCurrentTimestampInSecond();
-                                    if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerLastValidPacket + _peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= timestamp ||
-                                        ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternTimestampKeyGenerated + _peerNetworkSettingObject.PeerMaxAuthKeysExpire <= timestamp ||
+                                    if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerLastValidPacket == 0 ||
                                         ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerStatus != ClassPeerEnumStatus.PEER_ALIVE ||
                                         !ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerIsPublic)
                                     {
-                                        doUpdate = true;
+                                        forceUpdate = true;
                                     }
                                 }
                                 else
                                 {
                                     forceUpdate = true;
-                                    doUpdate = true;
                                 }
 
-                                if (doUpdate)
-                                {
-                                    if (!await ClassPeerKeysManager.UpdatePeerInternalKeys(_peerClientIp, packetSendPeerAuthKeysObject.PeerPort, _peerUniqueId, _cancellationTokenAccessData, _peerNetworkSettingObject, forceUpdate))
-                                    {
-                                        ClassLog.WriteLine("Packet from peer: " + _peerClientIp + " can't update peer keys.", ClassEnumLogLevelType.LOG_LEVEL_PEER_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
-                                    }
-                                    else
-                                    {
-                                        peerExist = true;
-                                    }
-                                }
+                                await ClassPeerKeysManager.UpdatePeerKeysReceivedNetworkServer(_peerClientIp, _peerUniqueId, packetSendPeerAuthKeysObject, _cancellationTokenAccessData);
 
-
-                                if (peerExist)
+                                if (await ClassPeerKeysManager.UpdatePeerInternalKeys(_peerClientIp, packetSendPeerAuthKeysObject.PeerPort, _peerUniqueId, _cancellationTokenAccessData, _peerNetworkSettingObject, forceUpdate))
                                 {
                                     if (!await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId)
                                     {
@@ -633,11 +627,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                         ClassLog.WriteLine("Packet response to send to peer: " + _peerClientIp + " failed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
 
                                         return ClassPeerNetworkClientServerHandlePacketEnumStatus.SEND_EXCEPTION_PACKET;
-                                    }
-                                    else
-                                    {
-                                        ClassPeerCheckManager.CleanPeerState(_peerClientIp, _peerUniqueId, true);
-                                        await ClassPeerKeysManager.UpdatePeerKeysReceivedNetworkServer(_peerClientIp, _peerUniqueId, packetSendPeerAuthKeysObject, _cancellationTokenAccessData);
                                     }
                                 }
                                 else
