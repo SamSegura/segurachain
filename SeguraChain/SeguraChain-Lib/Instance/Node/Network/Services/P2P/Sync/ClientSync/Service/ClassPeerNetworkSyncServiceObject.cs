@@ -1831,18 +1831,23 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                 {
                                                     bool peerRanked = false;
 
-
-                                                    if (ClassPeerNetworkBroadcastFunction.CheckPeerSeedNumericPacketSignature(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, result.Item2.ObjectReturned, result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, _peerNetworkSettingObject, cancellationTokenSourceTaskSync, out string numericPublicKeyOut))
+                                                    if (!result.Item2.PacketNumericHash.IsNullOrEmpty() && !result.Item2.PacketNumericSignature.IsNullOrEmpty())
                                                     {
-                                                        if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
+                                                        if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                         {
-                                                            if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+
+                                                            if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                             {
-                                                                peerRanked = true;
+                                                                if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
+                                                                {
+                                                                    if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                    {
+                                                                        peerRanked = true;
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
-
                                                     // Ignore packet timestamp now, to not make false comparing of other important data's.
                                                     if (result.Item2.ObjectReturned != null)
                                                     {
@@ -2164,18 +2169,20 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                             {
                                                                 bool peerRanked = false;
 
-
-                                                                if (ClassPeerNetworkBroadcastFunction.CheckPeerSeedNumericPacketSignature(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, result.Item2.ObjectReturned, result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, _peerNetworkSettingObject, cancellationTokenSourceTaskSync, out string numericPublicKeyOut))
+                                                                if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                 {
-                                                                    if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
+                                                                    if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                     {
-                                                                        if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                        // Do not allow multiple seed votes from the same numeric public key.
+                                                                        if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
                                                                         {
-                                                                            peerRanked = true;
+                                                                            if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                            {
+                                                                                peerRanked = true;
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
-
                                                                 ClassBlockObject blockObject = result.Item2.ObjectReturned.BlockData;
 
                                                                 blockObject.BlockTransactionFullyConfirmed = false;
@@ -2524,17 +2531,20 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                     bool peerRanked = false;
 
-                                                                    if (ClassPeerNetworkBroadcastFunction.CheckPeerSeedNumericPacketSignature(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, result.Item2.ObjectReturned, result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, _peerNetworkSettingObject, cancellationTokenSourceTaskSync, out string numericPublicKeyOut))
+                                                                    if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                     {
-                                                                        if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
+                                                                        if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                         {
-                                                                            if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                            // Do not allow multiple seed votes from the same numeric public key.
+                                                                            if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
                                                                             {
-                                                                                peerRanked = true;
+                                                                                if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                                {
+                                                                                    peerRanked = true;
+                                                                                }
                                                                             }
                                                                         }
                                                                     }
-
 
                                                                     string txHashCompare = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(result.Item2.ObjectReturned.TransactionObject));
 
@@ -2801,16 +2811,21 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                     bool peerRanked = false;
 
-                                                                    if (ClassPeerNetworkBroadcastFunction.CheckPeerSeedNumericPacketSignature(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, result.Item2.ObjectReturned, result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, _peerNetworkSettingObject, cancellationTokenSourceTaskSync, out string numericPublicKeyOut))
+                                                                    if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                     {
-                                                                        if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
+                                                                        if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                         {
-                                                                            if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                            // Do not allow multiple seed votes from the same numeric public key.
+                                                                            if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
                                                                             {
-                                                                                peerRanked = true;
+                                                                                if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                                {
+                                                                                    peerRanked = true;
+                                                                                }
                                                                             }
                                                                         }
                                                                     }
+
 
                                                                     string txHashCompare = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(result.Item2.ObjectReturned.ListTransactionObject));
 
@@ -3080,13 +3095,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                         {
                                                             bool peerRanked = false;
 
-                                                            if (ClassPeerNetworkBroadcastFunction.CheckPeerSeedNumericPacketSignature(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, result.Item2.ObjectReturned, result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, _peerNetworkSettingObject, cancellationTokenSourceTaskSync, out string numericPublicKeyOut))
+                                                            if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                             {
-                                                                if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
+                                                                if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                 {
-                                                                    if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                    // Do not allow multiple seed votes from the same numeric public key.
+                                                                    if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
                                                                     {
-                                                                        peerRanked = true;
+                                                                        if (listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0))
+                                                                        {
+                                                                            peerRanked = true;
+                                                                        }
                                                                     }
                                                                 }
                                                             }
@@ -3477,7 +3496,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                     if (targetExist)
                     {
+                        ClassPeerCheckManager.CleanPeerState(peerIp, peerUniqueId, true);
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic = true;
+                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus = ClassPeerEnumStatus.PEER_ALIVE;
                     }
 
                     ClassLog.WriteLine(peerIp + ":" + peerPort + " send propertly auth keys.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
@@ -3575,29 +3596,26 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                         if (IPAddress.TryParse(packetPeerList.PeerIpList[i], out _) && ClassUtility.CheckHexStringFormat(packetPeerList.PeerUniqueIdList[i]) && packetPeerList.PeerUniqueIdList[i].Length == BlockchainSetting.PeerUniqueIdHashLength)
                                         {
                                             bool failed = false;
-                                            bool newPeer = true;
-                                            if (ClassPeerDatabase.ContainsPeer(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i]))
+                                            if (!ClassPeerCheckManager.CheckPeerClientStatus(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], false, _peerNetworkSettingObject, out bool newPeer))
                                             {
-                                                if (!ClassPeerCheckManager.CheckPeerClientStatus(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], false, _peerNetworkSettingObject, out newPeer))
-                                                {
-                                                    failed = true;
-                                                }
+                                                failed = true;
                                             }
                                             if (failed || newPeer)
                                             {
-
-                                                if (await SendAskAuthPeerKeys(new ClassPeerNetworkClientSyncObject(packetPeerList.PeerIpList[i], packetPeerList.PeerPortList[i], packetPeerList.PeerUniqueIdList[i], _cancellationTokenServiceSync, _peerNetworkSettingObject, _peerFirewallSettingObject), _peerNetworkSettingObject.ListenApiPort, cancellation, false))
+                                                if (newPeer)
                                                 {
-                                                    ClassLog.WriteLine("New Peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i] + " successfully registered.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
-                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                                                    if (await SendAskAuthPeerKeys(new ClassPeerNetworkClientSyncObject(packetPeerList.PeerIpList[i], packetPeerList.PeerPortList[i], packetPeerList.PeerUniqueIdList[i], _cancellationTokenServiceSync, _peerNetworkSettingObject, _peerFirewallSettingObject), _peerNetworkSettingObject.ListenApiPort, cancellation, false))
+                                                    {
+                                                        ClassLog.WriteLine("New Peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i] + " successfully registered.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
+                                                        ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
 
+                                                    }
+                                                    else
+                                                    {
+                                                        ClassLog.WriteLine("Can't register peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i], ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
+                                                        ClassPeerCheckManager.InputPeerClientNoPacketConnectionOpened(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                    }
                                                 }
-                                                else
-                                                {
-                                                    ClassLog.WriteLine("Can't register peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i], ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
-                                                    ClassPeerCheckManager.InputPeerClientNoPacketConnectionOpened(packetPeerList.PeerIpList[i], packetPeerList.PeerUniqueIdList[i], _peerNetworkSettingObject, _peerFirewallSettingObject);
-                                                }
-
                                             }
                                         }
                                         else

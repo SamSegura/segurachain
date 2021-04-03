@@ -39,7 +39,6 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
         private const int ManageApiFirewallInterval = 2 * 1000;
         private const int CleanUpApiDeadConnectionInterval = 10 * 1000;
         private const int CleanUpPeerDeadConnectionInterval = 10 * 1000;
-        private const int CheckWholePeerStatusInterval = 1 * 1000;
         private const int UpdateBlockTransactionConfirmationInterval = 1 * 1000;
         private const int UpdateBlockchainStatsInterval = 1 * 1000;
         private const int UpdateNodeInternalStats = 1 * 1000;
@@ -88,11 +87,6 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
             StartTaskConfirmBlockTransaction();
             StartTaskCleanUpClosedApiClientConnection();
             StartTaskCleanUpClosedPeerClientConnection();
-            if (_nodeInstance.PeerSettingObject.PeerNetworkSettingObject.PublicPeer)
-            {
-                StartTaskCheckWholePeerStatus();
-            }
-
             if (_nodeInstance.PeerSettingObject.PeerFirewallSettingObject.PeerEnableFirewallLink)
             {
                 StartTaskManageApiFirewall();
@@ -297,37 +291,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
             }
         }
 
-        /// <summary>
-        /// Start a task who check whole peers status.
-        /// </summary>
-        private void StartTaskCheckWholePeerStatus()
-        {
-            try
-            {
-                Task.Factory.StartNew(async () =>
-                {
-                    while (_nodeInstance.PeerToolStatus)
-                    {
-                        _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
-
-                        try
-                        {
-
-                            ClassPeerCheckManager.CheckWholePeerStatus(_cancellationTokenSourceUpdateTask, _nodeInstance.PeerSettingObject.PeerNetworkSettingObject);
-                        }
-                        catch
-                        {
-                            // Ignored.
-                        }
-                        await Task.Delay(CheckWholePeerStatusInterval, _cancellationTokenSourceUpdateTask.Token);
-                    }
-                }, _cancellationTokenSourceUpdateTask.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
-            }
-            catch
-            {
-                // Ignored, catch the exception once the task is cancelled.
-            }
-        }
+ 
 
         /// <summary>
         /// Start a task who automatically update blockchain network stats from data synced.
