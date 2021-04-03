@@ -9,14 +9,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
         public string PacketHash;
         public string PacketSignature; // The signature of the packet hash.
         public string PacketPeerUniqueId;
+        public string PublicKey;
 
         /// <summary>
         /// The peer unique id is mandatory.
         /// </summary>
         /// <param name="packetPeerUniqueId"></param>
-        public ClassPeerPacketSendObject(string packetPeerUniqueId)
+        public ClassPeerPacketSendObject(string packetPeerUniqueId, string publicKey)
         {
             PacketPeerUniqueId = packetPeerUniqueId;
+            PublicKey = publicKey;
         }
     }
 
@@ -27,14 +29,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
         public string PacketHash;
         public string PacketSignature; // The signature of the packet hash.
         public string PacketPeerUniqueId;
+        public string PublicKey;
 
         /// <summary>
         /// The peer unique id is mandatory.
         /// </summary>
         /// <param name="packetPeerUniqueId"></param>
-        public ClassPeerPacketRecvObject(string packetPeerUniqueId)
+        public ClassPeerPacketRecvObject(string packetPeerUniqueId, string publicKey)
         {
             PacketPeerUniqueId = packetPeerUniqueId;
+            PublicKey = publicKey;
         }
     }
 }

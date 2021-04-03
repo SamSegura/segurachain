@@ -707,7 +707,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                         {
                             try
                             {
-                                ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSetting.PeerUniqueId)
+                                ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerInternPublicKey)
                                 {
                                     PacketOrder = ClassPeerEnumPacketSend.ASK_KEEP_ALIVE,
                                     PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketAskKeepAlive()

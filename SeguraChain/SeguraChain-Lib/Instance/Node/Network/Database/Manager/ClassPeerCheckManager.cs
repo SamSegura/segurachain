@@ -225,6 +225,29 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             return false;
         }
 
+        /// <summary>
+        /// Compare the public key received by a peer with the public key registered.
+        /// </summary>
+        /// <param name="peerIp"></param>
+        /// <param name="peerUniqueId"></param>
+        /// <param name="peerPublicKeyReceived"></param>
+        /// <returns></returns>
+        public static bool ComparePeerPacketPublicKey(string peerIp, string peerUniqueId, string peerPublicKeyReceived)
+        {
+            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+            {
+                if (!peerPublicKeyReceived.IsNullOrEmpty())
+                {
+                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey == peerPublicKeyReceived)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         #endregion
 
         #region Update peer stats.

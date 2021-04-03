@@ -1020,25 +1020,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                             }
                         }
                         break;
-                    case ClassPeerApiEnumGetRequest.GetPeerList:
-                        {
-
-                            Dictionary<string, int> dictionaryPublicPeer = ClassPeerDatabase.GetPeerListApiInfo(_peerNetworkSettingObject.ListenIp);
-                            if (!await SendApiResponse(BuildPacketResponse(new ClassApiPeerPacketSendPublicApiPeer()
-                            {
-                                PublicApiPeerDictionary = dictionaryPublicPeer,
-                                PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
-                            }, ClassPeerApiEnumPacketResponse.SEND_PUBLIC_API_PEER)))
-                            {
-                                dictionaryPublicPeer.Clear();
-                                // Can't send packet.
-                                return false;
-                            }
-
-                            // Clean up.
-                            dictionaryPublicPeer.Clear();
-                        }
-                        break;
                     default:
                         typeResponse = ClassPeerApiEnumTypeResponse.INVALID_PACKET;
                         break;

@@ -247,30 +247,27 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             {
                 if (await _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].TryConnect(_cancellation))
                 {
-                    if (await _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].TryReceiveAckPacket())
-                    {
-                        if (await _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].TryAskBroadcastMode())
-                        {
-                            _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].RunBroadcastTransactionTask();
 
-                            return true;
-                        }
+                    if (await _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].TryAskBroadcastMode())
+                    {
+                        _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].RunBroadcastTransactionTask();
+
+                        return true;
                     }
+
                 }
             }
             else
             {
                 if (await _listPeerNetworkClientBroadcastMemPoolSender[peerIpTarget][peerUniqueIdTarget].TryConnect(_cancellation))
-                {
-                    if (await _listPeerNetworkClientBroadcastMemPoolSender[peerIpTarget][peerUniqueIdTarget].TryReceiveAckPacket())
-                    {
+                { 
                         if (await _listPeerNetworkClientBroadcastMemPoolSender[peerIpTarget][peerUniqueIdTarget].TryAskBroadcastMode())
                         {
                             _listPeerNetworkClientBroadcastMemPoolSender[peerIpTarget][peerUniqueIdTarget].RunBroadcastTransactionTask();
 
                             return true;
                         }
-                    }
+                    
                 }
             }
 
@@ -540,106 +537,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             }
 
             /// <summary>
-            /// Try to receive the ACK Packet from the peer target.
-            /// </summary>
-            /// <returns></returns>
-            public async Task<bool> TryReceiveAckPacket()
-            {
-                bool ackPacketReceivedStatus = false;
-
-                long timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
-
-                using (CancellationTokenSource cancellationReceiveAckPacket = CancellationTokenSource.CreateLinkedTokenSource(_peerCancellationToken.Token))
-                {
-
-                    try
-                    {
-                        await Task.Factory.StartNew(async () =>
-                        {
-                            try
-                            {
-                                using (NetworkStream networkStream = new NetworkStream(_peerTcpClient.Client))
-                                {
-                                    while (!ackPacketReceivedStatus)
-                                    {
-                                        byte[] packetReceivedBuffer = new byte[_peerNetworkSettingObject.PeerMaxPacketBufferSize];
-
-                                        int packetLength = await networkStream.ReadAsync(packetReceivedBuffer, 0, packetReceivedBuffer.Length, cancellationReceiveAckPacket.Token);
-
-                                        if (packetLength > 0)
-                                        {
-                                            if (packetLength > 0)
-                                            {
-                                                if (packetReceivedBuffer.GetStringFromByteArrayAscii().Contains("ACK"))
-                                                {
-                                                    ackPacketReceivedStatus = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-
-                                        try
-                                        {
-                                            await Task.Delay(10, _peerCancellationToken.Token);
-                                        }
-                                        catch
-                                        {
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            catch
-                            {
-                                // Ignored.
-                            }
-                        }, cancellationReceiveAckPacket.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        // Ignored, catch the exception once the task is cancelled.
-                    }
-
-                    while (!ackPacketReceivedStatus)
-                    {
-                        if (timestampStart + _peerNetworkSettingObject.PeerMaxSemaphoreConnectAwaitDelay < ClassUtility.GetCurrentTimestampInMillisecond())
-                        {
-                            break;
-                        }
-
-                        if (_peerCancellationToken.IsCancellationRequested)
-                        {
-                            break;
-                        }
-
-                        try
-                        {
-                            await Task.Delay(10, _peerCancellationToken.Token);
-                        }
-                        catch
-                        {
-                            break;
-                        }
-                    }
-
-                    cancellationReceiveAckPacket.Cancel();
-                }
-
-                if (!ackPacketReceivedStatus)
-                {
-                    IsAlive = false;
-                }
-
-                return ackPacketReceivedStatus;
-            }
-
-            /// <summary>
             /// Try to ask the broadcast mode.
             /// </summary>
             /// <returns></returns>
             public async Task<bool> TryAskBroadcastMode()
             {
-                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId)
+                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey)
                 {
                     PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_BROADCAST_MODE,
                 };
@@ -900,7 +803,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                         {
                             try
                             {
-                                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId)
+                                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey)
                                 {
                                     PacketOrder = ClassPeerEnumPacketSend.ASK_KEEP_ALIVE,
                                     PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketAskKeepAlive()
@@ -959,7 +862,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                 #region First ask the mem pool block height list and their transaction counts.
 
-                                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId)
+                                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey)
                                 {
                                     PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOl_BLOCK_HEIGHT_LIST_BROADCAST_MODE,
                                     PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMemPoolBlockHeightList()
@@ -1032,7 +935,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                     {
                                                         // Ensure to be compatible with most recent transactions sent.
 
-                                                        packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId)
+                                                        packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey)
                                                         {
                                                             PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOl_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE,
                                                             PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMemPoolTransactionList()
@@ -1139,7 +1042,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                 {
                                                     if (!_memPoolListBlockHeightTransactionSend[blockHeight].Contains(transactionObject.TransactionHash))
                                                     {
-                                                        ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId)
+                                                        ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey)
                                                         {
                                                             PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_VOTE,
                                                             PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMemPoolTransactionVote()
@@ -1515,7 +1418,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                                                 if (!sendReceiveConfirmation)
                                                                                                 {
                                                                                                     // Send the confirmation of receive.
-                                                                                                    if (!await TrySendPacketToPeer(JsonConvert.SerializeObject(new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId)
+                                                                                                    if (!await TrySendPacketToPeer(JsonConvert.SerializeObject(new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey)
                                                                                                     {
                                                                                                         PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_BROADCAST_CONFIRMATION_RECEIVED,
                                                                                                         PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketAskMemPoolTransactionBroadcastConfirmationReceived()

@@ -268,30 +268,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
         }
 
         /// <summary>
-        /// Return the API port of a peer registered.
-        /// </summary>
-        /// <param name="peerKey"></param>
-        /// <param name="peerUniqueId"></param>
-        /// <returns></returns>
-        public static int GetPeerApiPort(string peerKey, string peerUniqueId)
-        {
-            if (!peerKey.IsNullOrEmpty())
-            {
-                if (DictionaryPeerDataObject.ContainsKey(peerKey))
-                {
-                    if (DictionaryPeerDataObject[peerKey].ContainsKey(peerUniqueId))
-                    {
-                        if (DictionaryPeerDataObject[peerKey][peerUniqueId].PeerApiPort >= BlockchainSetting.PeerMinPort && DictionaryPeerDataObject[peerKey][peerUniqueId].PeerApiPort <= BlockchainSetting.PeerMaxPort)
-                        {
-                            return DictionaryPeerDataObject[peerKey][peerUniqueId].PeerApiPort;
-                        }
-                    }
-                }
-            }
-            return BlockchainSetting.PeerDefaultApiPort;
-        }
-
-        /// <summary>
         /// Input a peer to the database of peer if possible.
         /// </summary>
         /// <param name="peerIp"></param>
@@ -397,47 +373,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
 
             // Clean up.
             listIpPeer.Clear(); 
-
-            return listPeerInfo;
-        }
-
-        /// <summary>
-        /// Generate a peer list API info.
-        /// </summary>
-        /// <param name="peerIpIgnored"></param>
-        /// <returns></returns>
-        public static Dictionary<string, int> GetPeerListApiInfo(string peerIpIgnored)
-        {
-            List<string> listIpPeer = new List<string>(DictionaryPeerDataObject.Keys);
-            Dictionary<string, int> listPeerInfo = new Dictionary<string, int>();
-
-            if (listIpPeer.Contains(peerIpIgnored))
-            {
-                listIpPeer.Remove(peerIpIgnored);
-            }
-
-            foreach (var peerIp in listIpPeer)
-            {
-                if (!listPeerInfo.ContainsKey(peerIp))
-                {
-                    if (DictionaryPeerDataObject[peerIp].Count > 0)
-                    {
-                        foreach (var peerUniqueId in DictionaryPeerDataObject[peerIp].Keys.ToArray())
-                        {
-                            if (DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
-                            {
-                                if (DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_ALIVE)
-                                {
-                                    listPeerInfo.Add(peerIp, DictionaryPeerDataObject[peerIp][peerUniqueId].PeerApiPort);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Clean up.
-            listIpPeer.Clear();
 
             return listPeerInfo;
         }

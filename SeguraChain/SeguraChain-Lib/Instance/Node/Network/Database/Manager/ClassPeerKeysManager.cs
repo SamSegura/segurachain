@@ -179,7 +179,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKeyIv = sendAskPeerAuthKeysObject.AesEncryptionIv;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey = sendAskPeerAuthKeysObject.PublicKey;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort = sendAskPeerAuthKeysObject.PeerPort;
-                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerApiPort = sendAskPeerAuthKeysObject.PeerApiPort;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic = sendAskPeerAuthKeysObject.PeerIsPublic;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId = peerUniqueId;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerNumericPublicKey = sendAskPeerAuthKeysObject.NumericPublicKey;
@@ -234,7 +233,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     PeerClientPacketEncryptionKeyIv = sendAskPeerAuthKeysObject.AesEncryptionIv,
                     PeerClientPublicKey = sendAskPeerAuthKeysObject.PublicKey,
                     PeerPort = sendAskPeerAuthKeysObject.PeerPort,
-                    PeerApiPort = sendAskPeerAuthKeysObject.PeerApiPort,
                     PeerIp = peerIp,
                     PeerNumericPublicKey = sendAskPeerAuthKeysObject.NumericPublicKey,
                     PeerIsPublic = sendAskPeerAuthKeysObject.PeerIsPublic,
@@ -308,7 +306,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIp = peerIp;
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId = peerUniqueId;
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort = sendPeerAuthKeysObject.PeerPort;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerApiPort = sendPeerAuthKeysObject.PeerApiPort;
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerNumericPublicKey = sendPeerAuthKeysObject.NumericPublicKey;
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket = ClassUtility.GetCurrentTimestampInSecond();
 
@@ -346,7 +343,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     PeerClientPacketEncryptionKeyIv = sendPeerAuthKeysObject.AesEncryptionIv,
                     PeerClientPublicKey = sendPeerAuthKeysObject.PublicKey,
                     PeerPort = sendPeerAuthKeysObject.PeerPort,
-                    PeerApiPort = sendPeerAuthKeysObject.PeerApiPort,
                     PeerNumericPublicKey = sendPeerAuthKeysObject.NumericPublicKey,
                     PeerUniqueId = peerUniqueId,
                     PeerIp = peerIp,

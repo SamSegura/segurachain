@@ -233,7 +233,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                             {
                                 if (await ClassPeerCheckManager.CheckPeerClientStatus(peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, false, peerNetworkSetting, cancellation))
                                 {
-                                    ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId)
+                                    ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerTargetObject.PeerIpTarget][peerTargetObject.PeerUniqueIdTarget].PeerInternPublicKey)
                                     {
                                         PacketOrder = ClassPeerEnumPacketSend.ASK_MINING_SHARE_VOTE,
                                         PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMiningShareVote()
@@ -345,13 +345,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     {
                         bool invalidPacket = false;
                         bool taskCompleteSuccessfully = false;
-
+                        string peerIpTarget = peerListTarget[peerKey].PeerIpTarget;
+                        string peerUniqueIdTarget = peerListTarget[peerKey].PeerUniqueIdTarget;
                         try
                         {
                             while (!taskCompleteSuccessfully)
                             {
 
-                                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId)
+                                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIpTarget][peerUniqueIdTarget].PeerInternPublicKey)
                                 {
                                     PacketOrder = ClassPeerEnumPacketSend.ASK_MINING_SHARE_VOTE,
                                     PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMiningShareVote()
@@ -362,7 +363,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                     })
                                 };
 
-                                packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, cancellationTokenSourceMiningShareVote);
+                                packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMiningShareVote);
 
                                 if (packetSendObject != null)
                                 {
@@ -373,7 +374,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                             if (peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived.PacketOrder == ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE)
                                             {
 
-                                                bool peerIgnorePacketSignature = ClassPeerCheckManager.CheckPeerClientWhitelistStatus(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, peerNetworkSetting);
+                                                bool peerIgnorePacketSignature = ClassPeerCheckManager.CheckPeerClientWhitelistStatus(peerIpTarget, peerUniqueIdTarget, peerNetworkSetting);
 
                                                 bool peerPacketSignatureValid = true;
                                                 if (!peerIgnorePacketSignature)
@@ -420,7 +421,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             {
                                                                 if (ClassUtility.CheckPacketTimestamp(peerPacketSendMiningShareVote.PacketTimestamp, peerNetworkSetting.PeerMaxTimestampDelayPacket, peerNetworkSetting.PeerMaxEarlierPacketDelay))
                                                                 {
-                                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget);
+                                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIpTarget, peerUniqueIdTarget);
 
                                                                     if (peerPacketSendMiningShareVote.BlockHeight == miningPowShareObject.BlockHeight)
                                                                     {
@@ -448,7 +449,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                                                             if (peerNetworkSetting.PeerEnableSovereignPeerVote)
                                                                             {
-                                                                                if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
+                                                                                if (ClassPeerCheckManager.PeerHasSeedRank(peerIpTarget, peerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                                 {
                                                                                     if (!listOfRankedPeerPublicKeySaved.Contains(numericPublicKeyOut))
                                                                                     {
@@ -548,7 +549,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                         if (invalidPacket)
                         {
-                            ClassPeerCheckManager.InputPeerClientInvalidPacket(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, peerNetworkSetting, peerFirewallSettingObject);
+                            ClassPeerCheckManager.InputPeerClientInvalidPacket(peerIpTarget, peerUniqueIdTarget, peerNetworkSetting, peerFirewallSettingObject);
                         }
 
                     }, cancellationTokenSourceMiningShareVote.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
@@ -898,9 +899,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     {
                         bool invalidPacket = false;
 
+                        string peerIpTarget = peerListTarget[peerKey].PeerIpTarget;
+                        string peerUniqueIdTarget = peerListTarget[peerKey].PeerUniqueIdTarget;
+
                         try
                         {
-                            ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId)
+                            ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIpTarget][peerUniqueIdTarget].PeerInternPublicKey)
                             {
                                 PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_VOTE,
                                 PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMemPoolTransactionVote()
@@ -910,7 +914,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                 })
                             };
 
-                            packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, cancellationTokenSourceMemPoolTxVote);
+                            packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMemPoolTxVote);
 
                             if (packetSendObject != null)
                             {
@@ -922,7 +926,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                         if (peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE)
                                         {
 
-                                            bool peerIgnorePacketSignature = ClassPeerCheckManager.CheckPeerClientWhitelistStatus(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, peerNetworkSetting);
+                                            bool peerIgnorePacketSignature = ClassPeerCheckManager.CheckPeerClientWhitelistStatus(peerIpTarget, peerUniqueIdTarget, peerNetworkSetting);
 
                                             bool peerPacketSignatureValid = true;
                                             if (!peerIgnorePacketSignature)
@@ -971,13 +975,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             {
                                                                 if (packetSendMemPoolTransactionVote.TransactionHash == transactionObject.TransactionHash)
                                                                 {
-                                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget);
+                                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIpTarget, peerUniqueIdTarget);
 
                                                                     bool peerRanked = false;
 
                                                                     if (peerNetworkSetting.PeerEnableSovereignPeerVote)
                                                                     {
-                                                                        if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
+                                                                        if (ClassPeerCheckManager.PeerHasSeedRank(peerIpTarget, peerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                         {
                                                                             if (!listOfRankedPeerPublicKeySaved.Contains(numericPublicKeyOut))
                                                                             {
@@ -1078,7 +1082,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                         if (invalidPacket)
                         {
-                            ClassPeerCheckManager.InputPeerClientInvalidPacket(peerListTarget[peerKey].PeerIpTarget, peerListTarget[peerKey].PeerUniqueIdTarget, peerNetworkSetting, peerFirewallSettingObject);
+                            ClassPeerCheckManager.InputPeerClientInvalidPacket(peerIpTarget, peerUniqueIdTarget, peerNetworkSetting, peerFirewallSettingObject);
                         }
 
                         totalTaskDone++;

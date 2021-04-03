@@ -19,7 +19,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         public long PeerTimestampInsert;
         public string PeerIp;
         public int PeerPort;
-        public int PeerApiPort;
         public string PeerUniqueId;
         public ClassPeerEnumStatus PeerStatus;
         public byte[] PeerClientPacketEncryptionKey;
