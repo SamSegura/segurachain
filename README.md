@@ -50,7 +50,7 @@ BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
 
 Curecoin: <b>B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR</b>
 
-Monero: <b>4AYR4Kfy9fbd4CRHvjy2sqEdrayWjoSQ4b8XvtpTwZEcgp6uEVV7UQjeCffGa6AH8q2Ub8R7S5iURZ5kSbhov6fJByQnJ3u</b>
+Monero: <b>44TSVkQ2k9TVns4AdKpP1bSPQ5ZgHU9sULZZwBrWye82fa6MpLgFFi66mjLMtQEZ7xPXGLz5LPktfH71tFqdX36HCbE3DvU</b>
 
 Litecoin: <b>MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt</b>
 
