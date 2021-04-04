@@ -50,6 +50,10 @@ BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
 
 Curecoin: <b>B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR</b>
 
+Monero: <b>4AYR4Kfy9fbd4CRHvjy2sqEdrayWjoSQ4b8XvtpTwZEcgp6uEVV7UQjeCffGa6AH8q2Ub8R7S5iURZ5kSbhov6fJByQnJ3u</b>
+
+Litecoin: <b>MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt</b>
+
 Thank you for your help. 
 
 Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
