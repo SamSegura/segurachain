@@ -47,6 +47,7 @@ If you want to contact me, reach the official discord of Xiropht and send me a p
 <h4>If you want to donate to the project here </h4>
 
 BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
+
 Curecoin: <b>B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR</b>
 
 Thank you for your help. 
