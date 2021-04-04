@@ -126,7 +126,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
                                             case ClassPeerNetworkServerHandleConnectionEnum.BAD_CLIENT_STATUS:
                                                 if (_firewallSettingObject.PeerEnableFirewallLink)
                                                 {
-                                                    ClassPeerFirewallManager.InsertApiInvalidPacket(clientIp);
+                                                    ClassPeerFirewallManager.InsertInvalidPacket(clientIp);
                                                 }
                                                 CloseTcpClient(clientPeerTcp);
                                                 break;

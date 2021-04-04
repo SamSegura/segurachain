@@ -282,7 +282,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             {
                 if (peerFirewallSettingObject.PeerEnableFirewallLink)
                 {
-                    ClassPeerFirewallManager.InsertApiInvalidPacket(peerIp);
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
                 }
             }
         }
@@ -323,7 +323,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             {
                 if (peerFirewallSettingObject.PeerEnableFirewallLink)
                 {
-                    ClassPeerFirewallManager.InsertApiInvalidPacket(peerIp);
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
                 }
             }
         }
@@ -361,7 +361,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             {
                 if (peerFirewallSettingObject.PeerEnableFirewallLink)
                 {
-                    ClassPeerFirewallManager.InsertApiInvalidPacket(peerIp);
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
                 }
             }
         }
@@ -456,7 +456,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             {
                 if (peerFirewallSettingObject.PeerEnableFirewallLink)
                 {
-                    ClassPeerFirewallManager.InsertApiInvalidPacket(peerIp);
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
                 }
             }
 
@@ -492,7 +492,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             {
                 if (peerFirewallSettingObject.PeerEnableFirewallLink)
                 {
-                    ClassPeerFirewallManager.InsertApiInvalidPacket(peerIp);
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
                 }
             }
         }
@@ -534,7 +534,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         {
             if (!packetNumericHash.IsNullOrEmpty() && !packetNumericSignature.IsNullOrEmpty() && !peerNumericPublicKey.IsNullOrEmpty())
             {
-                if (ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(data), cancellation) == packetNumericHash)
+                if (ClassUtility.GenerateSha3512FromString(data) == packetNumericHash)
                 {
                     if (ClassWalletUtility.WalletCheckSignature(packetNumericHash, packetNumericSignature, peerNumericPublicKey))
                     {
@@ -573,7 +573,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             {
                 if (peerFirewallSettingObject.PeerEnableFirewallLink)
                 {
-                    ClassPeerFirewallManager.InsertApiInvalidPacket(peerIp);
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
                 }
             }
         }

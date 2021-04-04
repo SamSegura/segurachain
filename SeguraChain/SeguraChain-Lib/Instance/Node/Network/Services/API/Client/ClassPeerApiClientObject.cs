@@ -156,7 +156,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                             {
                                                 if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                                                 {
-                                                    ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                                                    ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                                                 }
                                             }
                                             ClientConnectionStatus = false;
@@ -180,7 +180,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                             {
                                                 if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                                                 {
-                                                    ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                                                    ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                                                 }
                                             }
                                             ClientConnectionStatus = false;
@@ -206,7 +206,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                             {
                                                 if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                                                 {
-                                                    ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                                                    ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                                                 }
                                             }
                                         }
@@ -895,7 +895,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_BLOCK_ID:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_BLOCK_ID)))
                         {
@@ -906,7 +906,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_BLOCK_TRANSACTION_ID:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_BLOCK_TRANSACTION_ID)))
                         {
@@ -917,7 +917,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_WALLET_ADDRESS:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_WALLET_ADDRESS)))
                         {
@@ -928,7 +928,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_WALLET_TRANSACTION_HASH:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_WALLET_TRANSACTION_HASH)))
                         {
@@ -946,7 +946,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_PUSH_TRANSACTION:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_PUSH_TRANSACTION)))
                         {
@@ -957,7 +957,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.MAX_BLOCK_TRANSACTION_REACH:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.MAX_BLOCK_TRANSACTION_REACH)))
                         {
@@ -968,7 +968,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_PUSH_MINING_SHARE:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         break;
 
@@ -1047,7 +1047,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_BLOCK_ID:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_BLOCK_ID)))
                         {
@@ -1058,7 +1058,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_BLOCK_TRANSACTION_ID:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_BLOCK_TRANSACTION_ID)))
                         {
@@ -1069,7 +1069,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_WALLET_ADDRESS:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_WALLET_ADDRESS)))
                         {
@@ -1080,7 +1080,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_WALLET_TRANSACTION_HASH:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_WALLET_TRANSACTION_HASH)))
                         {
@@ -1098,7 +1098,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_PUSH_TRANSACTION:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.INVALID_PUSH_TRANSACTION)))
                         {
@@ -1109,7 +1109,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.MAX_BLOCK_TRANSACTION_REACH:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         if (await SendApiResponse(BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse.MAX_BLOCK_TRANSACTION_REACH)))
                         {
@@ -1120,7 +1120,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                     case ClassPeerApiEnumTypeResponse.INVALID_PUSH_MINING_SHARE:
                         if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                         {
-                            ClassPeerFirewallManager.InsertApiInvalidPacket(_clientIp);
+                            ClassPeerFirewallManager.InsertInvalidPacket(_clientIp);
                         }
                         break;
 

@@ -49,7 +49,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
 
                 if (!peerIgnorePacketSignature)
                 {
-                    if (ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(packetContent), cancellation) == packetHash)
+                    if (ClassUtility.GenerateSha3512FromString(packetContent) == packetHash)
                     {
                         peerPacketSignatureValid = ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject.CheckSignatureProcess(packetHash, packetSignature, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey);
                     }

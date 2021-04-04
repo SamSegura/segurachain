@@ -1308,7 +1308,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
 
                 sendObject.PacketContent = Convert.ToBase64String(packetContentEncrypted);
-                sendObject.PacketHash = ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(sendObject.PacketContent + sendObject.PacketOrder), cancellation);
+                sendObject.PacketHash = ClassUtility.GenerateSha3512FromString(sendObject.PacketContent + sendObject.PacketOrder);
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
                 {
                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject != null && cancellation != null)

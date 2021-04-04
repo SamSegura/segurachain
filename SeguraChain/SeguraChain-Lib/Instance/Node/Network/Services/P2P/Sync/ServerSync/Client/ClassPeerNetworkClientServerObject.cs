@@ -607,21 +607,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                             if (ClassUtility.CheckPacketTimestamp(packetSendPeerAuthKeysObject.PacketTimestamp, _peerNetworkSettingObject.PeerMaxTimestampDelayPacket, _peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
                             {
                                 bool forceUpdate = !peerExist;
-                                if (peerExist)
-                                {
-                                    long timestamp = ClassUtility.GetCurrentTimestampInSecond();
-                                    if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerLastValidPacket == 0 ||
-                                        ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerStatus != ClassPeerEnumStatus.PEER_ALIVE ||
-                                        !ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerIsPublic)
-                                    {
-                                        forceUpdate = true;
-                                    }
-                                }
-                                else
-                                {
-                                    forceUpdate = true;
-                                }
-
+                               
                                 await ClassPeerKeysManager.UpdatePeerKeysReceivedNetworkServer(_peerClientIp, _peerUniqueId, packetSendPeerAuthKeysObject, _cancellationTokenAccessData);
 
                                 if (await ClassPeerKeysManager.UpdatePeerInternalKeys(_peerClientIp, packetSendPeerAuthKeysObject.PeerPort, _peerUniqueId, _cancellationTokenAccessData, _peerNetworkSettingObject, forceUpdate))
@@ -2412,7 +2398,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                     if (packetContentEncrypted?.Length > 0)
                     {
                         packetSendObject.PacketContent = Convert.ToBase64String(packetContentEncrypted);
-                        packetSendObject.PacketHash = ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(packetSendObject.PacketContent), _cancellationTokenAccessData);
+                        packetSendObject.PacketHash = ClassUtility.GenerateSha3512FromString(packetSendObject.PacketContent);
 
                         if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject != null)
                         {
@@ -2440,7 +2426,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                 }
                 else
                 {
-                    packetSendObject.PacketHash = ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(packetSendObject.PacketContent), _cancellationTokenAccessData);
+                    packetSendObject.PacketHash = ClassUtility.GenerateSha3512FromString(packetSendObject.PacketContent);
                     if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(_peerClientIp))
                     {
                         if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp].ContainsKey(_peerUniqueId))
@@ -2496,7 +2482,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
         /// <param name="numericSignature">The signature generated returned.</param>
         private void SignPacketWithNumericPrivateKey<T>(T content, out string numericHash, out string numericSignature)
         {
-            numericHash = ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(JsonConvert.SerializeObject(content)), _cancellationTokenAccessData);
+            numericHash = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(content));
             numericSignature = ClassWalletUtility.WalletGenerateSignature(_peerNetworkSettingObject.PeerNumericPrivateKey, numericHash);
         }
 
@@ -2551,7 +2537,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                 {
                     return true;
                 }
-                if (ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(packetSendObject.PacketContent + packetSendObject.PacketOrder), _cancellationTokenAccessData) == packetSendObject.PacketHash)
+                if (ClassUtility.GenerateSha3512FromString(packetSendObject.PacketContent + packetSendObject.PacketOrder) == packetSendObject.PacketHash)
                 {
                     if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject.CheckSignatureProcess(packetSendObject.PacketHash, packetSendObject.PacketSignature, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerClientPublicKey))
                     {
@@ -2569,7 +2555,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
             }
             if (!exist)
             {
-                if (ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(packetSendObject.PacketContent + packetSendObject.PacketOrder), _cancellationTokenAccessData) == packetSendObject.PacketHash)
+                if (ClassUtility.GenerateSha3512FromString(packetSendObject.PacketContent + packetSendObject.PacketOrder) == packetSendObject.PacketHash)
                 {
                     return true;
                 }

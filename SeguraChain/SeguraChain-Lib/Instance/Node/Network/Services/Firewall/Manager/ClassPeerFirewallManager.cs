@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Enum;
 using SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Object;
 using SeguraChain_Lib.Utility;
@@ -11,7 +12,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager
         private const int MaxApiInvalidPacket = 30; // Max of invalid packets to reach for ban an IP.
         private const int ApiInvalidPacketDelay = 10; // Keep alive pending 10 seconds invalid packets.
         private const int ApiBanDelay = 60; // Ban pending 60 seconds.
-        private static Dictionary<string, ClassApiFirewallObject> _dictionaryApiFirewallObjects = new Dictionary<string, ClassApiFirewallObject>();
+        private static Dictionary<string, ClassApiFirewallObject> _dictionaryFirewallObjects = new Dictionary<string, ClassApiFirewallObject>();
 
         /// <summary>
         /// Check API Client IP.
@@ -20,27 +21,27 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager
         /// <returns></returns>
         public static bool CheckClientIpStatus(string clientIp)
         {
-            if (_dictionaryApiFirewallObjects.ContainsKey(clientIp))
+            if (_dictionaryFirewallObjects.ContainsKey(clientIp))
             {
-                if (_dictionaryApiFirewallObjects[clientIp].BanStatus)
+                if (_dictionaryFirewallObjects[clientIp].BanStatus)
                 {
-                    if (_dictionaryApiFirewallObjects[clientIp].BanTimestamp + ApiBanDelay >= ClassUtility.GetCurrentTimestampInSecond())
+                    if (_dictionaryFirewallObjects[clientIp].BanTimestamp + ApiBanDelay >= ClassUtility.GetCurrentTimestampInSecond())
                     {
                         return false;
                     }
 
-                    _dictionaryApiFirewallObjects[clientIp].BanStatus = false;
+                    _dictionaryFirewallObjects[clientIp].BanStatus = false;
                 }
 
-                if (_dictionaryApiFirewallObjects[clientIp].LastInvalidPacketTimestamp + ApiInvalidPacketDelay <= ClassUtility.GetCurrentTimestampInSecond())
+                if (_dictionaryFirewallObjects[clientIp].LastInvalidPacketTimestamp + ApiInvalidPacketDelay <= ClassUtility.GetCurrentTimestampInSecond())
                 {
-                    _dictionaryApiFirewallObjects[clientIp].TotalInvalidPacket = 0;
+                    _dictionaryFirewallObjects[clientIp].TotalInvalidPacket = 0;
                 }
 
             }
             else
             {
-                InsertApiClient(clientIp);
+                InsertClient(clientIp);
             }
             return true;
         }
@@ -49,11 +50,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager
         /// Insert a new IP of API Client.
         /// </summary>
         /// <param name="clientIp"></param>
-        private static bool InsertApiClient(string clientIp)
+        private static bool InsertClient(string clientIp)
         {
             try
             {
-                _dictionaryApiFirewallObjects.Add(clientIp, new ClassApiFirewallObject()
+                _dictionaryFirewallObjects.Add(clientIp, new ClassApiFirewallObject()
                 {
                     Ip = clientIp
                 });
@@ -70,25 +71,25 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager
         /// Insert an invalid packet to an IP of API Client.
         /// </summary>
         /// <param name="clientIp"></param>
-        public static void InsertApiInvalidPacket(string clientIp)
+        public static void InsertInvalidPacket(string clientIp)
         {
-            if (!_dictionaryApiFirewallObjects.ContainsKey(clientIp))
+            if (!_dictionaryFirewallObjects.ContainsKey(clientIp))
             {
-                if (InsertApiClient(clientIp))
+                if (InsertClient(clientIp))
                 {
-                    _dictionaryApiFirewallObjects[clientIp].LastInvalidPacketTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-                    _dictionaryApiFirewallObjects[clientIp].TotalInvalidPacket++;
+                    _dictionaryFirewallObjects[clientIp].LastInvalidPacketTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+                    _dictionaryFirewallObjects[clientIp].TotalInvalidPacket++;
                 }
             }
             else
             {
-                _dictionaryApiFirewallObjects[clientIp].LastInvalidPacketTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-                _dictionaryApiFirewallObjects[clientIp].TotalInvalidPacket++;
+                _dictionaryFirewallObjects[clientIp].LastInvalidPacketTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+                _dictionaryFirewallObjects[clientIp].TotalInvalidPacket++;
 
-                if (_dictionaryApiFirewallObjects[clientIp].TotalInvalidPacket >= MaxApiInvalidPacket)
+                if (_dictionaryFirewallObjects[clientIp].TotalInvalidPacket >= MaxApiInvalidPacket)
                 {
-                    _dictionaryApiFirewallObjects[clientIp].BanTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-                    _dictionaryApiFirewallObjects[clientIp].BanStatus = true;   
+                    _dictionaryFirewallObjects[clientIp].BanTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+                    _dictionaryFirewallObjects[clientIp].BanStatus = true;   
                 }
             }
         }
@@ -100,63 +101,26 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager
         /// <param name="firewallChainName"></param>
         public static void ManageFirewallLink(string firewallLinkName, string firewallChainName)
         {
-            List<string> listOfClientIp = new List<string>(_dictionaryApiFirewallObjects.Keys);
 
-            if (listOfClientIp.Count > 0)
+            foreach (var clientIp in _dictionaryFirewallObjects.Keys.ToArray())
             {
-                foreach (var clientIp in listOfClientIp)
+                if (_dictionaryFirewallObjects.ContainsKey(clientIp))
                 {
-                    if (_dictionaryApiFirewallObjects.ContainsKey(clientIp))
+                    if (!_dictionaryFirewallObjects[clientIp].BanStatusFirewallLink)
                     {
-                        if (!_dictionaryApiFirewallObjects[clientIp].BanStatusFirewallLink)
+                        if (_dictionaryFirewallObjects[clientIp].BanStatus)
                         {
-                            if (_dictionaryApiFirewallObjects[clientIp].BanStatus)
+                            if (_dictionaryFirewallObjects[clientIp].BanTimestamp + ApiBanDelay >= ClassUtility.GetCurrentTimestampInSecond())
                             {
-                                if (_dictionaryApiFirewallObjects[clientIp].BanTimestamp + ApiBanDelay >= ClassUtility.GetCurrentTimestampInSecond())
-                                {
-                                    _dictionaryApiFirewallObjects[clientIp].BanStatusFirewallLink = true;
-
-                                    switch (firewallLinkName)
-                                    {
-                                        case ClassApiFirewallName.Iptables:
-                                            Process.Start("/bin/bash", "-c \"iptables -A "+ firewallChainName+ " -p tcp -s " + clientIp + " -j DROP\""); // AddBlock iptables rule.
-                                            break;
-                                        case ClassApiFirewallName.PacketFilter:
-                                            Process.Start("pfctl", "-t " + firewallChainName + " -T add " + clientIp + ""); // AddBlock packet filter rule.
-                                            break;
-                                        case ClassApiFirewallName.Windows:
-                                            try
-                                            {
-                                                using (Process cmd = new Process())
-                                                {
-                                                    cmd.StartInfo.FileName = "cmd.exe";
-                                                    cmd.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                                                    cmd.StartInfo.Arguments = "/c netsh advfirewall firewall add rule name=\"" + firewallChainName + " (" + clientIp + ")\""; // AddBlock Windows rule.
-                                                    cmd.Start();
-                                                }
-                                            }
-                                            catch
-                                            {
-                                                // Ignored.
-                                            }
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (_dictionaryApiFirewallObjects[clientIp].BanTimestamp + ApiBanDelay < ClassUtility.GetCurrentTimestampInSecond())
-                            {
-                                _dictionaryApiFirewallObjects[clientIp].BanStatusFirewallLink = false;
+                                _dictionaryFirewallObjects[clientIp].BanStatusFirewallLink = true;
 
                                 switch (firewallLinkName)
                                 {
                                     case ClassApiFirewallName.Iptables:
-                                        Process.Start("/bin/bash", "-c \"iptables -D " + firewallChainName + " -p tcp -s " + clientIp + " -j DROP\""); // RemoveFromCache iptables rule.
+                                        Process.Start("/bin/bash", "-c \"iptables -A " + firewallChainName + " -p tcp -s " + clientIp + " -j DROP\""); // AddBlock iptables rule.
                                         break;
                                     case ClassApiFirewallName.PacketFilter:
-                                        Process.Start("pfctl", "-t " + firewallChainName + " -T del " + clientIp + ""); // RemoveFromCache packet filter rule.
+                                        Process.Start("pfctl", "-t " + firewallChainName + " -T add " + clientIp + ""); // AddBlock packet filter rule.
                                         break;
                                     case ClassApiFirewallName.Windows:
                                         try
@@ -165,25 +129,56 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager
                                             {
                                                 cmd.StartInfo.FileName = "cmd.exe";
                                                 cmd.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                                                cmd.StartInfo.Arguments = "/c netsh advfirewall firewall delete rule name=\""+firewallChainName+" (" + clientIp + ")\""; // RemoveFromCache Windows rule.
+                                                cmd.StartInfo.Arguments = "/c netsh advfirewall firewall add rule name=\"" + firewallChainName + " (" + clientIp + ")\""; // AddBlock Windows rule.
                                                 cmd.Start();
                                             }
                                         }
-                                        catch 
+                                        catch
                                         {
                                             // Ignored.
                                         }
                                         break;
                                 }
-
                             }
+                        }
+                    }
+                    else
+                    {
+                        if (_dictionaryFirewallObjects[clientIp].BanTimestamp + ApiBanDelay < ClassUtility.GetCurrentTimestampInSecond())
+                        {
+                            _dictionaryFirewallObjects[clientIp].BanStatusFirewallLink = false;
+
+                            switch (firewallLinkName)
+                            {
+                                case ClassApiFirewallName.Iptables:
+                                    Process.Start("/bin/bash", "-c \"iptables -D " + firewallChainName + " -p tcp -s " + clientIp + " -j DROP\""); // RemoveFromCache iptables rule.
+                                    break;
+                                case ClassApiFirewallName.PacketFilter:
+                                    Process.Start("pfctl", "-t " + firewallChainName + " -T del " + clientIp + ""); // RemoveFromCache packet filter rule.
+                                    break;
+                                case ClassApiFirewallName.Windows:
+                                    try
+                                    {
+                                        using (Process cmd = new Process())
+                                        {
+                                            cmd.StartInfo.FileName = "cmd.exe";
+                                            cmd.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                                            cmd.StartInfo.Arguments = "/c netsh advfirewall firewall delete rule name=\"" + firewallChainName + " (" + clientIp + ")\""; // RemoveFromCache Windows rule.
+                                            cmd.Start();
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // Ignored.
+                                    }
+                                    break;
+                            }
+
                         }
                     }
                 }
             }
-            listOfClientIp.Clear();
-
-
+           
         }
     }
 }

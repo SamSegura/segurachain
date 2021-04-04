@@ -3430,7 +3430,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
                 }),
             };
-            sendObject.PacketHash = ClassSha.MakeBigShaHashFromBigData(ClassUtility.GetByteArrayFromStringAscii(sendObject.PacketContent + sendObject.PacketOrder), cancellation);
+            sendObject.PacketHash = ClassUtility.GenerateSha3512FromString(sendObject.PacketContent + sendObject.PacketOrder);
             sendObject.PacketSignature = ClassWalletUtility.WalletGenerateSignature(peerObject.PeerInternPrivateKey, sendObject.PacketHash);
 
             #endregion

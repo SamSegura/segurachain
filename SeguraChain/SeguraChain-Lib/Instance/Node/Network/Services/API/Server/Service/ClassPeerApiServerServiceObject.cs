@@ -130,7 +130,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                                         case ClassPeerApiHandleIncomingConnectionEnum.TOO_MUCH_ACTIVE_CONNECTION_CLIENT:
                                             if (_firewallSettingObject.PeerEnableFirewallLink)
                                             {
-                                                ClassPeerFirewallManager.InsertApiInvalidPacket(clientIp);
+                                                ClassPeerFirewallManager.InsertInvalidPacket(clientIp);
                                             }
                                             CloseTcpClient(clientApiTcp);
 
