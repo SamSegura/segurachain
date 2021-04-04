@@ -44,7 +44,11 @@ Every devs and potential users can send me their returns about the project, pote
 
 If you want to contact me, reach the official discord of Xiropht and send me a pm: https://discord.gg/cmRN2xD
 
-<h4>If you want to donate to the project here is my BTC Address: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b></h4>
+<h4>If you want to donate to the project here </h4>
+
+BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
+Curecoin: <b>B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR</b>
+
 Thank you for your help. 
 
 Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
