@@ -21,7 +21,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
     {
         #region Check peer state.
 
-        private static SemaphoreSlim _semaphoreCheckPeerClientStatus = new SemaphoreSlim(1, 1);
 
         /// <summary>
         /// Check whole peer status, remove dead peers.
@@ -42,7 +41,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                         {
                             if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
                             {
-                                if (!await CheckPeerClientStatus(peerIp, peerUniqueId, false, peerNetworkSetting, cancellation))
+                                if (!CheckPeerClientStatus(peerIp, peerUniqueId, false, peerNetworkSetting, cancellation))
                                 {
                                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastPacketReceivedTimestamp + peerNetworkSetting.PeerDelayDeleteDeadPeer <= currentTimestamp &&
                                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket + peerNetworkSetting.PeerMaxDelayKeepAliveStats <= currentTimestamp &&
@@ -74,71 +73,55 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// Check if the peer client status is good. (Invalid packets amount, ban delay and more).
         /// </summary>
         /// <returns></returns>
-        public static async Task<bool> CheckPeerClientStatus(string peerIp, string peerUniqueId, bool isIncomingConnection, ClassPeerNetworkSettingObject peerNetworkSettingObject, CancellationTokenSource cancellation)
+        public static bool CheckPeerClientStatus(string peerIp, string peerUniqueId, bool isIncomingConnection, ClassPeerNetworkSettingObject peerNetworkSettingObject, CancellationTokenSource cancellation)
         {
-            bool useSemaphore = false;
-            bool result = false;
-
             try
             {
-
-                await _semaphoreCheckPeerClientStatus.WaitAsync(cancellation.Token);
-                useSemaphore = true;
-
-                try
+                if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
                 {
-                    if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+                    if (CheckPeerClientInitializationStatus(peerIp, peerUniqueId))
                     {
-                        if (CheckPeerClientInitializationStatus(peerIp, peerUniqueId))
+                        if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_BANNED || ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_DEAD)
                         {
-                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_BANNED || ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_DEAD)
-                            {
 
-                                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_BANNED)
+                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_BANNED)
+                            {
+                                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerBanDate + peerNetworkSettingObject.PeerBanDelay <= ClassUtility.GetCurrentTimestampInSecond())
                                 {
-                                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerBanDate + peerNetworkSettingObject.PeerBanDelay <= ClassUtility.GetCurrentTimestampInSecond())
+                                    CleanPeerState(peerIp, peerUniqueId, true);
+                                    return true;
+                                }
+                            }
+                            else if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_DEAD)
+                            {
+                                if (!isIncomingConnection)
+                                {
+                                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastDeadTimestamp + peerNetworkSettingObject.PeerDeadDelay <= ClassUtility.GetCurrentTimestampInSecond())
                                     {
                                         CleanPeerState(peerIp, peerUniqueId, true);
-                                        result = true;
-                                    }
-                                }
-                                else if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_DEAD)
-                                {
-                                    if (!isIncomingConnection)
-                                    {
-                                        if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastDeadTimestamp + peerNetworkSettingObject.PeerDeadDelay <= ClassUtility.GetCurrentTimestampInSecond())
-                                        {
-                                            CleanPeerState(peerIp, peerUniqueId, true);
-                                            result = true;
-                                        }
+                                        return true;
                                     }
                                 }
                             }
-                            else
+                        }
+                        else
+                        {
+                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= ClassUtility.GetCurrentTimestampInSecond())
                             {
-                                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= ClassUtility.GetCurrentTimestampInSecond())
-                                {
-                                    CleanPeerState(peerIp, peerUniqueId, false);
-                                }
-                                result = true;
+                                CleanPeerState(peerIp, peerUniqueId, false);
                             }
+                            return true;
                         }
                     }
                 }
-                catch
-                {
-                    result = false;
-                }
             }
-            finally
+            catch
             {
-                if (useSemaphore)
-                {
-                    _semaphoreCheckPeerClientStatus.Release();
-                }
+                // Ignored.
             }
 
-            return result;
+
+            return false;
         }
 
         /// <summary>

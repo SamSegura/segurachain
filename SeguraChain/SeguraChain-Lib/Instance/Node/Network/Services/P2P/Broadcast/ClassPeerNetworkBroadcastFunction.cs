@@ -65,7 +65,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     {
                         string peerUniqueId = previousListPeerSelected[peerIndex].PeerUniqueIdTarget;
 
-                        if (!await ClassPeerCheckManager.CheckPeerClientStatus(peerIp, peerUniqueId, false, peerNetworkSetting, cancellation))
+                        if (!ClassPeerCheckManager.CheckPeerClientStatus(peerIp, peerUniqueId, false, peerNetworkSetting, cancellation))
                         {
                             removePeerConnection = true;
                         }
@@ -134,7 +134,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                     {
                                         if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_ALIVE)
                                         {
-                                            if (await ClassPeerCheckManager.CheckPeerClientStatus(peerIp, peerUniqueId, false, peerNetworkSetting, cancellation))
+                                            if (ClassPeerCheckManager.CheckPeerClientStatus(peerIp, peerUniqueId, false, peerNetworkSetting, cancellation))
                                             {
                                                 if (!listPublicPeer.ContainsKey(peerIp))
                                                 {
@@ -231,7 +231,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                             bool taskDone = false;
                             while (!taskDone)
                             {
-                                if (await ClassPeerCheckManager.CheckPeerClientStatus(peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, false, peerNetworkSetting, cancellation))
+                                if (ClassPeerCheckManager.CheckPeerClientStatus(peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, false, peerNetworkSetting, cancellation))
                                 {
                                     ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerTargetObject.PeerIpTarget][peerTargetObject.PeerUniqueIdTarget].PeerInternPublicKey)
                                     {

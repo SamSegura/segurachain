@@ -4937,9 +4937,33 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
             if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
             {
-                if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions.ContainsKey(transactionHash))
+                bool blockIsLocked = false;
+                bool blockTransactionIsLocked = false;
+                try
                 {
-                    resultBlockTransaction = _dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions[transactionHash];
+                    if (Monitor.TryEnter(_dictionaryBlockObjectMemory[blockHeight].Content))
+                    {
+                        blockIsLocked = true;
+                        if (Monitor.TryEnter(_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions))
+                        {
+                            blockTransactionIsLocked = true;
+                            if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions.ContainsKey(transactionHash))
+                            {
+                                resultBlockTransaction = _dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions[transactionHash];
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    if (blockTransactionIsLocked)
+                    {
+                        Monitor.Exit(_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions);
+                    }
+                    if (blockIsLocked)
+                    {
+                        Monitor.Exit(_dictionaryBlockObjectMemory[blockHeight].Content);
+                    }
                 }
             }
 
