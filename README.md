@@ -60,18 +60,24 @@ Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
 <h3>To do list:</h3>
 
--> Improve MemPool broadcast instances.
+-> Improve MemPool broadcast instances. (70% done)
 
--> Complete some parts of the whitepaper and translate it in english.
+-> Complete some parts of the whitepaper and translate it in english. (80% done)
 
--> Complete wallets balance checkpoint disk cache process.
+-> Complete wallets balance checkpoint disk cache process. (40% done)
 
--> Complete Desktop Wallet features and options.
+-> Complete Desktop Wallet features and options. (65% done)
 
--> Develop the IO Cache Network mode.
+-> Develop the IO Cache Network mode. (0% done)
 
--> Develop the RPC Wallet.
+-> Develop the RPC Wallet. (0% done)
 
--> Develop an example of Mining Pool.
+-> Develop an example of Mining Pool. (0% done)
 
--> Finish optimizations.
+-> Finish optimizations. (45% done)
+
+<h3>Project of development:</h3>
+
+-> Implement an option to convert the BTC Blockchain database compatible with this technology.
+
+-> Develop an example of web wallet with <b>NuxtJS</b>
