@@ -35,6 +35,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// Packet received.
         /// </summary>
         public ClassPeerPacketRecvObject PeerPacketReceived;
+        public bool PeerPacketReceivedStatus;
         private MemoryStream _memoryStreamPacketDataReceived;
         private long _lastPacketReceivedTimestamp;
 
@@ -238,6 +239,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         private void CleanUpTask(CancellationTokenSource cancellation)
         {
             PeerPacketReceived = null;
+            PeerPacketReceivedStatus = false;
             CancelTaskDoConnection();
             if (!PeerConnectStatus)
             {
@@ -593,6 +595,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                                                     else
                                                     {
                                                         PeerPacketReceived = peerPacketReceived;
+                                                        PeerPacketReceivedStatus = true;
                                                     }
                                                 }
                                                 else
