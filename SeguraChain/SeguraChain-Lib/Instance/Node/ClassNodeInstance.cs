@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Open.Nat;
 using SeguraChain_Lib.Blockchain.Database;
@@ -73,6 +74,8 @@ namespace SeguraChain_Lib.Instance.Node
 
                 encryptionKey = Console.ReadLine();
             }
+
+            TuningNode();
 
             if (ClassSovereignUpdateDatabase.LoadSovereignUpdateData(encryptionKey, PeerSettingObject.PeerBlockchainDatabaseSettingObject.DataSetting.EnableCompressDatabase, PeerSettingObject.PeerBlockchainDatabaseSettingObject.DataSetting.EnableEncryptionDatabase))
             {
@@ -213,6 +216,15 @@ namespace SeguraChain_Lib.Instance.Node
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Apply tuning node.
+        /// </summary>
+        private void TuningNode()
+        {
+            ThreadPool.SetMinThreads(PeerSettingObject.PeerNetworkSettingObject.PeerMinThreadsPool, PeerSettingObject.PeerNetworkSettingObject.PeerMinThreadsPoolCompletionPort);
+            ThreadPool.SetMaxThreads(PeerSettingObject.PeerNetworkSettingObject.PeerMaxThreadsPool, PeerSettingObject.PeerNetworkSettingObject.PeerMaxThreadsPoolCompletionPort);
         }
 
         /// <summary>

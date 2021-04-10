@@ -1,5 +1,6 @@
 ﻿using SeguraChain_Lib.Blockchain.Database.DatabaseSetting;
 using SeguraChain_Lib.Blockchain.Setting;
+using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Instance.Node.Setting.Object
 {
@@ -76,6 +77,10 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Object
         public int PeerMaxRangeTransactionToSyncPerRequest;
         public bool PeerEnableSyncTransactionByRange;
         public bool PeerEnableSovereignPeerVote;
+        public int PeerMinThreadsPool;
+        public int PeerMinThreadsPoolCompletionPort;
+        public int PeerMaxThreadsPool;
+        public int PeerMaxThreadsPoolCompletionPort;
 
         /// <summary>
         /// Set default values.
@@ -112,6 +117,10 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Object
             PeerMaxRangeTransactionToSyncPerRequest = BlockchainSetting.PeerMaxRangeTransactionToSyncPerRequest;
             PeerEnableSyncTransactionByRange = BlockchainSetting.PeerEnableSyncTransactionByRange;
             PeerEnableSovereignPeerVote = BlockchainSetting.PeerEnableSovereignPeerVote;
+            PeerMinThreadsPool = ClassUtility.GetMaxAvailableProcessorCount();
+            PeerMinThreadsPoolCompletionPort = PeerMinThreadsPool * PeerMinThreadsPool;
+            PeerMaxThreadsPool = PeerMinThreadsPool * PeerMinThreadsPool;
+            PeerMaxThreadsPoolCompletionPort = PeerMinThreadsPoolCompletionPort * PeerMinThreadsPoolCompletionPort;
         }
     }
 

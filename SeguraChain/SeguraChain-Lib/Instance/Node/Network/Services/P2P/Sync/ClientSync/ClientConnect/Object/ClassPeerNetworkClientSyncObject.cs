@@ -49,7 +49,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         private CancellationTokenSource _peerCancellationTokenTaskWaitPeerPacketResponse;
         private CancellationTokenSource _peerCancellationTokenTaskListenPeerPacketResponse;
         private CancellationTokenSource _peerCancellationTokenTaskSendPeerPacketKeepAlive;
-        private SemaphoreSlim _semaphorePeer;
 
         /// <summary>
         /// Network settings.
@@ -88,7 +87,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             if (disposing)
             {
                 PeerTaskStatus = false;
-                CancelTaskWaitPeerPacketResponse();
+                CleanUpTask();
                 DisconnectFromTarget();
             }
             _disposed = true;
@@ -112,7 +111,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             _peerFirewallSettingObject = peerFirewallSettingObject;
             _memoryStreamPacketDataReceived = new MemoryStream();
             _peerCancellationTokenMain = peerCancellationTokenMain;
-            _semaphorePeer = new SemaphoreSlim(1, 1);
         }
 
         /// <summary>
@@ -127,99 +125,89 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         public async Task<bool> TrySendPacketToPeerTarget(string packet, CancellationTokenSource cancellation, ClassPeerEnumPacketResponse packetResponseExpected, bool keepAlive, bool broadcast)
         {
             bool result = false;
-            bool semaphoreUsed = false;
+
             try
             {
-                try
+
+                #region Clean up and cancel previous task.
+
+                CleanUpTask();
+
+                #endregion
+
+                _packetResponseExpected = packetResponseExpected;
+                _keepAlive = keepAlive;
+
+                #region Check the current connection status opened to the target.
+
+                if (PeerConnectStatus)
                 {
-                    await _semaphorePeer.WaitAsync(cancellation.Token);
-                    semaphoreUsed = true;
-
-                    _packetResponseExpected = packetResponseExpected;
-                    _keepAlive = keepAlive;
-
-                    #region Check the current connection status opened to the target.
-
-                    if (PeerConnectStatus)
+                    if (!CheckConnection())
                     {
-                        if (!CheckConnection())
+                        DisconnectFromTarget();
+                    }
+                }
+                else
+                {
+                    DisconnectFromTarget();
+                }
+
+                #endregion
+
+  
+
+                #region Reconnect to the target ip if the connection is not opened or dead.
+
+                if (!PeerConnectStatus)
+                {
+                    if (!DoConnection(cancellation))
+                    {
+                        DisconnectFromTarget();
+                        return false;
+                    }
+                    else
+                    {
+                        _peerDisconnected = false;
+                    }
+                }
+
+                #endregion
+
+                #region Send packet and wait packet response.
+
+
+                if (!await SendPeerPacket(packet, cancellation))
+                {
+                    ClassPeerCheckManager.InputPeerClientNoPacketConnectionOpened(PeerIpTarget, PeerUniqueIdTarget, _peerNetworkSetting, _peerFirewallSettingObject);
+                    DisconnectFromTarget();
+                }
+                else
+                {
+                    if (!broadcast)
+                    {
+                        if (await WaitPacketExpected(cancellation))
                         {
-                            DisconnectFromTarget();
+                            result = true;
                         }
                     }
                     else
                     {
-                        DisconnectFromTarget();
-                    }
-
-                    #endregion
-
-                    #region Clean up and cancel previous task.
-
-                    CleanUpTask(cancellation);
-
-                    #endregion
-
-                    bool cancel = false;
-
-                    #region Reconnect to the target ip if the connection is not opened or dead.
-
-                    if (!PeerConnectStatus)
-                    {
-                        if (!await DoConnection(cancellation))
-                        {
-                            DisconnectFromTarget();
-                            cancel = true;
-                        }
-                        else
-                        {
-                            _peerDisconnected = false;
-                        }
-                    }
-
-                    #endregion
-
-                    if (!cancel)
-                    {
-                        #region Send packet and wait packet response.
-
-
-                        if (!await SendPeerPacket(packet, cancellation))
-                        {
-                            ClassPeerCheckManager.InputPeerClientNoPacketConnectionOpened(PeerIpTarget, PeerUniqueIdTarget, _peerNetworkSetting, _peerFirewallSettingObject);
-                            DisconnectFromTarget();
-                        }
-                        else
-                        {
-                            if (!broadcast)
-                            {
-                                if (await WaitPacketExpected(cancellation))
-                                {
-                                    result = true;
-                                }
-                            }
-                            else
-                            {
-                                result = true;
-                            }
-                        }
-
-                        #endregion
+                        result = true;
                     }
                 }
-                catch
-                {
-                    // Ignored.
-                }
+
+                #endregion
+
             }
-            finally
+            catch(Exception error)
             {
-                if (semaphoreUsed)
+                if (error is OperationCanceledException || error is TaskCanceledException)
                 {
-                    _semaphorePeer.Release();
+                    Dispose();
                 }
             }
-            CleanPacketDataReceived();
+
+
             return result;
         }
 
@@ -236,9 +224,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// <summary>
         /// Clean up the task.
         /// </summary>
-        private void CleanUpTask(CancellationTokenSource cancellation)
+        private void CleanUpTask()
         {
-            PeerPacketReceived = null;
             PeerPacketReceivedStatus = false;
             CancelTaskDoConnection();
             if (!PeerConnectStatus)
@@ -248,7 +235,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             CancelTaskWaitPeerPacketResponse();
             CancelTaskListenPeerPacketResponse();
             CleanPacketDataReceived();
-            _peerCancellationTokenTaskWaitPeerPacketResponse = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token);
         }
 
         /// <summary>
@@ -285,106 +271,35 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// </summary>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<bool> DoConnection(CancellationTokenSource cancellation)
+        private bool DoConnection(CancellationTokenSource cancellation)
         {
-            _peerTcpClient = new TcpClient();
             bool successConnect = false;
-            bool taskDone = false;
-            bool failed = false;
             CancelTaskDoConnection();
             _peerCancellationTokenDoConnection = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token);
+            _peerTcpClient = new TcpClient();
 
             try
             {
-                await Task.Factory.StartNew(async () =>
+                Task taskConnect = _peerTcpClient.ConnectAsync(PeerIpTarget, PeerPortTarget);
+                taskConnect.Wait(_peerNetworkSetting.PeerMaxDelayToConnectToTarget * 1000, _peerCancellationTokenDoConnection.Token);
+
+#if NET5_0_OR_GREATER
+                if (taskConnect.IsCompletedSuccessfully)
                 {
-                    while (!successConnect)
-                    {
-                        if (_peerCancellationTokenDoConnection.IsCancellationRequested)
-                        {
-                            break;
-                        }
-
-                        if (_peerTcpClient == null)
-                        {
-                            failed = true;
-                            break;
-                        }
-                        if (_peerTcpClient.Client == null)
-                        {
-                            failed = true;
-                            break;
-                        }
-                        try
-                        {
-                            await _peerTcpClient.ConnectAsync(PeerIpTarget, PeerPortTarget);
-                            successConnect = true;
-                            break;
-                        }
-                        catch
-                        {
-                            // Ignored.  
-                        }
-
-                        try
-                        {
-                            await Task.Delay(1000, cancellation.Token);
-                        }
-                        catch
-                        {
-                            break;
-                        }
-                    }
-
-                    taskDone = true;
-
-                }, _peerCancellationTokenDoConnection.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+                    successConnect = true;
+                }
+#else
+                 if (taskConnect.IsCompleted)
+                 {
+                    successConnect = true;
+                 }
+#endif
             }
             catch
             {
-                // Ignored, catch the exception once the task is cancelled.
+                // Ignored.  
             }
 
-            long timestampStartConnect = ClassUtility.GetCurrentTimestampInMillisecond();
-
-            while (!successConnect)
-            {
-                if (timestampStartConnect + (_peerNetworkSetting.PeerMaxDelayToConnectToTarget * 1000) < ClassUtility.GetCurrentTimestampInMillisecond())
-                {
-                    break;
-                }
-
-                if (cancellation.IsCancellationRequested)
-                {
-                    break;
-                }
-
-                if (successConnect)
-                {
-                    break;
-                }
-
-                if (taskDone)
-                {
-                    break;
-                }
-
-                if (failed)
-                {
-                    break;
-                }
-
-                try
-                {
-                    await Task.Delay(10, cancellation.Token);
-                }
-                catch
-                {
-                    break;
-                }
-            }
-
-            CancelTaskDoConnection();
 
             if (successConnect)
             {
@@ -485,9 +400,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             return result;
         }
 
-        #endregion
+#endregion
 
-        #region Wait packet to receive functions.
+#region Wait packet to receive functions.
 
         /// <summary>
         /// Task in waiting a packet of response sent by the peer target.
@@ -495,7 +410,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         private void TaskWaitPeerPacketResponse(CancellationTokenSource cancellation)
         {
             PeerPacketReceived = null;
+            CancelTaskWaitPeerPacketResponse();
             CancelTaskListenPeerPacketResponse();
+            _peerCancellationTokenTaskWaitPeerPacketResponse = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token);
             _peerCancellationTokenTaskListenPeerPacketResponse = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token);
 
             PeerTaskStatus = true;
@@ -610,14 +527,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                                                 Array.Clear(base64Packet, 0, base64Packet.Length);
                                             }
 
-                                            CancelTaskListenPeerPacketResponse();
                                             PeerTaskStatus = false;
                                             break;
                                         }
                                         else
                                         {
-                                            CancelTaskListenPeerPacketResponse();
-                                            PeerConnectStatus = false;
                                             PeerTaskStatus = false;
                                             break;
                                         }
@@ -702,9 +616,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             }
         }
 
-        #endregion
+#endregion
 
-        #region Enable Keep alive functions.
+#region Enable Keep alive functions.
 
         /// <summary>
         /// Enable a task who send a packet of keep alive to the peer target.
@@ -799,9 +713,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             }
         }
 
-        #endregion
+#endregion
 
-        #region Manage TCP Connection.
+#region Manage TCP Connection.
 
         /// <summary>
         /// Send a packet to the peer target.
@@ -880,6 +794,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             return false;
         }
 
-        #endregion
+#endregion
     }
 }

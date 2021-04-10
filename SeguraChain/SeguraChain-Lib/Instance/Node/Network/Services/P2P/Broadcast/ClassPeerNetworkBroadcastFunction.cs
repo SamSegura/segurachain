@@ -81,6 +81,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                         {
                             if (previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject != null)
                             {
+                                previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.DisconnectFromTarget();
                                 previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.Dispose();
                             }
                         }
@@ -96,10 +97,19 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                         {
                             if (previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject != null)
                             {
-                                if (!previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.PeerConnectStatus)
+                                if (!previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.PeerConnectStatus ||
+                                !previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.PeerPacketReceivedStatus)
                                 {
-                                    previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.Dispose();
+                                    try
+                                    {
+                                        previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.DisconnectFromTarget();
 
+                                        previousListPeerSelected[peerIndex].PeerNetworkClientSyncObject.Dispose();
+                                    }
+                                    catch
+                                    {
+                                        // Ignored.
+                                    }
                                     previousListPeerSelected.Remove(peerIndex);
                                 }
 
@@ -248,7 +258,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                     if (packetSendObject != null)
                                     {
-                                        if (await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(packetSendObject), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, true, false))
+                                        if (await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(packetSendObject), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, false, false))
                                         {
                                             if (peerTargetObject.PeerNetworkClientSyncObject.PeerPacketReceived?.PacketOrder == ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE)
                                             {
@@ -648,6 +658,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                 {
                     try
                     {
+                        peerListTarget[peerKey].PeerNetworkClientSyncObject.DisconnectFromTarget();
                         peerListTarget[peerKey].PeerNetworkClientSyncObject.Dispose();
                     }
                     catch

@@ -102,7 +102,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int BlockDifficultyPrecision = 100000; // The precision put on the difficulty factor calculated.
         public const int GenesisBlockHeight = 1; // The genesis block height.
         public static readonly BigInteger GenesisBlockAmount = 2973370 * CoinDecimal; // The genesis block amount reward has pre-mining.
-        public const string GenesisBlockFinalTransactionHash = "D8A9D3BB92A8B547ED14161A24D19BAEE48ADC420AC2121FFABFD7E890AE69574B7FD76AEDDED8171C848A860BAAD636F024E28C3477846708EB8E05EE027D37"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
+        public const string GenesisBlockFinalTransactionHash = "C6C6566001008CCA8F342214EAF059164243BC364B5BDFD9AF1D4BFB17D73EEFC66DC0F810B2C59ABD7A852EB7592F0CF34B3CDDE06495D9299F82628D7D01E2"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
         public const int GenesisBlockTransactionCount = 1; // The maximum of transaction inserted on the genesis block.
         public const int BlockAmountNetworkConfirmations = 2; // The minimum amount of network checks on blocks to do with peers, before to enable the task of confirmations on the block.
         public const int BlockAmountSlowNetworkConfirmations = 5; // This amount increment another amount of network checks, once this one is reach, the network counter increment and this one return back to 0.
@@ -192,7 +192,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerDefaultPort = 2400;
         public static readonly Dictionary<string, Dictionary<string, int>> BlockchainStaticPeerList = new Dictionary<string, Dictionary<string, int>>()
         {
-            {"127.0.0.1", new Dictionary<string, int>(){ { "(Not mandatory): put_the_unique_id_from_the_peer_setting_json_file_of_the_node", PeerDefaultPort } }}
+            {"178.33.136.66", new Dictionary<string, int>(){ { "50CD0068183A466FA0F4CFC890ED2DE2E739B061D706C212C8615D9474603FED07BC08BF8D269004EF0BC087041227559397FFE177F5A4815AD0288F3FBE2284", PeerDefaultPort } }}
         }; // This is a static peer list who can't be updated, it's usually used once a peer don't have any peer list saved.
 
 

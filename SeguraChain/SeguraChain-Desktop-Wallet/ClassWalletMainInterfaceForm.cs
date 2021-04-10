@@ -983,8 +983,8 @@ namespace SeguraChain_Desktop_Wallet
 
                         try
                         {
-                            var currentWalletBalanceObjectOpened = await ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
-                            BigInteger walletAvailableBalanceBigInteger = await ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
+                            var currentWalletBalanceObjectOpened = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
+                            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
 
                             bool complete = false;
 
@@ -2060,7 +2060,7 @@ namespace SeguraChain_Desktop_Wallet
                 if (decimal.TryParse(textBoxSendTransactionAmountSelected.Text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal amountSelected))
                 {
 
-                    BigInteger walletAvailableBalanceBigInteger = await ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
+                    BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
 
                     decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 
@@ -2297,22 +2297,7 @@ namespace SeguraChain_Desktop_Wallet
 
             decimal feeToPay = (decimal)sendTransactionFeeCostCalculationResult.TotalFeeCost / BlockchainSetting.CoinDecimal;
 
-            Task<BigInteger> taskGetWalletAvailableBalance = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
-
-            try
-            {
-                taskGetWalletAvailableBalance.Wait(_cancellationTokenTaskUpdateWalletContentInformations.Token);
-            }
-            catch
-            {
-                return false;
-            }
-            if (taskGetWalletAvailableBalance.IsCanceled || taskGetWalletAvailableBalance.IsFaulted || !taskGetWalletAvailableBalance.IsCompleted)
-            {
-                return false;
-            }
-
-            BigInteger walletAvailableBalanceBigInteger = taskGetWalletAvailableBalance.Result;
+            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
 
             decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 
