@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+  	<ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net5.0;net48</TargetFrameworks>
     <RootNamespace>SeguraChain_Peer</RootNamespace>

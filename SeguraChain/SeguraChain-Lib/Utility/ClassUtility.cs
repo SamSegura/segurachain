@@ -721,18 +721,24 @@ namespace SeguraChain_Lib.Utility
         {
             try
             {
+                
                 if (socket?.Client != null)
                 {
-                    try
+                    lock (socket)
                     {
-                        //return !(socket.Client.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+                        try
+                        {
+                            lock (socket.Client)
+                            {
+                                //return !(socket.Client.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
 
-                        return !((socket.Client.Poll(10, SelectMode.SelectRead) && (socket.Client.Available == 0)) || !socket.Client.Connected);
-
-                    }
-                    catch
-                    {
-                        return false;
+                                return !((socket.Client.Poll(10, SelectMode.SelectRead) && (socket.Client.Available == 0)) || !socket.Client.Connected);
+                            }
+                        }
+                        catch
+                        {
+                            return false;
+                        }
                     }
                 }
             }

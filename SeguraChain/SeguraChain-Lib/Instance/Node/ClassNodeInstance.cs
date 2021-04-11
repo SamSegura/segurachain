@@ -64,6 +64,7 @@ namespace SeguraChain_Lib.Instance.Node
         /// <returns></returns>
         public bool NodeStart(bool fromWallet)
         {
+            
             PeerToolStatus = true;
 
             string encryptionKey = string.Empty;

@@ -2877,7 +2877,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                             else
                                             {
                                                 ClassTransactionObject transactionObject = blockObject.BlockTransactions[transactionHash].TransactionObject;
-                                                transactionStatus = await ClassTransactionUtility.CheckTransactionWithBlockchainData(transactionObject, false, false, blockObject, totalConfirmationsDone, listWalletAndPublicKeysCache, useSemaphore, cancellation);
+                                                transactionStatus = await ClassTransactionUtility.CheckTransactionWithBlockchainData(transactionObject, false, false, false, blockObject, totalConfirmationsDone, listWalletAndPublicKeysCache, useSemaphore, cancellation);
 
                                             }
 

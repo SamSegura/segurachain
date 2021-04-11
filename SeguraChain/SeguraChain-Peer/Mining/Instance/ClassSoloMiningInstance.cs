@@ -528,35 +528,9 @@ namespace SeguraChain_Peer.Mining.Instance
                                         // Submit the share if this one reach the difficulty of the block or if this one is higher.
                                         if (pocShareObject.PoWaCShareDifficulty >= _currentBlockDifficulty)
                                         {
-                                            CancellationTokenSource cancellationBroadcastMiningShare = CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenMiningTasks.Token);
-                                            ClassBlockEnumMiningShareVoteStatus unlockResult = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOCONSENSUS;
-                                            long blockHeight = ClassBlockchainStats.GetLastBlockHeight();
-                                            bool taskDone = false;
-                                            await Task.Factory.StartNew(async () =>
-                                            {
-
-                                                unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, true, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, cancellationBroadcastMiningShare);
-                                                taskDone = true;
-
-                                            }, cancellationBroadcastMiningShare.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
-
-                                           
-                                            while(!taskDone)
-                                            {
-                                                if (blockHeight != ClassBlockchainStats.GetLastBlockHeight())
-                                                {
-                                                    break;
-                                                }
-                                                try
-                                                {
-                                                    await Task.Delay(10, _cancellationTokenMiningTasks.Token);
-                                                }
-                                                catch
-                                                {
-                                                    break;
-                                                }
-                                            }
-
+                                            ClassBlockEnumMiningShareVoteStatus unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, true, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenMiningTasks);
+                                       
+                                         
                                             switch (unlockResult)
                                             {
                                                 case ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED:

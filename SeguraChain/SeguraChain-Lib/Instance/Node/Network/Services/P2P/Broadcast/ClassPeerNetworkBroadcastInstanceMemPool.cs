@@ -1396,7 +1396,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                                             if (transactionObject.BlockHeightTransaction > ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight)
                                                                                             {
 
-                                                                                                ClassTransactionEnumStatus checkTxResult = await ClassTransactionUtility.CheckTransactionWithBlockchainData(transactionObject, true, true, null, 0, listWalletAddressAndPublicKeyCache, true, _peerCancellationToken);
+                                                                                                ClassTransactionEnumStatus checkTxResult = await ClassTransactionUtility.CheckTransactionWithBlockchainData(transactionObject, true, true, true, null, 0, listWalletAddressAndPublicKeyCache, true, _peerCancellationToken);
 
                                                                                                 bool invalid = true;
 

@@ -228,58 +228,35 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
         public static async Task BroadcastMiningShareAsync(string peerServerIp, string peerOpenNatServerIp, string peerToExcept, ClassMiningPoWaCShareObject miningPowShareObject, ClassPeerNetworkSettingObject peerNetworkSetting, ClassPeerFirewallSettingObject peerFirewallSettingObject)
         {
             CancellationTokenSource cancellation = new CancellationTokenSource();
-            peerListBroadcastMiningShareTarget = GetRandomListPeerTargetAlive(peerServerIp, peerOpenNatServerIp, peerToExcept, peerListBroadcastMiningShareTarget, peerNetworkSetting, peerFirewallSettingObject, cancellation);
 
-            foreach (var peerTargetObject in peerListBroadcastMiningShareTarget.Values)
+            foreach (var peerTargetObject in GetRandomListPeerTargetAlive(peerServerIp, peerOpenNatServerIp, peerToExcept, peerListBroadcastMiningShareTarget, peerNetworkSetting, peerFirewallSettingObject, cancellation).Values)
             {
                 try
                 {
                     await Task.Factory.StartNew(async () =>
                     {
-                        try
+
+                        ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerTargetObject.PeerIpTarget][peerTargetObject.PeerUniqueIdTarget].PeerInternPublicKey)
                         {
-                            bool taskDone = false;
-                            while (!taskDone)
+                            PacketOrder = ClassPeerEnumPacketSend.ASK_MINING_SHARE_VOTE,
+                            PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMiningShareVote()
                             {
-                                if (ClassPeerCheckManager.CheckPeerClientStatus(peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, false, peerNetworkSetting, peerFirewallSettingObject))
-                                {
-                                    ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerTargetObject.PeerIpTarget][peerTargetObject.PeerUniqueIdTarget].PeerInternPublicKey)
-                                    {
-                                        PacketOrder = ClassPeerEnumPacketSend.ASK_MINING_SHARE_VOTE,
-                                        PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskMiningShareVote()
-                                        {
-                                            BlockHeight = miningPowShareObject.BlockHeight,
-                                            MiningPowShareObject = miningPowShareObject,
-                                            PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
-                                        })
-                                    };
+                                BlockHeight = miningPowShareObject.BlockHeight,
+                                MiningPowShareObject = miningPowShareObject,
+                                PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
+                            })
+                        };
 
-                                    packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, cancellation);
+                        packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, cancellation);
 
-                                    if (packetSendObject != null)
-                                    {
-                                        if (await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(packetSendObject), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, false, false))
-                                        {
-                                            if (peerTargetObject.PeerNetworkClientSyncObject.PeerPacketReceived?.PacketOrder == ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE)
-                                            {
-                                                taskDone = true;
-                                            }
-                                        }
-                                    }
-
-                                }
-                                else
-                                {
-                                    break;
-                                }
-
-                                await Task.Delay(100, cancellation.Token);
-                            }
-                        }
-                        catch
+                        if (packetSendObject != null)
                         {
-                            // Ignored.
+                            await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(packetSendObject), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, false, true);
                         }
+
+                        peerTargetObject.PeerNetworkClientSyncObject.DisconnectFromTarget();
+                        peerTargetObject.PeerNetworkClientSyncObject.Dispose();
+
 
                     }, TaskCreationOptions.RunContinuationsAsynchronously).ConfigureAwait(false);
                 }
@@ -287,8 +264,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                 {
                     // Ignored, catch the exception once the task is cancelled.
                 }
-
-
             }
         }
 
@@ -354,13 +329,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     await Task.Factory.StartNew(async () =>
                     {
                         bool invalidPacket = false;
-                        bool taskCompleteSuccessfully = false;
                         string peerIpTarget = peerListTarget[peerKey].PeerIpTarget;
                         string peerUniqueIdTarget = peerListTarget[peerKey].PeerUniqueIdTarget;
                         try
                         {
-                            while (!taskCompleteSuccessfully)
-                            {
+
 
                                 ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIpTarget][peerUniqueIdTarget].PeerInternPublicKey)
                                 {
@@ -514,7 +487,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                                                         }
                                                                         totalResponseOk++;
-                                                                        taskCompleteSuccessfully = true;
                                                                     }
                                                                 }
                                                             }
@@ -542,13 +514,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                     }
                                 }
 
-                                if (invalidPacket)
-                                {
-                                    break;
-                                }
-
-                                await Task.Delay(100, cancellationTokenSourceMiningShareVote.Token);
-                            }
+                            peerListTarget[peerKey].PeerNetworkClientSyncObject.DisconnectFromTarget();
+                            peerListTarget[peerKey].PeerNetworkClientSyncObject.Dispose();
                         }
                         catch
                         {

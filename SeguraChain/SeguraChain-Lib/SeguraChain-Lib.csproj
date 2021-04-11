@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+  	<ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <TargetFrameworks>net5.0;net48</TargetFrameworks>
     <RootNamespace>SeguraChain_Lib</RootNamespace>
     <Configurations>Debug;Release</Configurations>

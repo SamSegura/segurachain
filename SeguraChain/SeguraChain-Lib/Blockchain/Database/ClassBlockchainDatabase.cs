@@ -1188,7 +1188,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                                 ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
 
                                                                                                 resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
-                                                                                                await Task.Factory.StartNew(() => ClassPeerNetworkBroadcastFunction.BroadcastMiningShareAsync(apiServerIp, apiServerOpenNatIp, string.Empty, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject)).ConfigureAwait(false);
+                                                                                                await ClassPeerNetworkBroadcastFunction.BroadcastMiningShareAsync(apiServerIp, apiServerOpenNatIp, string.Empty, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject);
                                                                                             }
                                                                                             else
                                                                                             {

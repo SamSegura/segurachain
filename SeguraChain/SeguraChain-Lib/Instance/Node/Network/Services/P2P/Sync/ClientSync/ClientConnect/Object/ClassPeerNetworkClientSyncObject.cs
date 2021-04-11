@@ -22,7 +22,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// </summary>
         private TcpClient _peerTcpClient;
         public bool PeerConnectStatus;
-        private bool _peerDisconnected;
 
         /// <summary>
         /// Peer informations.
@@ -154,7 +153,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
 
                 #endregion
 
-  
 
                 #region Reconnect to the target ip if the connection is not opened or dead.
 
@@ -164,10 +162,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                     {
                         DisconnectFromTarget();
                         return false;
-                    }
-                    else
-                    {
-                        _peerDisconnected = false;
                     }
                 }
 
@@ -199,7 +193,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                 #endregion
 
             }
-            catch(Exception error)
+            catch (Exception error)
             {
                 if (error is OperationCanceledException || error is TaskCanceledException)
                 {
@@ -244,19 +238,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         {
             if (_peerTcpClient != null)
             {
-                if (PeerConnectStatus)
+                try
                 {
-                    try
-                    {
-                        if (!ClassUtility.SocketIsConnected(_peerTcpClient))
-                        {
-                            PeerConnectStatus = false;
-                        }
-                    }
-                    catch
-                    {
-                        PeerConnectStatus = false;
-                    }
+                    PeerConnectStatus = ClassUtility.SocketIsConnected(_peerTcpClient);
+                }
+                catch
+                {
+                    PeerConnectStatus = false;
                 }
             }
             else
@@ -291,20 +279,22 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
 #else
                  if (taskConnect.IsCompleted)
                  {
-                    successConnect = true;
+                    if (CheckConnection())
+                    {
+                        successConnect = true;
+                    }
                  }
 #endif
             }
             catch
             {
-                // Ignored.  
+                successConnect = false; 
             }
 
 
             if (successConnect)
             {
                 PeerConnectStatus = true;
-                _peerDisconnected = false;
                 return true;
             }
 
@@ -400,9 +390,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             return result;
         }
 
-#endregion
+        #endregion
 
-#region Wait packet to receive functions.
+        #region Wait packet to receive functions.
 
         /// <summary>
         /// Task in waiting a packet of response sent by the peer target.
@@ -616,9 +606,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             }
         }
 
-#endregion
+        #endregion
 
-#region Enable Keep alive functions.
+        #region Enable Keep alive functions.
 
         /// <summary>
         /// Enable a task who send a packet of keep alive to the peer target.
@@ -713,9 +703,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             }
         }
 
-#endregion
+        #endregion
 
-#region Manage TCP Connection.
+        #region Manage TCP Connection.
 
         /// <summary>
         /// Send a packet to the peer target.
@@ -754,31 +744,28 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// </summary>
         public void DisconnectFromTarget()
         {
-            if (!_peerDisconnected || PeerConnectStatus)
+
+            PeerConnectStatus = false;
+            CancelTaskDoConnection();
+            CancelTaskPeerPacketKeepAlive();
+            CancelTaskListenPeerPacketResponse();
+
+            try
             {
-                PeerConnectStatus = false;
-                CancelTaskDoConnection();
-                CancelTaskPeerPacketKeepAlive();
-                CancelTaskListenPeerPacketResponse();
-
-                try
+                if (_peerTcpClient != null)
                 {
-                    if (_peerTcpClient != null)
-                    {
-                        _peerTcpClient.Close();
-                    }
+                    _peerTcpClient.Close();
                 }
-                catch
-                {
-                    // Ignored.
-                }
-
-                _peerDisconnected = true;
-
-                // Ensure to clean up malformed packet data.
-                CleanPacketDataReceived();
             }
+            catch
+            {
+                // Ignored.
+            }
+
+            // Ensure to clean up malformed packet data.
+            CleanPacketDataReceived();
         }
+        
 
         /// <summary>
         /// Indicate if the task of client sync is cancelled or connected.
@@ -794,6 +781,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             return false;
         }
 
-#endregion
+        #endregion
     }
 }

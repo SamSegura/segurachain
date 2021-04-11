@@ -1859,7 +1859,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                         ClassTransactionEnumStatus transactionStatus = ClassTransactionEnumStatus.EMPTY_TRANSACTION; // Default.
                                         if (!alreadyExist)
                                         {
-                                            transactionStatus = await ClassTransactionUtility.CheckTransactionWithBlockchainData(packetSendAskMemPoolTransactionVote.TransactionObject, true, true, null, 0, null, true, _cancellationTokenAccessData);
+                                            transactionStatus = await ClassTransactionUtility.CheckTransactionWithBlockchainData(packetSendAskMemPoolTransactionVote.TransactionObject, true, true, false, null, 0, null, true, _cancellationTokenAccessData);
 
                                             if (transactionStatus != ClassTransactionEnumStatus.VALID_TRANSACTION)
                                             {

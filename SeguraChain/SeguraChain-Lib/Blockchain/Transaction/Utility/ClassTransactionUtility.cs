@@ -230,12 +230,13 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
         /// <param name="transactionObject">The transaction object data to check.</param>
         /// <param name="fromOutside">Like API requests or Peer sync.</param>
         /// <param name="checkBalance">Check wallet balance depending of the type of the transaction.</param>
+        /// <param name="fromBroadcastInstance">Avoid some checks if the transaction come from a broadcast instance.</param>
         /// <param name="blockObjectSource">The block object source if provided.</param>
         /// <param name="totalConfirmations"></param>
         /// <param name="useSemaphore"></param>
         /// <param name="cancellation"></param>
         /// <returns>Return the check status result of the transaction.</returns>
-        public static async Task<ClassTransactionEnumStatus> CheckTransactionWithBlockchainData(ClassTransactionObject transactionObject, bool fromOutside, bool checkBalance, ClassBlockObject blockObjectSource, long totalConfirmations, Dictionary<string, string> listWalletAndPublicKeysCache, bool useSemaphore, CancellationTokenSource cancellation)
+        public static async Task<ClassTransactionEnumStatus> CheckTransactionWithBlockchainData(ClassTransactionObject transactionObject, bool fromOutside, bool checkBalance, bool fromBroadcastInstance, ClassBlockObject blockObjectSource, long totalConfirmations, Dictionary<string, string> listWalletAndPublicKeysCache, bool useSemaphore, CancellationTokenSource cancellation)
         {
             if (transactionObject == null)
             {
@@ -250,26 +251,28 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             {
                 if (transactionObject.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION || transactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
                 {
-
-
-                    long blockHeightSend = ClassBlockchainDatabase.BlockchainMemoryManagement.GetCloserBlockHeightFromTimestamp(transactionObject.TimestampBlockHeightCreateSend, cancellation);
-
-                    if (blockHeightSend < BlockchainSetting.GenesisBlockHeight)
+                    ClassBlockObject blockObjectInformations = null;
+                    if (!fromBroadcastInstance)
                     {
-                        return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                    }
+                        long blockHeightSend = ClassBlockchainDatabase.BlockchainMemoryManagement.GetCloserBlockHeightFromTimestamp(transactionObject.TimestampBlockHeightCreateSend, cancellation);
 
-                    ClassBlockObject blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(blockHeightSend, cancellation);
-                    if (blockObjectInformations == null)
-                    {
-                        return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                    }
-
-                    if (blockObjectInformations.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                    {
-                        if (blockHeightSend + BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation < lastBlockHeight)
+                        if (blockHeightSend < BlockchainSetting.GenesisBlockHeight)
                         {
                             return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
+                        }
+
+                        blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(blockHeightSend, cancellation);
+                        if (blockObjectInformations == null)
+                        {
+                            return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
+                        }
+
+                        if (blockObjectInformations.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                        {
+                            if (blockHeightSend + BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation < lastBlockHeight)
+                            {
+                                return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
+                            }
                         }
                     }
 
@@ -283,7 +286,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                         return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
                     }
 
-                    blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(transactionObject.BlockHeightTransaction, cancellation);
+                     blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(transactionObject.BlockHeightTransaction, cancellation);
 
                     if (blockObjectInformations != null)
                     {
