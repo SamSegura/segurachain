@@ -174,61 +174,12 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     {
                         if (DatabaseSyncCache.Count > 0)
                         {
-
+                            
                             foreach (string walletAddress in DatabaseSyncCache.Keys.ToArray())
                             {
                                 _cancellationSyncCache.Token.ThrowIfCancellationRequested();
 
-                                #region Ensure to have propertly cached every synced transactions from the wallet file if this one is opened.
-
-
-                                string walletFileName = ClassDesktopWalletCommonData.WalletDatabase.GetWalletFileNameFromWalletAddress(walletAddress);
-
-                                if (!walletFileName.IsNullOrEmpty())
-                                {
-                                    foreach (long blockHeight in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList.Keys.ToArray())
-                                    {
-                                        _cancellationSyncCache.Token.ThrowIfCancellationRequested();
-
-                                        foreach (string transactionHash in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight].ToArray())
-                                        {
-                                            _cancellationSyncCache.Token.ThrowIfCancellationRequested();
-
-                                            try
-                                            {
-                                                var blockTransaction = await GetTransactionObjectFromSync(walletAddress, transactionHash, blockHeight, true, _cancellationSyncCache);
-
-                                                if (blockTransaction != null)
-                                                {
-                                                    if (blockTransaction.Item2 != null)
-                                                    {
-                                                        if (DatabaseSyncCache[walletAddress].ContainsBlockTransactionFromTransactionHashAndBlockHeight(blockHeight, transactionHash, _cancellationSyncCache))
-                                                        {
-                                                            DatabaseSyncCache[walletAddress].UpdateBlockTransaction(blockTransaction.Item2, blockTransaction.Item1);
-                                                        }
-                                                        else
-                                                        {
-                                                            DatabaseSyncCache[walletAddress].InsertBlockTransaction(new ClassSyncCacheBlockTransactionObject()
-                                                            {
-                                                                BlockTransaction = blockTransaction.Item2,
-                                                                IsMemPool = blockTransaction.Item1,
-                                                                IsSender = blockTransaction.Item2.TransactionObject.WalletAddressSender == walletAddress
-                                                            }, _cancellationSyncCache);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            catch (Exception error)
-                                            {
-#if DEBUG
-                                                Debug.WriteLine("Error on updating sync cache of wallet file name: " + walletFileName + " | Exception: " + error.Message);
-#endif
-                                            }
-                                        }
-                                    }
-                                }
-
-                                #endregion
+                                bool exception = false;
 
                                 foreach(long blockHeight in DatabaseSyncCache[walletAddress].BlockHeightKeys(_cancellationSyncCache))
                                 {
@@ -261,10 +212,20 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                         catch (Exception error)
                                         {
 #if DEBUG
-                                            Debug.WriteLine("Error on updating sync cache of wallet file name: " + walletFileName + " | Exception: " + error.Message);
+                                            Debug.WriteLine("Error on updating sync cache of wallet address: " + walletAddress + " | Exception: " + error.Message);
 #endif
+                                            exception = true;
+                                            break;
                                         }
                                     }
+
+                                    if (exception) break;
+                                    
+                                }
+
+                                if (exception)
+                                {
+                                    DatabaseSyncCache[walletAddress].Clear(_cancellationSyncCache);
                                 }
                             }
 

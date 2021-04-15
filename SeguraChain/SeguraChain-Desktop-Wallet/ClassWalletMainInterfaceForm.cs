@@ -1711,10 +1711,7 @@ namespace SeguraChain_Desktop_Wallet
         {
             if (tabControlWallet.SelectedTab == tabPageTransactionHistory)
             {
-                lock (panelTransactionHistory)
-                {
-                    panelTransactionHistory.Refresh();
-                }
+                panelTransactionHistory.Refresh();
             }
         }
 

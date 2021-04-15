@@ -83,15 +83,10 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                         pocShareIv = ClassAes.GenerateIv(pocShareIv, currentMiningSetting.PocShareNonceIvIteration);
                         break;
                     case ClassMiningPoWaCEnumInstructions.DO_ENCRYPTED_POC_SHARE:
-                        for (int i = 0; i < currentMiningSetting.PowRoundAesShare; i++)
-                        {
-                            ClassAes.EncryptionProcess(pocShareData, previousFinalBlockTransactionHashKey, pocShareIv, out pocShareData);
-                        }
+                        pocShareData = DoEncryptionPocShare(currentMiningSetting, pocShareData, previousFinalBlockTransactionHashKey, pocShareIv);
                         break;
                 }
             }
-
-
 
             string pocShare = ClassUtility.GetHexStringFromByteArray(pocShareData);
 
@@ -114,6 +109,8 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             };
 
         }
+
+
 
         /// <summary>
         /// Check a pow share.
@@ -300,19 +297,19 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
             byte[] pocShareDecryptedBytes = pocShareBytes;
             byte[] finalBlockTransactionHashMiningKey = GenerateFinalBlockTransactionHashMiningKey(previousFinalBlockTransactionHash);
-            for (int i = 0; i < currentMiningSetting.PowRoundAesShare; i++)
-            {
-                if (!ClassAes.DecryptionProcess(pocShareDecryptedBytes, finalBlockTransactionHashMiningKey, pocShareNonceIv, out pocShareDecryptedBytes))
-                {
-                    jobCompatibilityValue = -1;
-                    return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
-                }
 
-                if (pocShareDecryptedBytes == null)
-                {
-                    jobCompatibilityValue = -1;
-                    return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
-                }
+            pocShareDecryptedBytes = DoDecryptionPocShare(currentMiningSetting, pocShareDecryptedBytes, finalBlockTransactionHashMiningKey, pocShareNonceIv, out bool result);
+
+            if (!result)
+            {
+                jobCompatibilityValue = -1;
+                return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
+            }
+
+            if (pocShareDecryptedBytes == null)
+            {
+                jobCompatibilityValue = -1;
+                return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
             }
 
             #endregion
@@ -329,11 +326,12 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                 {
                     case ClassMiningPoWaCEnumInstructions.DO_NONCE_IV:
                         {
-                            for (int i = 0; i < currentMiningSetting.PocRoundShaNonce; i++)
+                            using (ClassSha3512DigestDisposable sha3512 = new ClassSha3512DigestDisposable())
                             {
-                                using (ClassSha3512DigestDisposable sha3512 = new ClassSha3512DigestDisposable())
+                                for (int i = 0; i < currentMiningSetting.PocRoundShaNonce; i++)
                                 {
                                     sha3512.Compute(pocShareIv, out pocShareIv);
+                                    sha3512.Reset();
                                 }
                             }
                         }
@@ -377,20 +375,21 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                                 return ClassMiningPoWaCEnumStatus.INVALID_NONCE_SHARE;
                             }
 
-                            for (int i = 0; i < currentMiningSetting.PowRoundAesShare; i++)
-                            {
-                                if (!ClassAes.DecryptionProcess(pocShareDecryptedBytes, finalBlockTransactionHashMiningKey, pocShareIv, out pocShareDecryptedBytes))
-                                {
-                                    jobCompatibilityValue = -1;
-                                    return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
-                                }
 
-                                if (pocShareDecryptedBytes == null)
-                                {
-                                    jobCompatibilityValue = -1;
-                                    return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
-                                }
+                            pocShareDecryptedBytes = DoDecryptionPocShare(currentMiningSetting, pocShareDecryptedBytes, finalBlockTransactionHashMiningKey, pocShareIv, out result);
+
+                            if (!result)
+                            {
+                                jobCompatibilityValue = -1;
+                                return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
                             }
+
+                            if (pocShareDecryptedBytes == null)
+                            {
+                                jobCompatibilityValue = -1;
+                                return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
+                            }
+
                         }
                         break;
                 }
@@ -681,7 +680,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
                         if (IsASquare(squareP1, squareP2, squareP3, squareP4))
                         {
-                            //Debug.WriteLine("Is a squere !");
                             newNonce[0] = (byte)(x1Bytes[0] + y1Bytes[1]);
                             newNonce[1] = (byte)(x2Bytes[0] + y2Bytes[1]);
                             newNonce[2] = (byte)(x3Bytes[0] + y3Bytes[1]);
@@ -882,7 +880,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
         {
             using (ClassSha3512DigestDisposable sha3512Digest = new ClassSha3512DigestDisposable())
             {
-
                 return BigInteger.Divide(BigInteger.Divide(ShaPowCalculation, blockDifficulty), BigInteger.Divide(new BigInteger(sha3512Digest.Compute(powShareDataBytes)), blockDifficulty));
             }
         }
@@ -1028,6 +1025,83 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Do the encryption process of the PoC share data.
+        /// </summary>
+        /// <param name="currentMiningSetting"></param>
+        /// <param name="pocShareData"></param>
+        /// <param name="previousFinalBlockTransactionHashKey"></param>
+        /// <param name="pocShareIv"></param>
+        /// <returns></returns>
+        private static byte[] DoEncryptionPocShare(ClassMiningPoWaCSettingObject currentMiningSetting, byte[] pocShareData, byte[] previousFinalBlockTransactionHashKey, byte[] pocShareIv)
+        {
+            try
+            {
+                using (RijndaelManaged aesObject = new RijndaelManaged())
+                {
+                    aesObject.KeySize = ClassAes.EncryptionKeySize;
+                    aesObject.BlockSize = ClassAes.EncryptionBlockSize;
+                    aesObject.Key = previousFinalBlockTransactionHashKey;
+                    aesObject.IV = pocShareIv;
+                    aesObject.Mode = CipherMode.CFB;
+                    aesObject.Padding = PaddingMode.PKCS7;
+                    using (ICryptoTransform encryptCryptoTransform = aesObject.CreateEncryptor(previousFinalBlockTransactionHashKey, pocShareIv))
+                    {
+                        for (int i = 0; i < currentMiningSetting.PowRoundAesShare; i++)
+                        {
+                            pocShareData = encryptCryptoTransform.TransformFinalBlock(pocShareData, 0, pocShareData.Length);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Ignored.
+            }
+
+            return pocShareData;
+        }
+
+        /// <summary>
+        /// Do the encryption process of the PoC share data.
+        /// </summary>
+        /// <param name="currentMiningSetting"></param>
+        /// <param name="pocShareData"></param>
+        /// <param name="previousFinalBlockTransactionHashKey"></param>
+        /// <param name="pocShareIv"></param>
+        /// <returns></returns>
+        private static byte[] DoDecryptionPocShare(ClassMiningPoWaCSettingObject currentMiningSetting, byte[] pocShareData, byte[] previousFinalBlockTransactionHashKey, byte[] pocShareIv, out bool result)
+        {
+            // Successfully by default.
+            result = true;
+            try
+            {
+                using (RijndaelManaged aesObject = new RijndaelManaged())
+                {
+                    aesObject.KeySize = ClassAes.EncryptionKeySize;
+                    aesObject.BlockSize = ClassAes.EncryptionBlockSize;
+                    aesObject.Key = previousFinalBlockTransactionHashKey;
+                    aesObject.IV = pocShareIv;
+                    aesObject.Mode = CipherMode.CFB;
+                    aesObject.Padding = PaddingMode.PKCS7;
+                    using (ICryptoTransform decryptCryptoTransform = aesObject.CreateDecryptor(previousFinalBlockTransactionHashKey, pocShareIv))
+                    {
+                        for (int i = 0; i < currentMiningSetting.PowRoundAesShare; i++)
+                        {
+                            pocShareData = decryptCryptoTransform.TransformFinalBlock(pocShareData, 0, pocShareData.Length);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                result = false;
+                pocShareData = null;
+            }
+
+            return pocShareData;
         }
 
         #region Math functions

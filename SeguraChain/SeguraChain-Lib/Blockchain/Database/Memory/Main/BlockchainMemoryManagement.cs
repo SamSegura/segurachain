@@ -100,7 +100,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             _semaphoreSlimMemoryAccess = new SemaphoreSlim(1, 1);
             _semaphoreSlimGetWalletBalance = new SemaphoreSlim(1, 1);
             _semaphoreSlimUpdateTransactionConfirmations = new SemaphoreSlim(1, 1);
-            _semaphoreSlimCacheBlockTransactionAccess = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
+            _semaphoreSlimCacheBlockTransactionAccess = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount() * ClassUtility.GetMaxAvailableProcessorCount());
 
             // Cancellation token of memory management.
             _cancellationTokenMemoryManagement = new CancellationTokenSource();

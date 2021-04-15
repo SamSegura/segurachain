@@ -165,7 +165,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         }
                     }
 
-                    if (!ClassUtility.SocketIsConnected(_tcpClientPeer))
+                    if (!ClassUtility.TcpClientIsConnected(_tcpClientPeer))
                     {
                         break;
                     }
@@ -509,7 +509,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                 {
                     if (packetSendObject.PacketOrder != ClassPeerEnumPacketSend.ASK_PEER_AUTH_KEYS)
                     {
-                        await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey)
+                        await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId, string.Empty)
                         {
                             PacketOrder = ClassPeerEnumPacketResponse.INVALID_PEER_PACKET,
                             PacketContent = string.Empty,

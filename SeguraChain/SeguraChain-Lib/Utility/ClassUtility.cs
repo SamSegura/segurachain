@@ -717,7 +717,7 @@ namespace SeguraChain_Lib.Utility
         /// </summary>
         /// <param name="socket"></param>
         /// <returns></returns>
-        public static bool SocketIsConnected(TcpClient socket)
+        public static bool TcpClientIsConnected(TcpClient socket)
         {
             try
             {
@@ -741,6 +741,34 @@ namespace SeguraChain_Lib.Utility
                         }
                     }
                 }
+            }
+            catch
+            {
+                return false;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Check if the tcp client socket is still connected.
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <returns></returns>
+        public static bool SocketIsConnected(Socket socket)
+        {
+            try
+            {
+
+                if (socket != null)
+                {
+                    lock (socket)
+                    {
+
+                        return !((socket.Poll(10, SelectMode.SelectRead) && (socket.Available == 0)) || !socket.Connected);
+                    }
+
+                }
+            
             }
             catch
             {
@@ -1000,10 +1028,13 @@ namespace SeguraChain_Lib.Utility
 
             if (src.Length > 0)
             {
-
-                foreach (var word in src.Split(new[] { seperatorStr }, StringSplitOptions.RemoveEmptyEntries))
+               
+                foreach (var word in src.Split(new[] { seperatorStr }, StringSplitOptions.None))
                 {
-                    listSplitted.Add(word);
+                    if (!word.IsNullOrEmpty())
+                    {
+                        listSplitted.Add(word);
+                    }
                 }
 
                 #region Old split way. Too slow, around 236ms per block without tx's splitted.

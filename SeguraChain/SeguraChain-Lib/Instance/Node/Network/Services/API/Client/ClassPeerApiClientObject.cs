@@ -271,7 +271,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                         break;
                     }
 
-                    if (!ClassUtility.SocketIsConnected(_clientTcpClient))
+                    if (!ClassUtility.TcpClientIsConnected(_clientTcpClient))
                     {
                         break;
                     }

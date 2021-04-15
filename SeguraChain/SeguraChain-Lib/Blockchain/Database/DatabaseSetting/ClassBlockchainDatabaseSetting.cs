@@ -51,9 +51,9 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         public const int DefaultIoCacheDiskReadStreamBufferSize = 8192;
         public const int DefaultIoCacheDiskMinReadByBlockSize = 1024;
         public const int DefaultIoCacheDiskMinWriteByBlockSize = 1024;
-        public const int DefaultIoCacheDiskMinPercentReadFromBlockDataSize = 50;
-        public const int DefaultIoCacheDiskMinPercentWriteFromBlockDataSize = 50;
-        public const int DefaultIoCacheDiskParallelTaskWaitDelay = 10;  // The delay of waiting in milliseconds per while pending parallel tasks are running on the IO Cache system.
+        public const int DefaultIoCacheDiskMinPercentReadFromBlockDataSize = 5;
+        public const int DefaultIoCacheDiskMinPercentWriteFromBlockDataSize = 5;
+        public const int DefaultIoCacheDiskParallelTaskWaitDelay = 1000;  // The delay of waiting in milliseconds per while pending parallel tasks are running on the IO Cache system.
         public const bool DefaultIoCacheDiskEnableCompressBlockData = true;
         public const bool DefaultIoCacheDiskEnableMultiTask = true;
 

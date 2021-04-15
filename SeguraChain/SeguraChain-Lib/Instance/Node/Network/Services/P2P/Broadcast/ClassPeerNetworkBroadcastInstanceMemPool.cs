@@ -1118,7 +1118,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                         {
                             try
                             {
-                                if (!ClassUtility.SocketIsConnected(_peerTcpClient))
+                                if (!ClassUtility.TcpClientIsConnected(_peerTcpClient))
                                 {
                                     StopTaskAndDisconnect();
                                     IsAlive = false;

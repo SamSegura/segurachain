@@ -69,6 +69,7 @@ namespace SeguraChain_Peer.Mining.Instance
         private int[] _totalLowDifficultyShare;
         private List<byte[]> _pocRandomData;
 
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -450,7 +451,7 @@ namespace SeguraChain_Peer.Mining.Instance
 
                         GetTotalHashrate = totalHashrate;
 
-                        await Task.Delay(1000);
+                        await Task.Delay(1000, _cancellationTokenMiningTasks.Token);
                     }
                 }, _cancellationTokenMiningTasks.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
             }
@@ -472,8 +473,6 @@ namespace SeguraChain_Peer.Mining.Instance
                 {
                     // Initialize timestamp of share.
                     long timestampShare = ClassUtility.GetCurrentTimestampInSecond();
-
-                    CancellationTokenSource cancellationSubmitMiningShare = new CancellationTokenSource();
 
                     while (GetMiningStatus)
                     {
@@ -561,22 +560,6 @@ namespace SeguraChain_Peer.Mining.Instance
                         }
                         catch (Exception error)
                         {
-
-                            if (_cancellationTokenMiningTasks.IsCancellationRequested)
-                            {
-                                if (!cancellationSubmitMiningShare.IsCancellationRequested)
-                                {
-                                    cancellationSubmitMiningShare.Cancel();
-                                }
-                            }
-                            else
-                            {
-                                if (!cancellationSubmitMiningShare.IsCancellationRequested)
-                                {
-                                    cancellationSubmitMiningShare.Cancel();
-                                    cancellationSubmitMiningShare = new CancellationTokenSource();
-                                }
-                            }
                             if (GetMiningStatus)
                             {
                                 ClassLog.WriteLine("Error on solo mining instance. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);

@@ -73,28 +73,40 @@ namespace SeguraChain_Lib.Algorithm
         {
             try
             {
-                using (RijndaelManaged aesObject = new RijndaelManaged())
+                if (content != null)
                 {
-                    aesObject.KeySize = EncryptionKeySize;
-                    aesObject.BlockSize = EncryptionBlockSize;
-                    aesObject.Key = key;
-                    aesObject.IV = iv;
-                    aesObject.Mode = CipherMode.CFB;
-                    aesObject.Padding = PaddingMode.PKCS7;
-                    using (ICryptoTransform encryptCryptoTransform = aesObject.CreateEncryptor(key, iv))
+                    using (RijndaelManaged aesObject = new RijndaelManaged())
                     {
-                        using (MemoryStream memoryStreamEncrypt = new MemoryStream())
+                        aesObject.KeySize = EncryptionKeySize;
+                        aesObject.BlockSize = EncryptionBlockSize;
+                        aesObject.Key = key;
+                        aesObject.IV = iv;
+                        aesObject.Mode = CipherMode.CFB;
+                        aesObject.Padding = PaddingMode.PKCS7;
+                        using (ICryptoTransform encryptCryptoTransform = aesObject.CreateEncryptor(key, iv))
                         {
-                            using (CryptoStream cryptoStreamEncrypt = new CryptoStream(memoryStreamEncrypt, encryptCryptoTransform, CryptoStreamMode.Write))
-                            {
-                                cryptoStreamEncrypt.Write(content, 0, content.Length);
-                                cryptoStreamEncrypt.FlushFinalBlock();
+                            result = encryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                            return true;
 
-                                result = memoryStreamEncrypt.ToArray();
-                                return true;
-                            }
+                            /*
+                            using (MemoryStream memoryStreamEncrypt = new MemoryStream())
+                            {
+                                using (CryptoStream cryptoStreamEncrypt = new CryptoStream(memoryStreamEncrypt, encryptCryptoTransform, CryptoStreamMode.Write))
+                                {
+                                    cryptoStreamEncrypt.Write(content, 0, content.Length);
+                                    cryptoStreamEncrypt.FlushFinalBlock();
+
+                                    result = memoryStreamEncrypt.ToArray();
+                                    return true;
+                                }
+                            }*/
                         }
                     }
+                }
+                else
+                {
+                    result = null;
+                    return false;
                 }
             }
 #if DEBUG
@@ -122,28 +134,39 @@ namespace SeguraChain_Lib.Algorithm
         {
             try
             {
-                using (RijndaelManaged aesObject = new RijndaelManaged())
+                if (content != null)
                 {
-                    aesObject.KeySize = EncryptionKeySize;
-                    aesObject.BlockSize = EncryptionBlockSize;
-                    aesObject.Key = key;
-                    aesObject.IV = iv;
-                    aesObject.Mode = CipherMode.CFB;
-                    aesObject.Padding = PaddingMode.PKCS7;
-                    using (ICryptoTransform decryptCryptoTransform = aesObject.CreateDecryptor(key, iv))
+                    using (RijndaelManaged aesObject = new RijndaelManaged())
                     {
-                        using (MemoryStream memoryStreamDecrypt = new MemoryStream())
+                        aesObject.KeySize = EncryptionKeySize;
+                        aesObject.BlockSize = EncryptionBlockSize;
+                        aesObject.Key = key;
+                        aesObject.IV = iv;
+                        aesObject.Mode = CipherMode.CFB;
+                        aesObject.Padding = PaddingMode.PKCS7;
+                        using (ICryptoTransform decryptCryptoTransform = aesObject.CreateDecryptor(key, iv))
                         {
-                            using (CryptoStream cryptoStreamDecrypt = new CryptoStream(memoryStreamDecrypt, decryptCryptoTransform, CryptoStreamMode.Write))
+                            result = decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                            return true;
+                            /*
+                            using (MemoryStream memoryStreamDecrypt = new MemoryStream())
                             {
-                                cryptoStreamDecrypt.Write(content, 0, content.Length);
-                                cryptoStreamDecrypt.FlushFinalBlock();
+                                using (CryptoStream cryptoStreamDecrypt = new CryptoStream(memoryStreamDecrypt, decryptCryptoTransform, CryptoStreamMode.Write))
+                                {
+                                    cryptoStreamDecrypt.Write(content, 0, content.Length);
+                                    cryptoStreamDecrypt.FlushFinalBlock();
 
-                                result = memoryStreamDecrypt.ToArray();
-                                return true;
-                            }
+                                    result = memoryStreamDecrypt.ToArray();
+                                    return true;
+                                }
+                            }*/
                         }
                     }
+                }
+                else
+                {
+                    result = null;
+                    return false;
                 }
             }
 #if DEBUG

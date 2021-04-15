@@ -50,8 +50,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
             _publicKey = string.Empty;
             _privateKey = string.Empty;
             _semaphoreUpdateCryptoStream = new SemaphoreSlim(1, 1);
-            _semaphoreDoEncryption = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
-            _semaphoreDoDecryption = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
+            _semaphoreDoEncryption = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount() * ClassUtility.GetMaxAvailableProcessorCount());
+            _semaphoreDoDecryption = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount() * ClassUtility.GetMaxAvailableProcessorCount());
             InitializeAesAndEcdsaSign(key, iv, publicKey, privateKey, true, cancellation);
         }
 
@@ -218,33 +218,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                     {
                         if (content.Length > 0)
                         {
-                            using (MemoryStream memoryStream = new MemoryStream())
-                            {
-                                using (CryptoStream cryptoStream = new CryptoStream(memoryStream, _encryptCryptoTransform, CryptoStreamMode.Write))
-                                {
-                                    await cryptoStream.WriteAsync(content, 0, content.Length, cancellation.Token);
-
-                                    if (!cryptoStream.HasFlushedFinalBlock)
-                                    {
-                                        cryptoStream.FlushFinalBlock();
-                                    }
-
-                                    if (!cancellation.IsCancellationRequested)
-                                    {
-                                        if (memoryStream.Length > 0)
-                                        {
-                                            result = memoryStream.ToArray();
-                                        }
-                                    }
-                                }
-                            }
+                            result = _encryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
                         }
                     }
-                    catch (Exception error)
+                    catch
                     {
-#if DEBUG
-                        Debug.WriteLine("Error on encrypt data from a peer. Exception: " + error.Message);
-#endif
                         result = null;
                     }
                 }
@@ -283,40 +261,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                     {
                         if (content.Length > 0)
                         {
-                            using (MemoryStream memoryStream = new MemoryStream())
+                            result = _decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+
+                            if (result.Length > 0)
                             {
-                                using (CryptoStream cryptoStream = new CryptoStream(memoryStream, _decryptCryptoTransform, CryptoStreamMode.Write))
-                                {
-                                    await cryptoStream.WriteAsync(content, 0, content.Length, cancellation.Token);
-
-
-                                    if (!cryptoStream.HasFlushedFinalBlock)
-                                    {
-                                        cryptoStream.FlushFinalBlock();
-                                    }
-
-
-                                    if (!cancellation.IsCancellationRequested)
-                                    {
-                                        if (memoryStream.Length > 0)
-                                        {
-                                            result = memoryStream.ToArray();
-
-                                            if (result.Length > 0)
-                                            {
-                                                decryptStatus = true;
-                                            }
-                                        }
-                                    }
-                                }
+                                decryptStatus = true;
                             }
                         }
                     }
-                    catch (Exception error)
+                    catch 
                     {
-#if DEBUG
-                        Debug.WriteLine("Error on decrypt data from a peer. Exception: " + error.Message);
-#endif
                         result = null;
                         decryptStatus = false;
                     }

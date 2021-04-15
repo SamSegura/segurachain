@@ -59,7 +59,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Custom.Object
             }
         }
 
-        public ClassCustomPanel() : base()
+        public ClassCustomPanel()
         {
             DoubleBuffered = true;
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
@@ -69,12 +69,13 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Custom.Object
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
             if (!drawed)
             {
                 ClassGraphicsUtility.DrawControlRoundedEdges(this, e.Graphics, Radius, BorderSize, BorderColor);
                 drawed = true;
             }
+            base.OnPaint(e);
+
         }
     }
 }
