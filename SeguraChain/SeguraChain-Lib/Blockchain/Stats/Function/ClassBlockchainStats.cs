@@ -259,7 +259,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <param name="listWalletAndPublicKeysCache"></param>
         /// <param name="cancellation"></param>
         /// <returns>Return the check status result of the transaction.</returns>
-        public static async Task<ClassTransactionEnumStatus> CheckTransaction(ClassTransactionObject transactionObject, ClassBlockObject blockObjectSource, bool checkFromBlockData, Dictionary<string, string> listWalletAndPublicKeysCache, CancellationTokenSource cancellation, bool external)
+        public static async Task<ClassTransactionEnumStatus> CheckTransaction(ClassTransactionObject transactionObject, ClassBlockObject blockObjectSource, bool checkFromBlockData, DisposableDictionary<string, string> listWalletAndPublicKeysCache, CancellationTokenSource cancellation, bool external)
         {
             return await ClassBlockchainDatabase.BlockchainMemoryManagement.CheckTransaction(transactionObject, blockObjectSource, checkFromBlockData, listWalletAndPublicKeysCache, cancellation, external);
         }

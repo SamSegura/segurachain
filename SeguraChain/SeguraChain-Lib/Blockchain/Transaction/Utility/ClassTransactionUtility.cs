@@ -16,6 +16,7 @@ using SeguraChain_Lib.Blockchain.Stats.Function;
 using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Wallet.Function;
+using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
 
 
@@ -236,7 +237,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
         /// <param name="useSemaphore"></param>
         /// <param name="cancellation"></param>
         /// <returns>Return the check status result of the transaction.</returns>
-        public static async Task<ClassTransactionEnumStatus> CheckTransactionWithBlockchainData(ClassTransactionObject transactionObject, bool fromOutside, bool checkBalance, bool fromBroadcastInstance, ClassBlockObject blockObjectSource, long totalConfirmations, Dictionary<string, string> listWalletAndPublicKeysCache, bool useSemaphore, CancellationTokenSource cancellation)
+        public static async Task<ClassTransactionEnumStatus> CheckTransactionWithBlockchainData(ClassTransactionObject transactionObject, bool fromOutside, bool checkBalance, bool fromBroadcastInstance, ClassBlockObject blockObjectSource, long totalConfirmations, DisposableDictionary<string, string> listWalletAndPublicKeysCache, bool useSemaphore, CancellationTokenSource cancellation)
         {
             if (transactionObject == null)
             {

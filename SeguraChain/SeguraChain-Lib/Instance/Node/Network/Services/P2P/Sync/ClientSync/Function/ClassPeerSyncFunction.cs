@@ -21,6 +21,7 @@ using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.ClientC
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet.SubPacket.Response;
 using SeguraChain_Lib.Instance.Node.Setting.Object;
 using SeguraChain_Lib.Log;
+using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Function
@@ -879,7 +880,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
         /// <param name="packetSendBlockTransactionDataByRange"></param>
         /// 
         /// <returns></returns>
-        public bool TryGetPacketBlockTransactionDataByRange(ClassPeerNetworkClientSyncObject peerNetworkClientSyncObject, string peerIp, int peerPort, Dictionary<string, string> listWalletAndPublicKeys, ClassPeerNetworkSettingObject peerNetworkSettingObject, long blockHeightTarget, CancellationTokenSource cancellation, out ClassPeerPacketSendBlockTransactionDataByRange packetSendBlockTransactionDataByRange)
+        public bool TryGetPacketBlockTransactionDataByRange(ClassPeerNetworkClientSyncObject peerNetworkClientSyncObject, string peerIp, int peerPort, DisposableDictionary<string, string> listWalletAndPublicKeys, ClassPeerNetworkSettingObject peerNetworkSettingObject, long blockHeightTarget, CancellationTokenSource cancellation, out ClassPeerPacketSendBlockTransactionDataByRange packetSendBlockTransactionDataByRange)
         {
             packetSendBlockTransactionDataByRange = null; // Default.
 
@@ -939,7 +940,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
         /// <param name="listWalletAndPublicKeys"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<bool> ClassPeerPacketSendBlockTransactionDataByRange(ClassPeerPacketSendBlockTransactionDataByRange packetSendBlockTransactionDataByRange, long blockHeightTarget, Dictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
+        private async Task<bool> ClassPeerPacketSendBlockTransactionDataByRange(ClassPeerPacketSendBlockTransactionDataByRange packetSendBlockTransactionDataByRange, long blockHeightTarget, DisposableDictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
         {
             bool result = true;
 
@@ -1002,7 +1003,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
         /// <param name="listWalletAndPublicKeys"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<bool> CheckPacketBlockTransactionData(ClassPeerPacketSendBlockTransactionData packetSendBlockTransactionData, long blockHeightTarget, Dictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
+        private async Task<bool> CheckPacketBlockTransactionData(ClassPeerPacketSendBlockTransactionData packetSendBlockTransactionData, long blockHeightTarget, DisposableDictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
         {
             if (packetSendBlockTransactionData == null)
             {

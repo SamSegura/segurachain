@@ -725,18 +725,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                     if (blockObject != null)
                                                                     {
-                                                                        Dictionary<string, string> listWalletAndPublicKeys = new Dictionary<string, string>();
-
-                                                                        if (!await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
+                                                                        using (DisposableDictionary<string, string> listWalletAndPublicKeys = new DisposableDictionary<string, string>())
                                                                         {
-                                                                            // Clean up.
-                                                                            listWalletAndPublicKeys.Clear();
-                                                                            ClassLog.WriteLine("Failed to sync block transaction(s) from the block height: " + blockObject.BlockHeight, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                            break;
+                                                                            if (!await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
+                                                                            {
+                                                                                ClassLog.WriteLine("Failed to sync block transaction(s) from the block height: " + blockObject.BlockHeight, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                                                                                break;
+                                                                            }
                                                                         }
-
-                                                                        // Clean up.
-                                                                        listWalletAndPublicKeys.Clear();
                                                                     }
                                                                     else
                                                                     {
@@ -905,18 +901,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                                             {
                                                                                                                 if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                                                                                                                 {
-                                                                                                                    Dictionary<string, string> listWalletAndPublicKeys = new Dictionary<string, string>();
-
-                                                                                                                    if (!await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
+                                                                                                                    using (DisposableDictionary<string, string> listWalletAndPublicKeys = new DisposableDictionary<string, string>())
                                                                                                                     {
-                                                                                                                        // Clean up.
-                                                                                                                        listWalletAndPublicKeys.Clear();
-                                                                                                                        ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + " failed, the amount of tx's to sync from a unlocked block cannot be equal of 0. Cancel sync and retry again.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                                                                        break;
+                                                                                                                        if (!await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
+                                                                                                                        {
+                                                                                                                            ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + " failed, the amount of tx's to sync from a unlocked block cannot be equal of 0. Cancel sync and retry again.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                                                                                                                            break;
+                                                                                                                        }
                                                                                                                     }
-
-                                                                                                                    // Clean up.
-                                                                                                                    listWalletAndPublicKeys.Clear();
 
                                                                                                                     ClassLog.WriteLine("The block height: " + blockHeightToCheck + " retrieved from peers, is fixed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
                                                                                                                 }
@@ -1180,16 +1172,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                     {
                                                                                         ClassLog.WriteLine("Attempt to check if the block height: " + lastBlockHeight + " has been mined failed. The attempt to unlock it failed: " + resultUnlockShare + ". Resync the block with other peers.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
-                                                                                        Dictionary<string, string> listWalletAndPublicKeys = new Dictionary<string, string>();
-
-                                                                                        // Attempt to check the current block and to fix it.
-                                                                                        if (await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
+                                                                                        using (DisposableDictionary<string, string> listWalletAndPublicKeys = new DisposableDictionary<string, string>())
                                                                                         {
-                                                                                            ClassLog.WriteLine("The block height: " + lastBlockHeight + " the block was invalid and has been resync.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                                                                                            // Attempt to check the current block and to fix it.
+                                                                                            if (await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
+                                                                                            {
+                                                                                                ClassLog.WriteLine("The block height: " + lastBlockHeight + " the block was invalid and has been resync.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                                                                                            }
                                                                                         }
-
-                                                                                        // Clean up.
-                                                                                        listWalletAndPublicKeys.Clear();
                                                                                     }
                                                                                 }
                                                                                 else
@@ -2759,7 +2749,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
         /// <param name="transactionIdEnd"></param>
         /// <param name="listWalletAndPublicKeys"></param>
         /// <returns></returns>
-        private async Task<SortedDictionary<string, ClassTransactionObject>> StartAskBlockTransactionObjectByRangeFromListPeerTarget(Dictionary<int, ClassPeerTargetObject> peerListTarget, long blockHeightTarget, int transactionIdStart, int transactionIdEnd, Dictionary<string, string> listWalletAndPublicKeys)
+        private async Task<SortedDictionary<string, ClassTransactionObject>> StartAskBlockTransactionObjectByRangeFromListPeerTarget(Dictionary<int, ClassPeerTargetObject> peerListTarget, long blockHeightTarget, int transactionIdStart, int transactionIdEnd, DisposableDictionary<string, string> listWalletAndPublicKeys)
         {
             ConcurrentDictionary<string, SortedDictionary<string, ClassTransactionObject>> listTransactionObjects = new ConcurrentDictionary<string, SortedDictionary<string, ClassTransactionObject>>();
             ConcurrentDictionary<string, float> listTransactionSeedVote = new ConcurrentDictionary<string, float>();
@@ -3437,12 +3427,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS, true, false);
 
-            peerNetworkClientSyncObject.CleanPacketDataReceived();
+            
 
             if (!packetSendStatus)
             {
                 ClassLog.WriteLine(peerIp + ":" + peerPort + " packet request failed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY);
-
                 return false;
             }
 
@@ -3554,7 +3543,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_LIST, true, false);
 
-                peerNetworkClientSyncObject.CleanPacketDataReceived();
+                
 
                 if (!packetSendStatus)
                 {
@@ -3680,7 +3669,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_LIST_SOVEREIGN_UPDATE, true, false);
 
-                peerNetworkClientSyncObject.CleanPacketDataReceived();
+                
 
                 if (!packetSendStatus)
                 {
@@ -3767,7 +3756,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_SOVEREIGN_UPDATE_FROM_HASH, true, false);
 
-                peerNetworkClientSyncObject.CleanPacketDataReceived();
+                
 
                 if (!packetSendStatus)
                 {
@@ -3859,7 +3848,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_NETWORK_INFORMATION, true, false);
 
-                peerNetworkClientSyncObject.CleanPacketDataReceived();
+                
 
                 if (!packetSendStatus)
                 {
@@ -3961,7 +3950,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_DATA, true, false);
 
-                peerNetworkClientSyncObject.CleanPacketDataReceived();
+                
 
                 if (!packetSendStatus)
                 {
@@ -4066,7 +4055,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA, true, false);
 
-                peerNetworkClientSyncObject.CleanPacketDataReceived();
+                
 
                 if (!packetSendStatus)
                 {
@@ -4142,7 +4131,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
         /// <param name="listWalletAndPublicKeys"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionDataByRange>>> SendAskBlockTransactionDataByRange(ClassPeerNetworkClientSyncObject peerNetworkClientSyncObject, long blockHeightTarget, int transactionIdRangeStart, int transactionIdRangeEnd, Dictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
+        private async Task<Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionDataByRange>>> SendAskBlockTransactionDataByRange(ClassPeerNetworkClientSyncObject peerNetworkClientSyncObject, long blockHeightTarget, int transactionIdRangeStart, int transactionIdRangeEnd, DisposableDictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
         {
             string peerIp = peerNetworkClientSyncObject.PeerIpTarget;
             int peerPort = peerNetworkClientSyncObject.PeerPortTarget;
@@ -4174,7 +4163,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA_BY_RANGE, true, false);
 
-                peerNetworkClientSyncObject.CleanPacketDataReceived();
+                
 
                 if (!packetSendStatus)
                 {
@@ -4252,7 +4241,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
         /// <param name="peerTargetList"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<bool> SyncBlockDataTransaction(ClassBlockObject blockObject, Dictionary<int, ClassPeerTargetObject> peerTargetList, Dictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
+        private async Task<bool> SyncBlockDataTransaction(ClassBlockObject blockObject, Dictionary<int, ClassPeerTargetObject> peerTargetList, DisposableDictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
         {
             if (blockObject.BlockHeight > BlockchainSetting.GenesisBlockHeight)
             {
@@ -4775,7 +4764,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 try
                 {
-                    peerTargetList[peerKey].PeerNetworkClientSyncObject.CleanPacketDataReceived();
                     if (!peerTargetList[peerKey].PeerNetworkClientSyncObject.PeerConnectStatus ||
                         !peerTargetList[peerKey].PeerNetworkClientSyncObject.PeerPacketReceivedStatus)
                     {
