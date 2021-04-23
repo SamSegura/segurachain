@@ -381,7 +381,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                 }
                                                 else
                                                 {
-                                                    packetTupleDecrypted = await ClassPeerDatabase.DictionaryPeerDataObject[peerListTarget[peerKey].PeerIpTarget][peerListTarget[peerKey].PeerUniqueIdTarget].GetInternCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived.PacketContent), cancellationTokenSourceMiningShareVote);
+                                                    packetTupleDecrypted = ClassPeerDatabase.DictionaryPeerDataObject[peerListTarget[peerKey].PeerIpTarget][peerListTarget[peerKey].PeerUniqueIdTarget].GetInternCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived.PacketContent));
                                                 }
 
                                                 if (packetTupleDecrypted == null)
@@ -404,7 +404,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                         {
                                                             if (ClassUtility.CheckPacketTimestamp(peerPacketSendMiningShareVote.PacketTimestamp, peerNetworkSetting.PeerMaxTimestampDelayPacket, peerNetworkSetting.PeerMaxEarlierPacketDelay))
                                                             {
-                                                                ClassPeerCheckManager.InputPeerClientValidPacket(peerIpTarget, peerUniqueIdTarget);
+                                                                ClassPeerCheckManager.InputPeerClientValidPacket(peerIpTarget, peerUniqueIdTarget, peerNetworkSetting);
 
                                                                 if (peerPacketSendMiningShareVote.BlockHeight == miningPowShareObject.BlockHeight)
                                                                 {
@@ -910,7 +910,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                 }
                                                 else
                                                 {
-                                                    packetTupleDecrypted = await ClassPeerDatabase.DictionaryPeerDataObject[peerListTarget[peerKey].PeerIpTarget][peerListTarget[peerKey].PeerUniqueIdTarget].GetInternCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived.PacketContent), cancellationTokenSourceMemPoolTxVote);
+                                                    packetTupleDecrypted = ClassPeerDatabase.DictionaryPeerDataObject[peerListTarget[peerKey].PeerIpTarget][peerListTarget[peerKey].PeerUniqueIdTarget].GetInternCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived.PacketContent));
                                                 }
 
                                                 if (packetTupleDecrypted == null)
@@ -935,7 +935,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             {
                                                                 if (packetSendMemPoolTransactionVote.TransactionHash == transactionObject.TransactionHash)
                                                                 {
-                                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIpTarget, peerUniqueIdTarget);
+                                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIpTarget, peerUniqueIdTarget, peerNetworkSetting);
 
                                                                     bool peerRanked = false;
 
@@ -1247,7 +1247,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     }
                     else
                     {
-                        packetContentEncrypted = await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject.EncryptDataProcess(ClassUtility.GetByteArrayFromStringAscii(sendObject.PacketContent), cancellation);
+                        packetContentEncrypted = ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject.EncryptDataProcess(ClassUtility.GetByteArrayFromStringAscii(sendObject.PacketContent));
 
                         if (packetContentEncrypted == null)
                         {

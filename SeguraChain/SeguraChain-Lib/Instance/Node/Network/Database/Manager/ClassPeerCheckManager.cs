@@ -368,13 +368,25 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// </summary>
         /// <param name="peerIp"></param>
         /// <param name="peerUniqueId"></param>
-        public static void InputPeerClientValidPacket(string peerIp, string peerUniqueId)
+        public static void InputPeerClientValidPacket(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject)
         {
             if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket = ClassUtility.GetCurrentTimestampInSecond();
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket++;
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt = 0;
+
+                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket >= peerNetworkSettingObject.PeerMaxInvalidPacket)
+                {
+                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket > 0)
+                    {
+                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket--;
+                    }
+                    else if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket < 0)
+                    {
+                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket = 0;
+                    }
+                }
             }
         }
 

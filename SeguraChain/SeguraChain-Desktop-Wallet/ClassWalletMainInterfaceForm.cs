@@ -1257,7 +1257,7 @@ namespace SeguraChain_Desktop_Wallet
         /// <param name="e"></param>
         private void createWalletToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using (ClassWalletCreateInternalForm walletCreateInternalForm = new ClassWalletCreateInternalForm())
+            using (ClassWalletCreateInternalForm walletCreateInternalForm = new ClassWalletCreateInternalForm(false, null))
             {
                 walletCreateInternalForm.ShowDialog(this);
             }

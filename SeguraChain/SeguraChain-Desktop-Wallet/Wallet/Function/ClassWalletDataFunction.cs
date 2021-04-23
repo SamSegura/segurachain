@@ -496,6 +496,18 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Function
             };
         }
 
+        public static ClassWalletDataObject GenerateWalletFromPrivateKey(string privateKey)
+        {
+            string walletPublicKey = ClassWalletUtility.GenerateWalletPublicKeyFromPrivateKey(privateKey);
+            string walletAddress = ClassWalletUtility.GenerateWalletAddressFromPublicKey(walletPublicKey);
+            return new ClassWalletDataObject
+            {
+                WalletAddress = walletAddress,
+                WalletPublicKey = walletPublicKey,
+                WalletPrivateKey = privateKey
+            };
+        }
+
         /// <summary>
         /// Generate a qr code depending of the argument provided.
         /// </summary>

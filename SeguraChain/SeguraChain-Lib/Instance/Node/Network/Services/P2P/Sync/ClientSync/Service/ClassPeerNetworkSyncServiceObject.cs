@@ -226,7 +226,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                 {
                                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
                                     {
-                                        ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                                        ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
                                     }
                                 }
                             }
@@ -309,7 +309,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                         {
                                             totalInitializedSuccessfully++;
                                             ClassPeerCheckManager.CleanPeerState(peerListToInitialize[i1].Item1, peerListToInitialize[i1].Item2, true);
-                                            ClassPeerCheckManager.InputPeerClientValidPacket(peerListToInitialize[i1].Item1, peerListToInitialize[i1].Item2);
+                                            ClassPeerCheckManager.InputPeerClientValidPacket(peerListToInitialize[i1].Item1, peerListToInitialize[i1].Item2, _peerNetworkSettingObject);
 
                                         }
                                         else
@@ -445,7 +445,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                         {
                                             totalCheckSuccessfullyDone++;
                                             ClassPeerCheckManager.CleanPeerState(peerListToCheck[i1].Item1, peerListToCheck[i1].Item2, true);
-                                            ClassPeerCheckManager.InputPeerClientValidPacket(peerListToCheck[i1].Item1, peerListToCheck[i1].Item2);
+                                            ClassPeerCheckManager.InputPeerClientValidPacket(peerListToCheck[i1].Item1, peerListToCheck[i1].Item2, _peerNetworkSettingObject);
                                         }
                                         else
                                         {
@@ -3486,7 +3486,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
 
                     ClassLog.WriteLine(peerIp + ":" + peerPort + " send propertly auth keys.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
                     return true;
                 }
                 catch (Exception error)
@@ -3595,7 +3595,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                 if (await SendAskAuthPeerKeys(new ClassPeerNetworkClientSyncObject(packetPeerList.PeerIpList[i], packetPeerList.PeerPortList[i], packetPeerList.PeerUniqueIdList[i], _cancellationTokenServiceSync, _peerNetworkSettingObject, _peerFirewallSettingObject), cancellation, false))
                                                 {
                                                     ClassLog.WriteLine("New Peer: " + packetPeerList.PeerIpList[i] + ":" + packetPeerList.PeerPortList[i] + " successfully registered.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
-                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                                                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
 
                                                 }
                                                 else
@@ -3789,7 +3789,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassSovereignUpdateObject>>(false, null);
                     }
 
-                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
 
                     return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassSovereignUpdateObject>>(true, new ClassPeerSyncPacketObjectReturned<ClassSovereignUpdateObject>()
                     {
@@ -3881,7 +3881,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendNetworkInformation>>(false, null);
                     }
 
-                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
 
                     return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendNetworkInformation>>(true, new ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendNetworkInformation>()
                     {
@@ -3983,7 +3983,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockData>>(false, null);
                     }
 
-                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
 
                     return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockData>>(true, new ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockData>()
                     {
@@ -4088,7 +4088,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionData>>(false, null);
                     }
 
-                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
 
                     return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionData>>(true, new ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionData>()
                     {
@@ -4197,7 +4197,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionDataByRange>>(false, null);
                     }
 
-                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId);
+                    ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
 
                     return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionDataByRange>>(true, new ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionDataByRange>()
                     {

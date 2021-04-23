@@ -20,7 +20,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
 {
     public partial class ClassWalletCreateInternalForm : Form
     {
-        private int _currentStep;
+        private ClassWalletCreateEnumMenu _currentStep;
         private readonly ClassWalletCreateFormLanguage _walletCreateFormLanguageObject;
         private ClassWalletCreateEnumCreateMethod _currentWalletCreateMethod;
         private ClassWalletDataObject _currentWalletDataObject;
@@ -29,19 +29,34 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         private int _currentWalletEncryptionRounds;
         private bool _usePassword;
         private bool _saved;
+        private bool _import;
+
+        #region Enum steps of the wallet create menu.
+
+
+        #endregion
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public ClassWalletCreateInternalForm()
+        public ClassWalletCreateInternalForm(bool import, string importPrivateKey)
         {
-            _usePassword = true;
-            _currentWalletCreateMethod = ClassWalletCreateEnumCreateMethod.FAST_RANDOM_WAY;
+            if (import)
+            {
+                _import = import;
+                _currentStep = ClassWalletCreateEnumMenu.WALLET_CREATE_WRITE_PASSWORD;
+                _currentWalletDataObject = ClassWalletDataFunction.GenerateWalletFromPrivateKey(importPrivateKey);
+            }
+            else
+            {
+                _currentStep = ClassWalletCreateEnumMenu.WALLET_CREATE_SELECT_GENERATE_MODE; // Default step.
+                _usePassword = true;
+                _currentWalletCreateMethod = ClassWalletCreateEnumCreateMethod.FAST_RANDOM_WAY;
+            }
             _walletCreateFormLanguageObject = ClassDesktopWalletCommonData.LanguageDatabase.GetLanguageContentObject<ClassWalletCreateFormLanguage>(ClassLanguageEnumType.LANGUAGE_TYPE_CREATE_WALLET_FORM);
             _currentWalletEncryptionRounds = ClassWalletDefaultSetting.DefaultWalletIterationCount;
-            _currentStep = 0; // Default step.
             InitializeComponent();
-
+           
         }
 
         /// <summary>
@@ -54,6 +69,11 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
             tabControlCreateWallet.ItemSize = new Size(tabControlCreateWallet.ItemSize.Width, 1);
             InitializeLanguageContentText();
             ChangeTabPage();
+            if(_import)
+            {
+                buttonCreateWalletBackToStepOne.Enabled = false;
+                buttonCreateWalletBackToStepOne.Hide();
+            }
         }
 
         /// <summary>
@@ -63,7 +83,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         /// <param name="e"></param>
         private void ClassWalletCreateInternalForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (_currentStep == 2 && !_saved)
+            if (_currentStep == ClassWalletCreateEnumMenu.WALLET_CREATE_FINAL_STEP && !_saved)
             {
                 if (MessageBox.Show(_walletCreateFormLanguageObject.MESSAGEBOX_WALLET_CREATE_ON_CLOSING_LAST_STEP_TEXT, _walletCreateFormLanguageObject.MESSAGEBOX_WALLET_CREATE_ON_CLOSING_LAST_STEP_TITLE_TEXT, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
                 {
@@ -236,7 +256,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
 
             if (goNextStep)
             {
-                _currentStep = 1;
+                _currentStep = ClassWalletCreateEnumMenu.WALLET_CREATE_WRITE_PASSWORD;
                 ChangeTabPage();
             }
         }
@@ -252,7 +272,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         /// <param name="e"></param>
         private void textBoxCreateWalletPassword_TextChanged(object sender, EventArgs e)
         {
-            if (_currentStep == 1)
+            if (_currentStep == ClassWalletCreateEnumMenu.WALLET_CREATE_WRITE_PASSWORD)
             {
                 _passwordSelected = textBoxCreateWalletPassword.Text;
             }
@@ -286,8 +306,11 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         /// <param name="e"></param>
         private void buttonCreateWalletBackToStepOne_Click(object sender, EventArgs e)
         {
-            _currentStep = 0;
-            ChangeTabPage();
+            if (!_import)
+            {
+                _currentStep = ClassWalletCreateEnumMenu.WALLET_CREATE_SELECT_GENERATE_MODE;
+                ChangeTabPage();
+            }
         }
 
         /// <summary>
@@ -309,18 +332,21 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
 
             if (goNextStep)
             {
-                _currentStep = 2;
-                switch (_currentWalletCreateMethod)
+                _currentStep = ClassWalletCreateEnumMenu.WALLET_CREATE_FINAL_STEP;
+                if (!_import)
                 {
-                    case ClassWalletCreateEnumCreateMethod.FAST_RANDOM_WAY:
-                        _currentWalletDataObject = ClassWalletDataFunction.GenerateNewWalletDataObject(null, true);
-                        break;
-                    case ClassWalletCreateEnumCreateMethod.SLOW_RANDOM_WAY:
-                        _currentWalletDataObject = ClassWalletDataFunction.GenerateNewWalletDataObject(null, false);
-                        break;
-                    case ClassWalletCreateEnumCreateMethod.BASE_WORD_WAY:
-                        _currentWalletDataObject = ClassWalletDataFunction.GenerateNewWalletDataObject(_baseWordSelected, false);
-                        break;
+                    switch (_currentWalletCreateMethod)
+                    {
+                        case ClassWalletCreateEnumCreateMethod.FAST_RANDOM_WAY:
+                            _currentWalletDataObject = ClassWalletDataFunction.GenerateNewWalletDataObject(null, true);
+                            break;
+                        case ClassWalletCreateEnumCreateMethod.SLOW_RANDOM_WAY:
+                            _currentWalletDataObject = ClassWalletDataFunction.GenerateNewWalletDataObject(null, false);
+                            break;
+                        case ClassWalletCreateEnumCreateMethod.BASE_WORD_WAY:
+                            _currentWalletDataObject = ClassWalletDataFunction.GenerateNewWalletDataObject(_baseWordSelected, false);
+                            break;
+                    }
                 }
                 pictureBoxQrCodePrivateKey.BackgroundImage = ClassWalletDataFunction.GenerateBitmapWalletQrCode(_currentWalletDataObject.WalletPrivateKey);
                 pictureBoxQrCodeWalletAddress.BackgroundImage = ClassWalletDataFunction.GenerateBitmapWalletQrCode(_currentWalletDataObject.WalletAddress);
@@ -410,9 +436,9 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
                 tab.Enabled = false;
                 tab.Hide();
             }
-            tabControlCreateWallet.TabPages[_currentStep].Enabled = true;
-            tabControlCreateWallet.TabPages[_currentStep].Show();
-            tabControlCreateWallet.SelectedTab = tabControlCreateWallet.TabPages[_currentStep];
+            tabControlCreateWallet.TabPages[(int)_currentStep].Enabled = true;
+            tabControlCreateWallet.TabPages[(int)_currentStep].Show();
+            tabControlCreateWallet.SelectedTab = tabControlCreateWallet.TabPages[(int)_currentStep];
 
             #endregion
         }
@@ -424,9 +450,9 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         /// <param name="e"></param>
         private void tabControlCreateWallet_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (tabControlCreateWallet.SelectedIndex != _currentStep)
+            if (tabControlCreateWallet.SelectedIndex != (int)_currentStep)
             {
-                tabControlCreateWallet.SelectedTab = tabControlCreateWallet.TabPages[_currentStep];
+                tabControlCreateWallet.SelectedTab = tabControlCreateWallet.TabPages[(int)_currentStep];
             }
         }
 
@@ -440,9 +466,6 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
             double originalPositionFactor = ((double)label.Location.X / tabControlCreateWallet.Width) * 100d;
             return ClassGraphicsUtility.AutoSetLocationAndResizeControl<Label>(label, tabControlCreateWallet, originalPositionFactor, false);
         }
-
-
-
 
         #endregion
 

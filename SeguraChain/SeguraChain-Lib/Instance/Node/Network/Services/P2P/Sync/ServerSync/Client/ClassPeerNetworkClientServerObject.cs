@@ -404,7 +404,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                                                         break;
                                                                     case ClassPeerNetworkClientServerHandlePacketEnumStatus.VALID_PACKET:
                                                                         {
-                                                                            ClassPeerCheckManager.InputPeerClientValidPacket(_peerClientIp, _peerUniqueId);
+                                                                            ClassPeerCheckManager.InputPeerClientValidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject);
                                                                             if (_clientAskDisconnection)
                                                                             {
                                                                                 ClientPeerConnectionStatus = false;
@@ -2386,7 +2386,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                     byte[] packetContentEncrypted;
                     if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject != null)
                     {
-                        packetContentEncrypted = await ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject.EncryptDataProcess(ClassUtility.GetByteArrayFromStringAscii(packetSendObject.PacketContent), _cancellationTokenAccessData);
+                        packetContentEncrypted = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject.EncryptDataProcess(ClassUtility.GetByteArrayFromStringAscii(packetSendObject.PacketContent));
                     }
                     else
                     {
@@ -2578,7 +2578,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                 {
                     if (ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject != null)
                     {
-                        var contentDecryptedTuple = await ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(content), _cancellationTokenAccessData);
+                        var contentDecryptedTuple = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].GetClientCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(content));
 
                         if (contentDecryptedTuple != null)
                         {

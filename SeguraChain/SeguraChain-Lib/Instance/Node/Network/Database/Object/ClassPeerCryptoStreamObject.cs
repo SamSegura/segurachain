@@ -27,8 +27,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         /// Handle multithreading access.
         /// </summary>
         private SemaphoreSlim _semaphoreUpdateCryptoStream;
-        private SemaphoreSlim _semaphoreDoEncryption;
-        private SemaphoreSlim _semaphoreDoDecryption;
 
         private string _privateKey;
         private ECPrivateKeyParameters _ecPrivateKeyParameters;
@@ -50,8 +48,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
             _publicKey = string.Empty;
             _privateKey = string.Empty;
             _semaphoreUpdateCryptoStream = new SemaphoreSlim(1, 1);
-            _semaphoreDoEncryption = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount() * ClassUtility.GetMaxAvailableProcessorCount());
-            _semaphoreDoDecryption = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount() * ClassUtility.GetMaxAvailableProcessorCount());
             InitializeAesAndEcdsaSign(key, iv, publicKey, privateKey, true, cancellation);
         }
 
@@ -199,39 +195,24 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         /// Encrypt data.
         /// </summary>
         /// <param name="content"></param>
-        /// <param name="cancellation"></param>
+        /// 
         /// <returns></returns>
-        public async Task<byte[]> EncryptDataProcess(byte[] content, CancellationTokenSource cancellation)
+        public byte[] EncryptDataProcess(byte[] content)
         {
             byte[] result = null;
 
             if (_initialized)
             {
-                bool semaphoreUsed = false;
-
                 try
                 {
-                    await _semaphoreDoEncryption.WaitAsync(cancellation.Token);
-                    semaphoreUsed = true;
-
-                    try
+                    if (content.Length > 0)
                     {
-                        if (content.Length > 0)
-                        {
-                            result = _encryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
-                        }
-                    }
-                    catch
-                    {
-                        result = null;
+                        result = _encryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
                     }
                 }
-                finally
+                catch
                 {
-                    if (semaphoreUsed)
-                    {
-                        _semaphoreDoEncryption.Release();
-                    }
+                    result = null;
                 }
 
             }
@@ -242,46 +223,35 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         /// Decrypt data.
         /// </summary>
         /// <param name="content"></param>
-        /// <param name="cancellation"></param>
+        /// 
         /// <returns></returns>
-        public async Task<Tuple<byte[], bool>> DecryptDataProcess(byte[] content, CancellationTokenSource cancellation)
+        public Tuple<byte[], bool> DecryptDataProcess(byte[] content)
         {
             byte[] result = null;
             bool decryptStatus = false;
-            bool semaphoreUsed = false;
 
             if (_initialized)
             {
+
+
                 try
                 {
-                    await _semaphoreDoDecryption.WaitAsync(cancellation.Token);
-                    semaphoreUsed = true;
-
-                    try
+                    if (content.Length > 0)
                     {
-                        if (content.Length > 0)
-                        {
-                            result = _decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                        result = _decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
 
-                            if (result.Length > 0)
-                            {
-                                decryptStatus = true;
-                            }
+                        if (result.Length > 0)
+                        {
+                            decryptStatus = true;
                         }
                     }
-                    catch 
-                    {
-                        result = null;
-                        decryptStatus = false;
-                    }
                 }
-                finally
+                catch
                 {
-                    if (semaphoreUsed)
-                    {
-                        _semaphoreDoDecryption.Release();
-                    }
+                    result = null;
+                    decryptStatus = false;
                 }
+
             }
 
             return new Tuple<byte[], bool>(result, decryptStatus);

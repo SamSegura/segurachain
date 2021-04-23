@@ -72,10 +72,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
         /// <param name="peerPort"></param>
         /// <param name="peerUniqueId"></param>
         /// <param name="packetContent"></param>
-        /// <param name="cancellation"></param>
         /// <param name="packetDecrypted"></param>
+        /// 
         /// <returns></returns>
-        public bool TryDecryptPacketPeerContent(string peerIp, int peerPort, string peerUniqueId, string packetContent, CancellationTokenSource cancellation, out byte[] packetDecrypted)
+        public bool TryDecryptPacketPeerContent(string peerIp, int peerPort, string peerUniqueId, string packetContent, out byte[] packetDecrypted)
         {
             packetDecrypted = null; // Default.
 
@@ -83,26 +83,19 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             {
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject != null)
                 {
-                    Task<Tuple<byte[], bool>> taskPacketDecrypt = ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(packetContent), cancellation);
+                    var taskPacketDecrypt = ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject.DecryptDataProcess(Convert.FromBase64String(packetContent));
 
-                    taskPacketDecrypt.Wait(cancellation.Token);
-
-                    if (taskPacketDecrypt.IsCompleted)
+                    if (taskPacketDecrypt != null)
                     {
-                        if (taskPacketDecrypt.Result != null)
+                        if (taskPacketDecrypt.Item2 && taskPacketDecrypt.Item1 != null)
                         {
-                            if (taskPacketDecrypt.Result.Item2 && taskPacketDecrypt.Result.Item1 != null)
+                            if (taskPacketDecrypt.Item1.Length == 0)
                             {
-                                if (taskPacketDecrypt.Result.Item1.Length == 0)
-                                {
-                                    return false;
-                                }
-                                packetDecrypted = taskPacketDecrypt.Result.Item1;
-
-                                return true;
+                                return false;
                             }
+                            packetDecrypted = taskPacketDecrypt.Item1;
 
-                            return false;
+                            return true;
                         }
 
                         ClassLog.WriteLine(peerIp + ":" + peerPort + " send a packet who can't be decrypted by internal keys sent.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
@@ -247,7 +240,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }
@@ -358,7 +351,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }
@@ -463,7 +456,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }
@@ -548,7 +541,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }
@@ -656,7 +649,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }
@@ -733,7 +726,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }
@@ -836,7 +829,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }
@@ -891,7 +884,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, cancellation, out byte[] packetDecrypted))
+            if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
             {
                 return false;
             }

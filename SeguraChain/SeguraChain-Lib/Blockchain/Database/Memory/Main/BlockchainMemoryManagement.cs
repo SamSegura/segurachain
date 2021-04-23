@@ -3015,11 +3015,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             };
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region Specific check of data managed with the cache system.
+        #region Specific check of data managed with the cache system.
 
         /// <summary>
         /// Check if a transaction hash provided already exist on blocks.
@@ -3037,7 +3037,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 blockHeight = ClassTransactionUtility.GetBlockHeightFromTransactionHash(transactionHash);
             }
 
-#region Check on the active memory first.
+            #region Check on the active memory first.
 
             if (ContainsKey(blockHeight))
             {
@@ -3061,7 +3061,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 }
             }
 
-#endregion
+            #endregion
 
             if (!inMemory)
             {
@@ -3324,7 +3324,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         /// <returns>Return the check status result of the transaction.</returns>
         public async Task<ClassTransactionEnumStatus> CheckTransaction(ClassTransactionObject transactionObject, ClassBlockObject blockObjectSource, bool checkFromBlockData, DisposableDictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation, bool external)
         {
-#region Check transaction content.
+            #region Check transaction content.
 
             if (transactionObject.WalletAddressSender.IsNullOrEmpty())
             {
@@ -3377,16 +3377,16 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 return ClassTransactionEnumStatus.INVALID_TRANSACTION_VERSION;
             }
 
-#endregion
+            #endregion
 
-#region Check block target confirmations.
+            #region Check block target confirmations.
 
             if (transactionObject.BlockHeightTransactionConfirmationTarget - transactionObject.BlockHeightTransaction < BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations)
             {
                 return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT_TARGET_CONFIRMATION;
             }
 
-#endregion
+            #endregion
 
             if (transactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
                 transactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
@@ -3587,7 +3587,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 }
                             }
 
-#region Check signature(s) with public key(s).
+                            #region Check signature(s) with public key(s).
 
                             if (!ClassWalletUtility.WalletCheckSignature(transactionObject.TransactionHash, transactionObject.TransactionSignatureSender, BlockchainSetting.WalletAddressDevPublicKey(transactionObject.TimestampSend)))
                             {
@@ -3598,7 +3598,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             }
 
 
-#endregion
+                            #endregion
                         }
 
 
@@ -3725,7 +3725,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             return ClassTransactionEnumStatus.EMPTY_TRANSACTION_SOURCE_LIST;
                         }
 
-#region Check Base 64 Signature formatting.
+                        #region Check Base 64 Signature formatting.
 
                         if (!ClassUtility.CheckBase64String(transactionObject.TransactionSignatureSender))
                         {
@@ -3749,9 +3749,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 return ClassTransactionEnumStatus.INVALID_TRANSACTION_SIGNATURE;
                             }
                         }
-#endregion
+                        #endregion
 
-#region Check Fee.
+                        #region Check Fee.
 
                         if (checkFromBlockData)
                         {
@@ -3794,9 +3794,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         }
 
 
-#endregion
+                        #endregion
 
-#region Check Public Keys results.
+                        #region Check Public Keys results.
 
                         if (!checkAddressSender)
                         {
@@ -3819,9 +3819,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             }
                         }
 
-#endregion
+                        #endregion
 
-#region Check signature(s) with public key(s).
+                        #region Check signature(s) with public key(s).
 
                         if (!ClassWalletUtility.WalletCheckSignature(transactionObject.TransactionHash, transactionObject.TransactionSignatureSender, transactionObject.WalletPublicKeySender))
                         {
@@ -3856,7 +3856,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 }
                             }
                         }
-#endregion
+                        #endregion
                     }
                     break;
                 default:
@@ -3866,9 +3866,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             return ClassTransactionEnumStatus.VALID_TRANSACTION;
         }
 
-#endregion
+        #endregion
 
-#region Misc functions who can be managed with the cache system.
+        #region Misc functions who can be managed with the cache system.
 
         /// <summary>
         /// Check the block mined.
@@ -3946,7 +3946,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 {
                     if (useCheckpoint)
                     {
-#region Use checkpoint for speed up the wallet balance calculation.
+                        #region Use checkpoint for speed up the wallet balance calculation.
 
                         long lastBlockHeightWalletCheckpoint = 0;
 
@@ -4146,11 +4146,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             }
                         }
 
-#endregion
+                        #endregion
                     }
                     else
                     {
-#region Slower way. do not use wallet balance checkpoint.
+                        #region Slower way. do not use wallet balance checkpoint.
 
 #if DEBUG
                         if (isWallet)
@@ -4242,7 +4242,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                         }
 
-#endregion
+                        #endregion
                     }
 
                     // Take in count mem pool transaction indexed only sending.
@@ -4302,12 +4302,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             return blockchainWalletBalance;
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
 
-#region Functions to manage memory.
+        #region Functions to manage memory.
 
         /// <summary>
         /// Task who automatically save objects in memory not used into cache disk.
@@ -4349,156 +4349,161 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                         {
                                             case CacheEnumName.IO_CACHE:
                                                 {
-                                                    Dictionary<long, bool> dictionaryCache = new Dictionary<long, bool>();
-
-#region List blocks to update on the cache and list blocks to push out of the memory.
-
-                                                    for (long i = 0; i < lastBlockHeight; i++)
+                                                    using (DisposableDictionary<long, bool> dictionaryCache = new DisposableDictionary<long, bool>())
                                                     {
-                                                        if (i < lastBlockHeight)
+                                                        #region List blocks to update on the cache and list blocks to push out of the memory.
+
+                                                        for (long i = 0; i < lastBlockHeight; i++)
                                                         {
-                                                            long blockHeight = i + 1;
-
-                                                            if (ContainsKey(blockHeight))
+                                                            if (i < lastBlockHeight)
                                                             {
-                                                                if (_pauseMemoryManagement || _cancellationTokenMemoryManagement.IsCancellationRequested)
-                                                                {
-                                                                    break;
-                                                                }
+                                                                long blockHeight = i + 1;
 
-                                                                if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
+                                                                // Do not cache the genesis block.
+                                                                if (blockHeight > BlockchainSetting.GenesisBlockHeight)
                                                                 {
-#region Insert/Update data cache from an element of memory recently updated. 
-
-                                                                    // Ignore locked block.
-                                                                    if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                                                                    if (ContainsKey(blockHeight))
                                                                     {
-                                                                        // Used and updated frequently, update disk data to keep changes if a crash happen.
-                                                                        if ((_dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalObjectCacheUpdateLimitTime >= timestamp ||
-                                                                            !_dictionaryBlockObjectMemory[blockHeight].ObjectIndexed ||
-                                                                            !_dictionaryBlockObjectMemory[blockHeight].CacheUpdated) &&
-                                                                            (_dictionaryBlockObjectMemory[blockHeight].Content.BlockStatus == ClassBlockEnumStatus.UNLOCKED &&
-                                                                            _dictionaryBlockObjectMemory[blockHeight].Content.BlockUnlockValid &&
-                                                                            _dictionaryBlockObjectMemory[blockHeight].Content.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations
-                                                                            && blockHeight >= limitIndexToCache) || (_dictionaryBlockObjectMemory[blockHeight].Content.BlockHeight == BlockchainSetting.GenesisBlockHeight))
+                                                                        if (_pauseMemoryManagement || _cancellationTokenMemoryManagement.IsCancellationRequested)
                                                                         {
-                                                                            dictionaryCache.Add(blockHeight, false);
+                                                                            break;
                                                                         }
-                                                                        // Unused elements.
-                                                                        else
-                                                                        {
 
-                                                                            if (blockHeight < limitIndexToCache &&
-                                                                                _dictionaryBlockObjectMemory[blockHeight].Content.BlockStatus == ClassBlockEnumStatus.UNLOCKED &&
-                                                                                _dictionaryBlockObjectMemory[blockHeight].Content.BlockUnlockValid &&
-                                                                                _dictionaryBlockObjectMemory[blockHeight].Content.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations
-                                                                                && _dictionaryBlockObjectMemory[blockHeight].Content.BlockHeight != BlockchainSetting.GenesisBlockHeight)
+                                                                        if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
+                                                                        {
+                                                                            #region Insert/Update data cache from an element of memory recently updated. 
+
+                                                                            // Ignore locked block.
+                                                                            if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                                                                             {
-                                                                                if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalObjectExpirationMemoryCached <= timestamp)
+                                                                                // Used and updated frequently, update disk data to keep changes if a crash happen.
+                                                                                if ((_dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalObjectCacheUpdateLimitTime >= timestamp ||
+                                                                                    !_dictionaryBlockObjectMemory[blockHeight].ObjectIndexed ||
+                                                                                    !_dictionaryBlockObjectMemory[blockHeight].CacheUpdated) &&
+                                                                                    (_dictionaryBlockObjectMemory[blockHeight].Content.BlockStatus == ClassBlockEnumStatus.UNLOCKED &&
+                                                                                    _dictionaryBlockObjectMemory[blockHeight].Content.BlockUnlockValid &&
+                                                                                    _dictionaryBlockObjectMemory[blockHeight].Content.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations
+                                                                                    && blockHeight >= limitIndexToCache) || (_dictionaryBlockObjectMemory[blockHeight].Content.BlockHeight == BlockchainSetting.GenesisBlockHeight))
                                                                                 {
-                                                                                    dictionaryCache.Add(blockHeight, true);
+                                                                                    dictionaryCache.Add(blockHeight, false);
+                                                                                }
+                                                                                // Unused elements.
+                                                                                else
+                                                                                {
+
+                                                                                    if (blockHeight < limitIndexToCache &&
+                                                                                        _dictionaryBlockObjectMemory[blockHeight].Content.BlockStatus == ClassBlockEnumStatus.UNLOCKED &&
+                                                                                        _dictionaryBlockObjectMemory[blockHeight].Content.BlockUnlockValid &&
+                                                                                        _dictionaryBlockObjectMemory[blockHeight].Content.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations
+                                                                                        && _dictionaryBlockObjectMemory[blockHeight].Content.BlockHeight != BlockchainSetting.GenesisBlockHeight)
+                                                                                    {
+                                                                                        if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalObjectExpirationMemoryCached <= timestamp)
+                                                                                        {
+                                                                                            dictionaryCache.Add(blockHeight, true);
+                                                                                        }
+                                                                                    }
+
                                                                                 }
                                                                             }
 
+                                                                            #endregion
                                                                         }
                                                                     }
-
-#endregion
                                                                 }
                                                             }
                                                         }
-                                                    }
 
-#endregion
+                                                        #endregion
 
-#region Push data updated to the cache, released old data from the active memory.
+                                                        #region Push data updated to the cache, released old data from the active memory.
 
-                                                    if (dictionaryCache.Count > 0)
-                                                    {
-
-                                                        List<ClassBlockObject> blockObjectToCacheOut = new List<ClassBlockObject>();
-                                                        List<ClassBlockObject> blockObjectToCacheUpdate = new List<ClassBlockObject>();
-
-#region Push blocks to put out of memory to the cache system.
-
-                                                        int countBlockOutOfMemory = dictionaryCache.Count(x => x.Value);
-
-                                                        if (countBlockOutOfMemory > 0)
+                                                        if (dictionaryCache.Count > 0)
                                                         {
-                                                            foreach (var blockPair in dictionaryCache.Where(x => x.Value))
-                                                            {
-                                                                _dictionaryBlockObjectMemory[blockPair.Key].Content.DeepCloneBlockObject(true, out ClassBlockObject blockObjectCopy);
-                                                                blockObjectToCacheOut.Add(blockObjectCopy);
-                                                            }
 
-                                                            if (await AddOrUpdateListBlockObjectOnMemoryDataCache(blockObjectToCacheOut, true, _cancellationTokenMemoryManagement))
+                                                            List<ClassBlockObject> blockObjectToCacheOut = new List<ClassBlockObject>();
+                                                            List<ClassBlockObject> blockObjectToCacheUpdate = new List<ClassBlockObject>();
+
+                                                            #region Push blocks to put out of memory to the cache system.
+
+                                                            int countBlockOutOfMemory = dictionaryCache.GetList.Count(x => x.Value);
+
+                                                            if (countBlockOutOfMemory > 0)
                                                             {
-                                                                foreach (var blockPair in dictionaryCache.Where(x => x.Value))
+                                                                foreach (var blockPair in dictionaryCache.GetList.Where(x => x.Value))
                                                                 {
-                                                                    _dictionaryBlockObjectMemory[blockPair.Key].CacheUpdated = true;
-                                                                    _dictionaryBlockObjectMemory[blockPair.Key].ObjectIndexed = true;
-                                                                    _dictionaryBlockObjectMemory[blockPair.Key].ObjectCacheType = CacheBlockMemoryEnumState.IN_PERSISTENT_CACHE;
-                                                                    _dictionaryBlockObjectMemory[blockPair.Key].Content = null;
+                                                                    _dictionaryBlockObjectMemory[blockPair.Key].Content.DeepCloneBlockObject(true, out ClassBlockObject blockObjectCopy);
+                                                                    blockObjectToCacheOut.Add(blockObjectCopy);
                                                                 }
-                                                                changeDone = true;
-#if DEBUG
-                                                                Debug.WriteLine("Total block object(s) cached out of memory: " + countBlockOutOfMemory);
-#endif
-                                                                ClassLog.WriteLine("Memory management - Total block object(s) cached out of memory: " + countBlockOutOfMemory, ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
+                                                                if (await AddOrUpdateListBlockObjectOnMemoryDataCache(blockObjectToCacheOut, true, _cancellationTokenMemoryManagement))
+                                                                {
+                                                                    foreach (var blockPair in dictionaryCache.GetList.Where(x => x.Value))
+                                                                    {
+                                                                        _dictionaryBlockObjectMemory[blockPair.Key].CacheUpdated = true;
+                                                                        _dictionaryBlockObjectMemory[blockPair.Key].ObjectIndexed = true;
+                                                                        _dictionaryBlockObjectMemory[blockPair.Key].ObjectCacheType = CacheBlockMemoryEnumState.IN_PERSISTENT_CACHE;
+                                                                        _dictionaryBlockObjectMemory[blockPair.Key].Content = null;
+                                                                    }
+                                                                    changeDone = true;
+#if DEBUG
+                                                                    Debug.WriteLine("Total block object(s) cached out of memory: " + countBlockOutOfMemory);
+#endif
+                                                                    ClassLog.WriteLine("Memory management - Total block object(s) cached out of memory: " + countBlockOutOfMemory, ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+
+                                                                }
+
+                                                                // Clean up.
+                                                                blockObjectToCacheOut.Clear();
                                                             }
+
+                                                            #endregion
+
+                                                            #region Push updated blocks to the cache system.
+
+                                                            int countBlockToUpdate = dictionaryCache.GetList.Count(x => x.Value == false);
+
+                                                            if (countBlockToUpdate > 0)
+                                                            {
+                                                                foreach (var blockPair in dictionaryCache.GetList.Where(x => x.Value == false))
+                                                                {
+                                                                    _dictionaryBlockObjectMemory[blockPair.Key].Content.DeepCloneBlockObject(true, out ClassBlockObject blockObjectCopy);
+                                                                    blockObjectToCacheUpdate.Add(blockObjectCopy);
+                                                                }
+
+                                                                if (await AddOrUpdateListBlockObjectOnMemoryDataCache(blockObjectToCacheUpdate, true, _cancellationTokenMemoryManagement))
+                                                                {
+                                                                    changeDone = true;
+                                                                    foreach (var blockPair in dictionaryCache.GetList.Where(x => x.Value == false))
+                                                                    {
+                                                                        _dictionaryBlockObjectMemory[blockPair.Key].CacheUpdated = true;
+                                                                        _dictionaryBlockObjectMemory[blockPair.Key].ObjectIndexed = true;
+                                                                        _dictionaryBlockObjectMemory[blockPair.Key].ObjectCacheType = CacheBlockMemoryEnumState.IN_CACHE;
+                                                                    }
+#if DEBUG
+                                                                    Debug.WriteLine("Total block object(s) cached updated and keep in memory: " + countBlockToUpdate);
+#endif
+                                                                    ClassLog.WriteLine("Memory management - Total block object(s) cached updated and keep in memory: " + countBlockToUpdate, ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+
+                                                                }
+
+                                                                // Clean up.
+                                                                blockObjectToCacheUpdate.Clear();
+                                                            }
+
+                                                            #endregion
 
                                                             // Clean up.
-                                                            blockObjectToCacheOut.Clear();
-                                                        }
+                                                            dictionaryCache.Clear();
 
-#endregion
-
-#region Push updated blocks to the cache system.
-
-                                                        int countBlockToUpdate = dictionaryCache.Count(x => x.Value == false);
-
-                                                        if (countBlockToUpdate > 0)
-                                                        {
-                                                            foreach (var blockPair in dictionaryCache.Where(x => x.Value == false))
+                                                            if (changeDone)
                                                             {
-                                                                _dictionaryBlockObjectMemory[blockPair.Key].Content.DeepCloneBlockObject(true, out ClassBlockObject blockObjectCopy);
-                                                                blockObjectToCacheUpdate.Add(blockObjectCopy);
+                                                                // Purge the IO Cache system.
+                                                                await _cacheIoSystem.PurgeCacheIoSystem();
                                                             }
-
-                                                            if (await AddOrUpdateListBlockObjectOnMemoryDataCache(blockObjectToCacheUpdate, true, _cancellationTokenMemoryManagement))
-                                                            {
-                                                                changeDone = true;
-                                                                foreach (var blockPair in dictionaryCache.Where(x => x.Value == false))
-                                                                {
-                                                                    _dictionaryBlockObjectMemory[blockPair.Key].CacheUpdated = true;
-                                                                    _dictionaryBlockObjectMemory[blockPair.Key].ObjectIndexed = true;
-                                                                    _dictionaryBlockObjectMemory[blockPair.Key].ObjectCacheType = CacheBlockMemoryEnumState.IN_CACHE;
-                                                                }
-#if DEBUG
-                                                                Debug.WriteLine("Total block object(s) cached updated and keep in memory: " + countBlockToUpdate);
-#endif
-                                                                ClassLog.WriteLine("Memory management - Total block object(s) cached updated and keep in memory: " + countBlockToUpdate, ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-
-                                                            }
-
-                                                            // Clean up.
-                                                            blockObjectToCacheUpdate.Clear();
                                                         }
 
-#endregion
-
-                                                        // Clean up.
-                                                        dictionaryCache.Clear();
-
-                                                        if (changeDone)
-                                                        {
-                                                            // Purge the IO Cache system.
-                                                            await _cacheIoSystem.PurgeCacheIoSystem();
-                                                        }
+                                                        #endregion
                                                     }
-
-#endregion
 
                                                 }
                                                 break;
@@ -5016,7 +5021,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         {
             SortedList<string, ClassBlockTransaction> listBlockTransaction = new SortedList<string, ClassBlockTransaction>();
 
-#region Check the active memory.
+            #region Check the active memory.
 
             if (_dictionaryBlockObjectMemory.ContainsKey(blockHeight))
             {
@@ -5036,9 +5041,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 }
             }
 
-#endregion
+            #endregion
 
-#region Use the block transaction cache if possible.
+            #region Use the block transaction cache if possible.
 
             if (GetBlockMirrorObject(blockHeight, out ClassBlockObject blockInformationObject))
             {
@@ -5083,9 +5088,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 }
             }
 
-#endregion
+            #endregion
 
-#region Then ask the cache system.
+            #region Then ask the cache system.
 
             if (_blockchainDatabaseSetting.BlockchainCacheSetting.EnableCacheDatabase)
             {
@@ -5113,7 +5118,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 }
             }
 
-#endregion
+            #endregion
 
             return listBlockTransaction;
         }
@@ -5135,7 +5140,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                 if (GetLastBlockHeight >= BlockchainSetting.GenesisBlockHeight)
                 {
-#region Generate at first the list of block object in the active memory and change range if necessary.
+                    #region Generate at first the list of block object in the active memory and change range if necessary.
                     // Do not allow invalid range index lower than the genesis block height.
                     if (blockHeightStart < BlockchainSetting.GenesisBlockHeight)
                     {
@@ -5148,7 +5153,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         blockHeightEnd = Count;
                     }
 
-                    List<long> listBlockCached = new List<long>();
+                    List<long> listBlockHeightTargetCached = new List<long>();
 
                     HashSet<long> blockListAlreadyRetrieved = new HashSet<long>();
 
@@ -5161,33 +5166,42 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                             if (blockHeight >= blockHeightStart && blockHeight <= blockHeightEnd)
                             {
-                                if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
+                                if (blockHeight > BlockchainSetting.GenesisBlockHeight)
                                 {
-                                    blockListAlreadyRetrieved.Add(blockHeight);
-                                    listBlockObjects.Add(blockHeight, new Tuple<ClassBlockObject, bool>(_dictionaryBlockObjectMemory[blockHeight].Content, false));
+                                    if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
+                                    {
+                                        blockListAlreadyRetrieved.Add(blockHeight);
+                                        listBlockObjects.Add(blockHeight, new Tuple<ClassBlockObject, bool>(_dictionaryBlockObjectMemory[blockHeight].Content, false));
+                                    }
+                                    else
+                                    {
+                                        listBlockHeightTargetCached.Add(blockHeight);
+                                    }
                                 }
                                 else
                                 {
-                                    listBlockCached.Add(blockHeight);
+                                    blockListAlreadyRetrieved.Add(blockHeight);
+                                    listBlockObjects.Add(blockHeight, new Tuple<ClassBlockObject, bool>(_dictionaryBlockObjectMemory[BlockchainSetting.GenesisBlockHeight].Content, false));
+                                    listBlockHeightTargetCached.Remove(BlockchainSetting.GenesisBlockHeight);
                                 }
                             }
                         }
                     }
-#endregion
+                    #endregion
 
                     switch (_blockchainDatabaseSetting.BlockchainCacheSetting.CacheName)
                     {
                         case CacheEnumName.IO_CACHE:
                             {
-                                if (listBlockCached.Count > 0)
+                                if (listBlockHeightTargetCached.Count > 0)
                                 {
                                     try
                                     {
-                                        listBlockCached.Sort();
+                                        listBlockHeightTargetCached.Sort();
 
                                         // Calculated again the new range to retrieve.
-                                        long minBlockHeight = listBlockCached[0];
-                                        long maxBlockHeight = listBlockCached[listBlockCached.Count - 1];
+                                        long minBlockHeight = listBlockHeightTargetCached[0];
+                                        long maxBlockHeight = listBlockHeightTargetCached[listBlockHeightTargetCached.Count - 1];
 
                                         listBlockObjects = await _cacheIoSystem.GetBlockObjectListFromBlockHeightRange(minBlockHeight, maxBlockHeight, blockListAlreadyRetrieved, listBlockObjects, keepAlive, cancellation);
                                     }
@@ -5206,7 +5220,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             }
             else
             {
-#region Generate the list of block object in the active memory and change range if necessary.
+                #region Generate the list of block object in the active memory and change range if necessary.
                 // Do not allow invalid range index lower than the genesis block height.
                 if (blockHeightStart < BlockchainSetting.GenesisBlockHeight)
                 {
@@ -5235,7 +5249,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         }
                     }
                 }
-#endregion
+                #endregion
 
             }
             return listBlockObjects;
@@ -5498,10 +5512,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             return totalMemoryUsageFromCache;
         }
 
-#endregion
+        #endregion
 
 
-#region Functions to manage mirror memory.
+        #region Functions to manage mirror memory.
 
         /// <summary>
         /// Check if the block height possess his mirror block content.
@@ -5600,10 +5614,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             }
         }
 
-#endregion
+        #endregion
 
 
-#region Manage the block transaction cache in front of IO Cache files/network.
+        #region Manage the block transaction cache in front of IO Cache files/network.
 
         /// <summary>
         /// Insert a wallet address to keep reserved for the block transaction cache.
@@ -6492,10 +6506,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             return _totalBlockTransactionMemorySize + (GetBlockTransactionCachedCount() * (BlockchainSetting.TransactionHashSize * sizeof(char)));
         }
 
-#endregion
+        #endregion
 
 
-#region Other functions.
+        #region Other functions.
 
         /// <summary>
         /// Build a list of block height by range.
@@ -6540,7 +6554,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             return listOfBlockRange;
         }
 
-#endregion
+        #endregion
     }
 }
 

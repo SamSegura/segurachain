@@ -1236,11 +1236,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         await _ioSemaphoreAccess.WaitAsync(cancellation.Token);
                         useSemaphore = true;
                     }
-                    else
-                    {
-                        await _ioSemaphoreAccess.WaitAsync();
-                        useSemaphore = true;
-                    }
                 }
 
                 Dictionary<long, ClassBlockObject> listIoData = new Dictionary<long, ClassBlockObject>();
