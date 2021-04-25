@@ -841,7 +841,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                     }),
                                 };
 
-                                packetSendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
+                                packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
 
                                 if (!await TrySendPacketToPeer(JsonConvert.SerializeObject(packetSendObject)))
                                 {
@@ -918,7 +918,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             }),
                                                         };
 
-                                                        packetSendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
+                                                        packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
 
                                                         if (!await TrySendPacketToPeer(JsonConvert.SerializeObject(packetSendObject)))
                                                         {
@@ -1020,7 +1020,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             })
                                                         };
 
-                                                        packetSendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
+                                                        packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
 
                                                         if (!await TrySendPacketToPeer(JsonConvert.SerializeObject(packetSendObject)))
                                                         {

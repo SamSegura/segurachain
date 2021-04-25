@@ -25,6 +25,7 @@ using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
+using SeguraChain_Lib.Other.Object.ThreadExtension;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Desktop_Wallet.MainForm.System
@@ -40,7 +41,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         /// <summary>
         /// Handle multithreading access.
         /// </summary>
-        private readonly SemaphoreSlim _semaphoreTransactionHistoryAccess;
+        private readonly SemaphoreSmooth _semaphoreTransactionHistoryAccess;
 
         /// <summary>
         /// Constructor.
@@ -49,7 +50,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         {
             _dictionaryTransactionHistory = new ConcurrentDictionary<string, ClassTransactionHistoryObject>();
             _dictionaryTransactionHistoryOrderType = new ConcurrentDictionary<ClassEnumTransactionHistoryColumnType, ClassTransactionHistoryOrderObject>();
-            _semaphoreTransactionHistoryAccess = new SemaphoreSlim(1, 1);
+            _semaphoreTransactionHistoryAccess = new SemaphoreSmooth(1, 1);
         }
 
         /// <summary>
@@ -62,61 +63,44 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             get
             {
                 Bitmap returnedBitmap = null;
-
-                bool semaphoreUsed = false;
-                try
-                {
-                    _semaphoreTransactionHistoryAccess.Wait(cancellation.Token);
-                    semaphoreUsed = true;
-
-                    if (_dictionaryTransactionHistory.ContainsKey(walletFileOpened))
+                if (_dictionaryTransactionHistory.ContainsKey(walletFileOpened))
+                    if (_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory != null && _dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory != null)
                     {
-                        if (_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory != null && _dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory != null)
+                        bool isLockedBitmap = false;
+                        bool isLockedGraphic = false;
+                        try
                         {
-                            bool isLockedBitmap = false;
-                            bool isLockedGraphic = false;
                             try
                             {
-                                try
-                                {
 
-                                    if (Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory))
+                                if (Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory, 1000))
+                                {
+                                    isLockedGraphic = true;
+                                    if (Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory, 1000))
                                     {
-                                        isLockedGraphic = true;
-                                        if (Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory))
-                                        {
-                                            isLockedBitmap = true;
-                                            returnedBitmap = ClassGraphicsUtility.CloneBitmap(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
-                                        }
+                                        isLockedBitmap = true;
+                                        returnedBitmap = ClassGraphicsUtility.CloneBitmap(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
                                     }
                                 }
-                                catch
-                                {
-                                    // Ignored.
-                                }
                             }
-                            finally
+                            catch
                             {
-                                if (isLockedBitmap)
-                                {
-                                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
-                                }
+                                // Ignored.
+                            }
+                        }
+                        finally
+                        {
+                            if (isLockedBitmap)
+                            {
+                                Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
+                            }
 
-                                if (isLockedGraphic)
-                                {
-                                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
-                                }
+                            if (isLockedGraphic)
+                            {
+                                Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
                             }
                         }
                     }
-                }
-                finally
-                {
-                    if (semaphoreUsed)
-                    {
-                        _semaphoreTransactionHistoryAccess.Release();
-                    }
-                }
 
                 return returnedBitmap;
             }
@@ -178,7 +162,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                         {
                                             long previousTransactionCount = _dictionaryTransactionHistory[walletFileOpened].LastTransactionCount;
                                             long walletTotalTransactionCount = walletDataObject.WalletTotalMemPoolTransaction;
-
+                                            bool changeDone = false;
 
                                             walletTotalTransactionCount += walletDataObject.WalletTotalTransaction;
 
@@ -202,16 +186,17 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                                 if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x.TransactionHash == memPoolTransactionHash))
                                                                 {
                                                                     _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, transactionObject, true));
+                                                                    changeDone = true;
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 }
+                                                long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
 
                                                 // Travel transactions synced push on blocks unlocked.
                                                 if (ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(walletAddress))
                                                 {
-                                                    long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
                                                     long lastBlockHeightTravel = 0;
 
                                                     foreach (long blockHeight in walletDataObject.WalletTransactionList.Keys.ToArray().OrderBy(x => x))
@@ -238,26 +223,33 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                                         if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x != null && x?.TransactionHash == transactionHash && x?.IsMemPool == true))
                                                                         {
                                                                             _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x != null && x?.TransactionHash == transactionHash && x?.IsMemPool == true);
+                                                                            changeDone = true;
                                                                         }
                                                                     }
 
                                                                     if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x?.TransactionHash == transactionHash))
                                                                     {
                                                                         _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, blockTransactionCached.Item2.TransactionObject, false));
+                                                                        changeDone = true;
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
-
                                                     _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight = lastBlockHeightTravel;
                                                 }
+                                                else
+                                                {
+                                                    _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight = lastBlockHeight;
+                                                }
 
+                                                if (changeDone)
+                                                {
+                                                    _dictionaryTransactionHistory[walletFileOpened].LastTransactionCount = walletTotalTransactionCount;
 
-                                                _dictionaryTransactionHistory[walletFileOpened].LastTransactionCount = walletTotalTransactionCount;
-
-                                                _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
-                                                requireUpdate = true;
+                                                    _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
+                                                    requireUpdate = true;
+                                                }
                                             }
                                         }
 

@@ -15,6 +15,7 @@ using SeguraChain_Lib.Blockchain.Database;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Utility;
+using SeguraChain_Desktop_Wallet.Sync.Object;
 
 namespace SeguraChain_Desktop_Wallet.Wallet.Database
 {
@@ -130,6 +131,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                             {
                                                 if (!ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(DictionaryWalletData[walletFileName].WalletAddress))
                                                 {
+                                                    ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.TryAdd(DictionaryWalletData[walletFileName].WalletAddress, new ClassSyncCacheObject());
                                                     DictionaryWalletData[walletFileName].WalletEnableRescan = true;
                                                 }
 

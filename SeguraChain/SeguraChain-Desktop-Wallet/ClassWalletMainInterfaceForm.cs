@@ -1071,28 +1071,7 @@ namespace SeguraChain_Desktop_Wallet
                         {
                             if (!ClassDesktopWalletCommonData.WalletDatabase.GetWalletRescanStatus(_currentWalletFilename))
                             {
-                                if (await _walletRecentTransactionHistorySystemInstance.UpdateRecentTransactionHistory(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations))
-                                {
-                                    bool complete = false;
-                                    MethodInvoker invoke = () =>
-                                    {
-                                        panelInternalRecentTransactions.Refresh();
-                                        complete = true;
-                                    };
-                                    BeginInvoke(invoke);
-
-                                    while (!complete)
-                                    {
-                                        try
-                                        {
-                                            await Task.Delay(ClassWalletDefaultSetting.DefaultAwaitInvokeDesktopWalletFormDelay, _cancellationTokenTaskUpdateWalletContentInformations.Token);
-                                        }
-                                        catch
-                                        {
-                                            break;
-                                        }
-                                    }
-                                }
+                                await _walletRecentTransactionHistorySystemInstance.UpdateRecentTransactionHistory(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
                             }
                         }
                         catch (Exception error)
@@ -1304,7 +1283,7 @@ namespace SeguraChain_Desktop_Wallet
         {
             if (_listWalletOpened.Contains(_currentWalletFilename))
             {
-
+                ClassDesktopWalletCommonData.WalletSyncSystem.StopTaskUpdateSyncCache();
                 if (ClassDesktopWalletCommonData.WalletDatabase.CloseAndSaveWalletFileAsync(_currentWalletFilename).Result)
                 {
                     if (_listWalletOpened.Remove(_currentWalletFilename))
@@ -1329,6 +1308,7 @@ namespace SeguraChain_Desktop_Wallet
                 {
                     MessageBox.Show(@"Failed to close the wallet file: " + _currentWalletFilename + @" please try again later.");
                 }
+                ClassDesktopWalletCommonData.WalletSyncSystem.EnableTaskUpdateSyncCache();
             }
         }
 
@@ -1340,7 +1320,7 @@ namespace SeguraChain_Desktop_Wallet
         private void rescanToolStripMenuItem_Click(object sender, EventArgs e)
         {
             StopTaskUpdateWalletInformations();
-
+            ClassDesktopWalletCommonData.WalletSyncSystem.StopTaskUpdateSyncCache();
             string walletAddress = ClassDesktopWalletCommonData.WalletDatabase.GetWalletAddressFromWalletFileName(_currentWalletFilename);
             _walletTransactionHistorySystemInstance.RemoveTransactionHistoryFromWalletFileOpenedTarget(_currentWalletFilename);
             ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(walletAddress, _cancellationTokenTaskUpdateWalletListOpened);
@@ -1349,8 +1329,8 @@ namespace SeguraChain_Desktop_Wallet
                 walletRescanInternalForm.ShowDialog(this);
             }
 
-            SwitchWalletFile(_currentWalletFilename, false, _cancellationTokenTaskUpdateWalletListOpened);
             ClassDesktopWalletCommonData.WalletSyncSystem.EnableTaskUpdateSyncCache();
+            SwitchWalletFile(_currentWalletFilename, false, _cancellationTokenTaskUpdateWalletListOpened);
         }
 
         /// <summary>

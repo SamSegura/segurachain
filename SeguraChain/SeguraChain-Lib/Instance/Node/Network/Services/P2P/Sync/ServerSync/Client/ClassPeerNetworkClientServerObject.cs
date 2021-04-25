@@ -660,7 +660,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_PEER_LIST:
                         {
-                            ClassPeerPacketSendAskPeerList packetSendAskPeerList = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskPeerList>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskPeerList packetSendAskPeerList = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskPeerList>(packetSendObject.PacketContent);
 
                             if (packetSendAskPeerList != null)
                             {
@@ -712,7 +712,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_LIST_SOVEREIGN_UPDATE:
                         {
-                            ClassPeerPacketSendAskListSovereignUpdate packetSendAskListSovereignUpdate = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskListSovereignUpdate>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskListSovereignUpdate packetSendAskListSovereignUpdate = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskListSovereignUpdate>(packetSendObject.PacketContent);
 
                             if (packetSendAskListSovereignUpdate != null)
                             {
@@ -768,7 +768,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_SOVEREIGN_UPDATE_FROM_HASH:
                         {
-                            ClassPeerPacketSendAskSovereignUpdateFromHash packetSendAskSovereignUpdateFromHash = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskSovereignUpdateFromHash>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskSovereignUpdateFromHash packetSendAskSovereignUpdateFromHash = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskSovereignUpdateFromHash>(packetSendObject.PacketContent);
 
                             if (packetSendAskSovereignUpdateFromHash != null)
                             {
@@ -855,7 +855,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_NETWORK_INFORMATION:
                         {
-                            ClassPeerPacketSendAskNetworkInformation packetSendAskNetworkInformation = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskNetworkInformation>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskNetworkInformation packetSendAskNetworkInformation = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskNetworkInformation>(packetSendObject.PacketContent);
 
                             if (packetSendAskNetworkInformation != null)
                             {
@@ -955,7 +955,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_BLOCK_DATA:
                         {
-                            ClassPeerPacketSendAskBlockData packetSendAskBlockData = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockData>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskBlockData packetSendAskBlockData = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockData>(packetSendObject.PacketContent);
 
                             if (packetSendAskBlockData != null)
                             {
@@ -1065,7 +1065,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_BLOCK_HEIGHT_INFORMATION:
                         {
-                            ClassPeerPacketSendAskBlockHeightInformation packetSendAskBlockHeightInformation = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockHeightInformation>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskBlockHeightInformation packetSendAskBlockHeightInformation = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockHeightInformation>(packetSendObject.PacketContent);
 
                             if (packetSendAskBlockHeightInformation != null)
                             {
@@ -1152,7 +1152,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_BLOCK_TRANSACTION_DATA:
                         {
-                            ClassPeerPacketSendAskBlockTransactionData packetSendAskBlockTransactionData = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockTransactionData>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskBlockTransactionData packetSendAskBlockTransactionData = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockTransactionData>(packetSendObject.PacketContent);
 
                             if (packetSendAskBlockTransactionData != null)
                             {
@@ -1240,7 +1240,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_BLOCK_TRANSACTION_DATA_BY_RANGE:
                         {
-                            ClassPeerPacketSendAskBlockTransactionDataByRange packetSendAskBlockTransactionDataByRange = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockTransactionDataByRange>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskBlockTransactionDataByRange packetSendAskBlockTransactionDataByRange = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskBlockTransactionDataByRange>(packetSendObject.PacketContent);
 
                             if (packetSendAskBlockTransactionDataByRange != null)
                             {
@@ -1371,7 +1371,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         {
                             if (ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight >= BlockchainSetting.GenesisBlockHeight)
                             {
-                                ClassPeerPacketSendAskMiningShareVote packetSendAskMemPoolMiningShareVote = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMiningShareVote>(packetSendObject.PacketContent);
+                                ClassPeerPacketSendAskMiningShareVote packetSendAskMemPoolMiningShareVote = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMiningShareVote>(packetSendObject.PacketContent);
 
                                 if (packetSendAskMemPoolMiningShareVote != null)
                                 {
@@ -1849,7 +1849,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_VOTE:
                         {
-                            ClassPeerPacketSendAskMemPoolTransactionVote packetSendAskMemPoolTransactionVote = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMemPoolTransactionVote>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskMemPoolTransactionVote packetSendAskMemPoolTransactionVote = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMemPoolTransactionVote>(packetSendObject.PacketContent);
 
                             if (packetSendAskMemPoolTransactionVote != null)
                             {
@@ -2045,7 +2045,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_MEM_POOl_BLOCK_HEIGHT_LIST_BROADCAST_MODE:
                         {
-                            ClassPeerPacketSendAskMemPoolBlockHeightList packetMemPoolAskBlockHeightList = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMemPoolBlockHeightList>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskMemPoolBlockHeightList packetMemPoolAskBlockHeightList = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMemPoolBlockHeightList>(packetSendObject.PacketContent);
 
                             if (packetMemPoolAskBlockHeightList != null)
                             {
@@ -2124,7 +2124,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         break;
                     case ClassPeerEnumPacketSend.ASK_MEM_POOl_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE:
                         {
-                            ClassPeerPacketSendAskMemPoolTransactionList packetMemPoolAskMemPoolTransactionList = await DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMemPoolTransactionList>(packetSendObject.PacketContent);
+                            ClassPeerPacketSendAskMemPoolTransactionList packetMemPoolAskMemPoolTransactionList = DecryptDeserializePacketContentPeer<ClassPeerPacketSendAskMemPoolTransactionList>(packetSendObject.PacketContent);
 
                             if (packetMemPoolAskMemPoolTransactionList != null)
                             {
@@ -2498,12 +2498,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
         /// <typeparam name="T">Type of the content to return.</typeparam>
         /// <param name="packetContentCrypted">The packet content to decrypt.</param>
         /// <returns></returns>
-        private async Task<T> DecryptDeserializePacketContentPeer<T>(string packetContentCrypted)
+        private T DecryptDeserializePacketContentPeer<T>(string packetContentCrypted)
         {
             T packetContentResult = default;
 
 
-            byte[] decryptedPacket = await DecryptContentPacketPeer(packetContentCrypted);
+            byte[] decryptedPacket = DecryptContentPacketPeer(packetContentCrypted);
 
             if (decryptedPacket != null)
             {
@@ -2570,7 +2570,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
         /// </summary>
         /// <param name="content">The content encrypted.</param>
         /// <returns>Indicate if the decryption has been done successfully.</returns>
-        private async Task<byte[]> DecryptContentPacketPeer(string content)
+        private byte[] DecryptContentPacketPeer(string content)
         {
             if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(_peerClientIp))
             {

@@ -68,6 +68,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public bool BlockUnlockValid;
         public long BlockLastChangeTimestamp;
         public long BlockNetworkAmountConfirmations;
+        public bool BlockIsUpdated;
 
         /// <summary>
         /// Only used pending to sync a block.

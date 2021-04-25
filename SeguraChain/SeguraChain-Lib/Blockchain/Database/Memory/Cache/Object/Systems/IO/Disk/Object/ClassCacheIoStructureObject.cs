@@ -51,9 +51,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     {
                         lock (_blockObject)
                         {
+                            if (value.BlockIsUpdated)
+                                IsUpdated = true;
+
                             _blockObject = value;
+                            _blockObject.BlockIsUpdated = false;
                             _blockObject.Disposed = false;
-                            IsUpdated = true;
 
                             if (needPulse)
                             {

@@ -28,6 +28,7 @@ using SeguraChain_Lib.Blockchain.Wallet.Function;
 using SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.List;
+using SeguraChain_Lib.Other.Object.ThreadExtension;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
@@ -59,10 +60,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         /// <summary>
         /// Management of multithreading access.
         /// </summary>
-        private SemaphoreSlim _semaphoreSlimUpdateTransactionConfirmations;
-        private SemaphoreSlim _semaphoreSlimMemoryAccess;
-        private SemaphoreSlim _semaphoreSlimGetWalletBalance;
-        private SemaphoreSlim _semaphoreSlimCacheBlockTransactionAccess;
+        private SemaphoreSmooth _semaphoreSlimUpdateTransactionConfirmations;
+        private SemaphoreSmooth _semaphoreSlimMemoryAccess;
+        private SemaphoreSmooth _semaphoreSlimGetWalletBalance;
+        private SemaphoreSmooth _semaphoreSlimCacheBlockTransactionAccess;
 
         /// <summary>
         /// Management of memory.
@@ -97,10 +98,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             BlockchainWalletIndexMemoryCacheObject = new BlockchainWalletIndexMemoryManagement(blockchainDatabaseSetting);
 
             // Protect against multithreading access.
-            _semaphoreSlimMemoryAccess = new SemaphoreSlim(1, 1);
-            _semaphoreSlimGetWalletBalance = new SemaphoreSlim(1, 1);
-            _semaphoreSlimUpdateTransactionConfirmations = new SemaphoreSlim(1, 1);
-            _semaphoreSlimCacheBlockTransactionAccess = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount() * ClassUtility.GetMaxAvailableProcessorCount());
+            _semaphoreSlimMemoryAccess = new SemaphoreSmooth(1, 1);
+            _semaphoreSlimGetWalletBalance = new SemaphoreSmooth(1, 1);
+            _semaphoreSlimUpdateTransactionConfirmations = new SemaphoreSmooth(1, 1);
+            _semaphoreSlimCacheBlockTransactionAccess = new SemaphoreSmooth(1, ClassUtility.GetMaxAvailableProcessorCount());
 
             // Cancellation token of memory management.
             _cancellationTokenMemoryManagement = new CancellationTokenSource();
@@ -599,13 +600,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 {
 
                     // Update the active memory if the content of the block height target if this one is not empty.
-                    if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].Content != null)
+                    if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].Content != null || blockObject.BlockHeight == BlockchainSetting.GenesisBlockHeight)
                     {
                         _dictionaryBlockObjectMemory[blockObject.BlockHeight].Content = blockObject;
                         _dictionaryBlockObjectMemory[blockObject.BlockHeight].CacheUpdated = false;
                         _dictionaryBlockObjectMemory[blockObject.BlockHeight].ObjectCacheType = CacheBlockMemoryEnumState.IN_ACTIVE_MEMORY;
 
-                        if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].ObjectIndexed)
+                        if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].ObjectIndexed && blockObject.BlockHeight != BlockchainSetting.GenesisBlockHeight)
                         {
                             await AddOrUpdateMemoryDataToCache(blockObject, keepAlive, cancellation);
                         }
@@ -1658,14 +1659,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 #endif
                                     }
 
-                                    long timespend = ClassUtility.GetCurrentTimestampInMillisecond() - timestampTaskStart;
 
                                     // Retrieve latest stats calculated if their is any cancellation done.
                                     if (!canceled)
                                     {
-#if DEBUG
-                                        Debug.WriteLine("Timespend to generate the latest blockchain stats: " + timespend + " ms.");
-#endif
                                         // Update tasks stats confirmed.
                                         blockchainNetworkStatsObject.TotalCoinCirculating = totalCoinCirculating;
                                         blockchainNetworkStatsObject.TotalCoinPending = totalCoinPending;
@@ -1677,7 +1674,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                         blockchainNetworkStatsObject.LastBlockHeightTransactionConfirmationDone = lastBlockHeightTransactionConfirmationDone;
                                         blockchainNetworkStatsObject.LastBlockHeightUnlocked = lastBlockHeightUnlocked;
                                         blockchainNetworkStatsObject.LastUpdateStatsDateTime = ClassUtility.GetDatetimeFromTimestamp(ClassUtility.GetCurrentTimestampInSecond());
-                                        blockchainNetworkStatsObject.BlockchainStatsTimestampToGenerate = timespend;
+                                        blockchainNetworkStatsObject.BlockchainStatsTimestampToGenerate = ClassUtility.GetCurrentTimestampInMillisecond() - timestampTaskStart;
                                         blockchainNetworkStatsObject.LastBlockHeight = lastBlockHeight;
                                         blockchainNetworkStatsObject.LastBlockDifficulty = lastBlockDifficulty;
                                         blockchainNetworkStatsObject.LastBlockHash = lastBlockHash;

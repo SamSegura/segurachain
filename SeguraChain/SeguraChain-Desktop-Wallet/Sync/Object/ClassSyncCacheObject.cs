@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Linq;
 using SeguraChain_Lib.Utility;
+using System.Numerics;
 
 namespace SeguraChain_Desktop_Wallet.Sync.Object
 {
@@ -18,6 +19,9 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// </summary>
         private Dictionary<long, Dictionary<string, ClassSyncCacheBlockTransactionObject>> _syncCacheDatabase;
 
+        public BigInteger AvailableBalance = 0;
+        public BigInteger PendingBalance = 0;
+
         /// <summary>
         /// Get the total amount of transactions cached.
         /// </summary>
@@ -29,7 +33,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
 
                 if (_syncCacheDatabase.Count > 0)
                 {
-                    foreach(long blockHeight in _syncCacheDatabase.Keys)
+                    foreach (long blockHeight in _syncCacheDatabase.Keys)
                     {
                         totalTransactions += _syncCacheDatabase[blockHeight].Count;
                     }
@@ -131,7 +135,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
                 _semaphoreDictionaryAccess.Wait(cancellation.Token);
                 semaphoreUsed = true;
 
-                if(!_syncCacheDatabase.ContainsKey(blockHeight))
+                if (!_syncCacheDatabase.ContainsKey(blockHeight))
                 {
                     _syncCacheDatabase.Add(blockHeight, new Dictionary<string, ClassSyncCacheBlockTransactionObject>());
                     result = true;
@@ -315,7 +319,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
 
                 if (_syncCacheDatabase.ContainsKey(blockHeight))
                 {
-                    foreach(var syncCacheBlockTransactionPair in _syncCacheDatabase[blockHeight])
+                    foreach (var syncCacheBlockTransactionPair in _syncCacheDatabase[blockHeight])
                     {
                         yield return syncCacheBlockTransactionPair;
                     }

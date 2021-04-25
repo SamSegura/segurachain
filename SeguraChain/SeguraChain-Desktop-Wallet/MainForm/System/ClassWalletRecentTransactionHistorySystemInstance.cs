@@ -66,63 +66,44 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         /// <returns></returns>
         public Bitmap GetRecentTransactionHistoryBitmap(CancellationTokenSource cancellation)
         {
-            bool semaphoreUsed = false;
+
             Bitmap returnedBitmap = null;
+            bool isLockedBitmap = false;
+            bool isLockedGraphic = false;
 
             try
             {
-                if (cancellation != null)
-                {
-                    semaphoreUsed = _semaphoreRecentTransactionHistoryAccess.Wait(1000, cancellation.Token);
-                }
-                else
-                {
-                    semaphoreUsed = _semaphoreRecentTransactionHistoryAccess.Wait(1000);
-                }
-                bool isLockedBitmap = false;
-                bool isLockedGraphic = false;
-
                 try
                 {
-                    try
+                    if (_bitmapRecentTransactionHistory != null && _graphicsRecentTransactionHistory != null)
                     {
-                        if (_bitmapRecentTransactionHistory != null && _graphicsRecentTransactionHistory != null)
+                        if (Monitor.TryEnter(_graphicsRecentTransactionHistory))
                         {
-                            if (Monitor.TryEnter(_graphicsRecentTransactionHistory))
+                            isLockedGraphic = true;
+
+                            if (Monitor.TryEnter(_bitmapRecentTransactionHistory))
                             {
-                                isLockedGraphic = true;
+                                isLockedBitmap = true;
 
-                                if (Monitor.TryEnter(_bitmapRecentTransactionHistory))
-                                {
-                                    isLockedBitmap = true;
-
-                                    returnedBitmap = ClassGraphicsUtility.CloneBitmap(_bitmapRecentTransactionHistory);
-                                }
+                                returnedBitmap = ClassGraphicsUtility.CloneBitmap(_bitmapRecentTransactionHistory);
                             }
                         }
                     }
-                    catch
-                    {
-                        // Ignored.
-                    }
                 }
-                finally
+                catch
                 {
-                    if (isLockedBitmap)
-                    {
-                        Monitor.Exit(_bitmapRecentTransactionHistory);
-                    }
-                    if (isLockedGraphic)
-                    {
-                        Monitor.Exit(_graphicsRecentTransactionHistory);
-                    }
+                    // Ignored.
                 }
             }
             finally
             {
-                if (semaphoreUsed)
+                if (isLockedBitmap)
                 {
-                    _semaphoreRecentTransactionHistoryAccess.Release();
+                    Monitor.Exit(_bitmapRecentTransactionHistory);
+                }
+                if (isLockedGraphic)
+                {
+                    Monitor.Exit(_graphicsRecentTransactionHistory);
                 }
             }
             return returnedBitmap;

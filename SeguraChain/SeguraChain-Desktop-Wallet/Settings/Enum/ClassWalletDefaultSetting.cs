@@ -22,7 +22,7 @@ namespace SeguraChain_Desktop_Wallet.Settings.Enum
         /// Interval of update used of the sync of wallets files opened.
         /// </summary>
         public const int DefaultWalletUpdateSyncInterval = 1000;
-        public const int DefaultWalletUpdateSyncCacheInterval = 30 * 1000;
+        public const int DefaultWalletUpdateSyncCacheInterval = 5 * 1000;
 
         /// <summary>
         /// Interval of update to show latest blockchain network stats.
@@ -37,7 +37,7 @@ namespace SeguraChain_Desktop_Wallet.Settings.Enum
         /// <summary>
         /// Interval of update informations of the wallet opened.
         /// </summary>
-        public const int DefaultTaskUpdateWalletInformationsInterval = 1000;
+        public const int DefaultTaskUpdateWalletInformationsInterval = 10 * 1000;
 
         /// <summary>
         /// Await delay on invoke action on the form of the desktop wallet.
@@ -56,7 +56,7 @@ namespace SeguraChain_Desktop_Wallet.Settings.Enum
         #region Recent transaction history colors and settings.
 
         public static readonly Font DefaultPanelRecentTransactionHistoryFont = new Font("Arial", 10, FontStyle.Bold);
-        public const int DefaultTaskUpdateWalletRecentTransactionsInterval = 100;
+        public const int DefaultTaskUpdateWalletRecentTransactionsInterval = 1000;
         public const int DefaultWalletMaxRecentTransactionToShow = 5;
         public const int DefaultWalletRecentTransactionLogoSize = 50;
         public static readonly Color DefaultRecentTransactionBackColor = Color.FromArgb(245, 249, 252);

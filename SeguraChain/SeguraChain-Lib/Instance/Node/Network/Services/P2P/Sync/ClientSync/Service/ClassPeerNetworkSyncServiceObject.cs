@@ -3537,7 +3537,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
 
             if (sendObject != null)
             {
@@ -3663,7 +3663,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
 
             if (sendObject != null)
             {
@@ -3750,7 +3750,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
 
             if (sendObject != null)
             {
@@ -3842,7 +3842,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
 
             if (sendObject != null)
             {
@@ -3944,7 +3944,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             };
 
 
-            sendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
 
             if (sendObject != null)
             {
@@ -4049,7 +4049,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             };
 
 
-            sendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
 
             if (sendObject != null)
             {
@@ -4157,7 +4157,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             };
 
 
-            sendObject = await ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
 
             if (sendObject != null)
             {

@@ -247,7 +247,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                             })
                         };
 
-                        packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, cancellation);
+                        packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, cancellation);
 
                         if (packetSendObject != null)
                         {
@@ -346,7 +346,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                 })
                             };
 
-                            packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMiningShareVote);
+                            packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMiningShareVote);
 
                             if (packetSendObject != null)
                             {
@@ -874,7 +874,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                 })
                             };
 
-                            packetSendObject = await BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMemPoolTxVote);
+                            packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMemPoolTxVote);
 
                             if (packetSendObject != null)
                             {
@@ -1230,7 +1230,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
         /// <param name="cancellation"></param>
         /// 
         /// <returns></returns>
-        public static async Task<ClassPeerPacketSendObject> BuildSignedPeerSendPacketObject(ClassPeerPacketSendObject sendObject, string peerIp, string peerUniqueId, CancellationTokenSource cancellation)
+        public static ClassPeerPacketSendObject BuildSignedPeerSendPacketObject(ClassPeerPacketSendObject sendObject, string peerIp, string peerUniqueId, CancellationTokenSource cancellation)
         {
             if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
             {

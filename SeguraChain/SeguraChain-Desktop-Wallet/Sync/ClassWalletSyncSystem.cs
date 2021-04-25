@@ -175,16 +175,16 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     {
                         if (DatabaseSyncCache.Count > 0)
                         {
-                            
+
                             foreach (string walletAddress in DatabaseSyncCache.Keys.ToArray())
                             {
                                 _cancellationSyncCache.Token.ThrowIfCancellationRequested();
 
                                 bool exception = false;
 
-                                foreach(long blockHeight in DatabaseSyncCache[walletAddress].BlockHeightKeys(_cancellationSyncCache))
+                                foreach (long blockHeight in DatabaseSyncCache[walletAddress].BlockHeightKeys(_cancellationSyncCache))
                                 {
-                                    foreach(var transactionHash in DatabaseSyncCache[walletAddress].GetListBlockTransactionHashFromBlockHeight(blockHeight, _cancellationSyncCache))
+                                    foreach (var transactionHash in DatabaseSyncCache[walletAddress].GetListBlockTransactionHashFromBlockHeight(blockHeight, _cancellationSyncCache))
                                     {
                                         try
                                         {
@@ -209,7 +209,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                     }
 
                                     if (exception) break;
-                                    
+
                                 }
 
                                 string walletFilename = ClassDesktopWalletCommonData.WalletDatabase.GetWalletFileNameFromWalletAddress(walletAddress);
@@ -218,9 +218,9 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                 {
                                     if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData.ContainsKey(walletFilename))
                                     {
-                                        foreach(long blockHeight in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFilename].WalletTransactionList.Keys.ToArray())
+                                        foreach (long blockHeight in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFilename].WalletTransactionList.Keys.ToArray())
                                         {
-                                            foreach(string transactionHash in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFilename].WalletTransactionList[blockHeight].ToArray())
+                                            foreach (string transactionHash in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFilename].WalletTransactionList[blockHeight].ToArray())
                                             {
                                                 if (!DatabaseSyncCache[walletAddress].ContainsBlockTransactionFromTransactionHashAndBlockHeight(blockHeight, transactionHash, _cancellationSyncCache))
                                                 {
