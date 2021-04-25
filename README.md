@@ -78,6 +78,8 @@ Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
 <h3>Project of development:</h3>
 
+-> Develop a block explorer page inside of the node API.
+
 -> Implement an option to convert the BTC Blockchain database compatible with this technology.
 
 -> Develop an example of web wallet with <b>NuxtJS</b>
