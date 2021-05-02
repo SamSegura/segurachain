@@ -33,7 +33,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         /// Default data settings.
         /// </summary>
         public const bool DefaultEnableEncryptionDatabase = false;
-        public const bool DefaultEnableCompressingDatabase = false;
+        public const bool DefaultEnableCompressingDatabase = true;
         public const bool DefaultEnableCachingDatabase = true;
         public const bool DefaultDataFormatIsJson = false;
         public const ClassBlockchainDatabaseCacheTypeEnum DefaultCacheType = ClassBlockchainDatabaseCacheTypeEnum.CACHE_DISK;
