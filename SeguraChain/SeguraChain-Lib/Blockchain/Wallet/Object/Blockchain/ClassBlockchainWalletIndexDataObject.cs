@@ -411,7 +411,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
                     {
                         foreach (var txHash in await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListTransactionHashByWalletAddressTarget(_walletAddress, blockHeight, false, cancellation))
                         {
-                            if (!txHash.IsNullOrEmpty())
+                            if (!txHash.IsNullOrEmpty(out _))
                             {
                                 listTxHash.Add(txHash);
                             }

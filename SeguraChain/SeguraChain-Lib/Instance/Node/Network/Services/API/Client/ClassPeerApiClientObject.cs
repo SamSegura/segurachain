@@ -136,7 +136,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
 
                                 string packetReceived = packetBuffer.GetStringFromByteArrayAscii();
 
-                                if (!packetReceived.IsNullOrEmpty())
+                                if (!packetReceived.IsNullOrEmpty(out _))
                                 {
 
                                     #region Take in count the common POST HTTP request syntax of data.
@@ -360,7 +360,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
 
                 if (apiPeerPacketObjectSend != null)
                 {
-                    if (!apiPeerPacketObjectSend.PacketContentObjectSerialized.IsNullOrEmpty())
+                    if (!apiPeerPacketObjectSend.PacketContentObjectSerialized.IsNullOrEmpty(out _))
                     {
 
                         switch (apiPeerPacketObjectSend.PacketType)
@@ -1207,10 +1207,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
         /// <returns></returns>
         private string BuildPacketResponse<T>(T packetResponse, ClassPeerApiEnumPacketResponse packetResponseType)
         {
-            return JsonConvert.SerializeObject(new ClassApiPeerPacketObjetReceive()
+            return ClassUtility.SerializeData(new ClassApiPeerPacketObjetReceive()
             {
                 PacketType = packetResponseType,
-                PacketObjectSerialized = JsonConvert.SerializeObject(packetResponse)
+                PacketObjectSerialized = ClassUtility.SerializeData(packetResponse)
             });
         }
 
@@ -1221,7 +1221,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
         /// <returns></returns>
         private string BuildPacketResponseStatus(ClassPeerApiEnumPacketResponse packetResponseType)
         {
-            return JsonConvert.SerializeObject(new ClassApiPeerPacketObjetReceive()
+            return ClassUtility.SerializeData(new ClassApiPeerPacketObjetReceive()
             {
                 PacketType = packetResponseType,
                 PacketObjectSerialized = null

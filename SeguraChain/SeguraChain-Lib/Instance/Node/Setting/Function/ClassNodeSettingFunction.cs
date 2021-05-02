@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using Newtonsoft.Json;
@@ -159,7 +160,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
 
                 firewallChainName = Console.ReadLine() ?? string.Empty;
 
-                while(firewallChainName.IsNullOrEmpty())
+                while(firewallChainName.IsNullOrEmpty(out _))
                 {
                     Console.Clear();
 
@@ -217,7 +218,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
             {
                 using (StreamWriter writer = new StreamWriter(PeerSettingFilePath))
                 {
-                    writer.WriteLine(JsonConvert.SerializeObject(peerSettingObject, Formatting.Indented));
+                    writer.WriteLine(ClassUtility.SerializeData(peerSettingObject, Formatting.Indented));
                 }
             }
             catch(Exception error)
@@ -289,8 +290,8 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
                 return false;
             }
 
-            if (peerSettingObject.PeerNetworkSettingObject.PeerNumericPrivateKey.IsNullOrEmpty() ||
-                peerSettingObject.PeerNetworkSettingObject.PeerNumericPublicKey.IsNullOrEmpty())
+            if (peerSettingObject.PeerNetworkSettingObject.PeerNumericPrivateKey.IsNullOrEmpty(out _) ||
+                peerSettingObject.PeerNetworkSettingObject.PeerNumericPublicKey.IsNullOrEmpty(out _))
             {
                 ClassLog.WriteLine("Error, empty private/public numeric keys.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                 return false;
@@ -303,7 +304,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
                 return false;
             }
 
-            if (peerSettingObject.PeerNetworkSettingObject.PeerUniqueId.IsNullOrEmpty())
+            if (peerSettingObject.PeerNetworkSettingObject.PeerUniqueId.IsNullOrEmpty(out _))
             {
                 ClassLog.WriteLine("Error, the peer unique id is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
@@ -379,21 +380,21 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
 
             #region Database setting part.
 
-            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainSetting.BlockchainBlockDatabaseFilename.IsNullOrEmpty())
+            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainSetting.BlockchainBlockDatabaseFilename.IsNullOrEmpty(out _))
             {
                 ClassLog.WriteLine("Error, the block database filename is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
                 return false;
             }
 
-            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainSetting.BlockchainCheckpointDatabaseFilename.IsNullOrEmpty())
+            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainSetting.BlockchainCheckpointDatabaseFilename.IsNullOrEmpty(out _))
             {
                 ClassLog.WriteLine("Error, the checkpoint database filename is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
                 return false;
             }
 
-            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainSetting.BlockchainDirectoryPath.IsNullOrEmpty())
+            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainSetting.BlockchainDirectoryPath.IsNullOrEmpty(out _))
             {
                 ClassLog.WriteLine("Error, the blockchain directory path is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
@@ -406,7 +407,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
 
             if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting == null)
             {
-                if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting.CacheDirectoryPath.IsNullOrEmpty())
+                if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting.CacheDirectoryPath.IsNullOrEmpty(out _))
                 {
                     ClassLog.WriteLine("Error, the peer blockchain cache directory path is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
@@ -520,13 +521,13 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
 
             #region MemPool setting part.
 
-            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.MemPoolSetting.MemPoolDirectoryPath.IsNullOrEmpty())
+            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.MemPoolSetting.MemPoolDirectoryPath.IsNullOrEmpty(out _))
             {
                 ClassLog.WriteLine("Error, the MemPool directory path cannot be null or empty", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
                 return false;
             }
 
-            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.MemPoolSetting.MemPoolTransactionDatabaseFilename.IsNullOrEmpty())
+            if (peerSettingObject.PeerBlockchainDatabaseSettingObject.MemPoolSetting.MemPoolTransactionDatabaseFilename.IsNullOrEmpty(out _))
             {
                 ClassLog.WriteLine("Error, the MemPool transaction database filename cannot be null or empty", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
                 return false;
@@ -547,7 +548,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
 
             if (peerSettingObject.PeerFirewallSettingObject.PeerEnableFirewallLink)
             {
-                if (peerSettingObject.PeerFirewallSettingObject.PeerFirewallName.IsNullOrEmpty() || peerSettingObject.PeerFirewallSettingObject.PeerFirewallChainName.IsNullOrEmpty())
+                if (peerSettingObject.PeerFirewallSettingObject.PeerFirewallName.IsNullOrEmpty(out _) || peerSettingObject.PeerFirewallSettingObject.PeerFirewallChainName.IsNullOrEmpty(out _))
                 {
                     ClassLog.WriteLine("Error, the peer firewall link is enabled, but the firewall name or the chain/table firewall name are empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 

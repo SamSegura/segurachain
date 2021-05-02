@@ -129,7 +129,7 @@ namespace SeguraChain_Lib.Utility
         /// <returns></returns>
         private static byte[] Decode(string base58Content, bool useBlockchainVersion)
         {
-            if (base58Content.IsNullOrEmpty())
+            if (base58Content.IsNullOrEmpty(out _))
             {
                 return null;
             }

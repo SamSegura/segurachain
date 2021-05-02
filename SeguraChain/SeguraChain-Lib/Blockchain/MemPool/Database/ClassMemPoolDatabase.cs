@@ -49,7 +49,7 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
 
             if (blockchainDatabaseSetting.DataSetting.EnableEncryptionDatabase)
             {
-                if (encryptionKey.IsNullOrEmpty())
+                if (encryptionKey.IsNullOrEmpty(out _))
                 {
                     ClassLog.WriteLine("The input encryption key is empty, can't decrypt MemPool database.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                     return false;
@@ -105,7 +105,7 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
                                     }
                                 }
 
-                                if (!line.IsNullOrEmpty())
+                                if (!line.IsNullOrEmpty(out _))
                                 {
 
                                     if (ClassUtility.TryDeserialize(line, out ClassMemPoolTransactionObject transactionObject, ObjectCreationHandling.Reuse))
@@ -173,7 +173,7 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
 
                                 if (blockchainDatabaseSetting.DataSetting.EnableEncryptionDatabase)
                                 {
-                                    if (ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(JsonConvert.SerializeObject(txObjects.Value)), _encryptionKey, _encryptionKeyIv, out byte[] encryptedResult))
+                                    if (ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(ClassUtility.SerializeData(txObjects.Value)), _encryptionKey, _encryptionKeyIv, out byte[] encryptedResult))
                                     {
                                         writer.WriteLine(Convert.ToBase64String(encryptedResult));
                                     }
@@ -181,7 +181,7 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
                                 else
                                 {
 
-                                    writer.WriteLine(JsonConvert.SerializeObject(txObjects.Value));
+                                    writer.WriteLine(ClassUtility.SerializeData(txObjects.Value));
                                 }
 
                             }

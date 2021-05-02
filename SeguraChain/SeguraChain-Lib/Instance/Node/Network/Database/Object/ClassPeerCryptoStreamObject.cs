@@ -163,7 +163,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                         countInit++;
 
                     }
-                    if (!publicKey.IsNullOrEmpty() && !privateKey.IsNullOrEmpty())
+                    if (!publicKey.IsNullOrEmpty(out _) && !privateKey.IsNullOrEmpty(out _))
                     {
                         _privateKey = privateKey;
                         _ecPrivateKeyParameters = new ECPrivateKeyParameters(new BigInteger(ClassBase58.DecodeWithCheckSum(privateKey, true)), ClassWalletUtility.ECDomain);
@@ -304,7 +304,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         {
             bool result = false;
 
-            if (_initialized)
+            if (_initialized && !signature.IsNullOrEmpty(out signature))
             {
                 if (publicKey != null)
                 {

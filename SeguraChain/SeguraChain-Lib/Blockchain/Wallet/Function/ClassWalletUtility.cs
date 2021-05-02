@@ -6,7 +6,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Asn1.X9;
-using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using SeguraChain_Lib.Blockchain.Setting;
@@ -14,7 +13,6 @@ using SeguraChain_Lib.Blockchain.Wallet.Object.Wallet;
 using SeguraChain_Lib.Other.Object.SHA3;
 using SeguraChain_Lib.Utility;
 using BigInteger = Org.BouncyCastle.Math.BigInteger;
-using System.Threading;
 
 namespace SeguraChain_Lib.Blockchain.Wallet.Function
 {
@@ -23,7 +21,6 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static readonly X9ECParameters ECParameters = SecNamedCurves.GetByName(BlockchainSetting.CurveName);
         public static readonly ECDomainParameters ECDomain = new ECDomainParameters(ECParameters.Curve, ECParameters.G, ECParameters.N, ECParameters.H);
         private const string BaseHexCurve = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-        private static ISigner _signer = SignerUtilities.GetSigner(BlockchainSetting.SignerName);
 
 
 
@@ -81,7 +78,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
             // Not really much secure..
             if (!fastGenerator)
             {
-                bool useBaseWord = !baseWords.IsNullOrEmpty(); // If false, use random word process.
+                bool useBaseWord = !baseWords.IsNullOrEmpty(out _); // If false, use random word process.
 
                 byte[] privateKeyWifByteArray = new byte[BlockchainSetting.WalletPrivateKeyWifByteArrayLength];
                 if (useBaseWord)
@@ -177,7 +174,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         /// <returns>Return a public key WIF.</returns>
         public static string GenerateWalletPublicKeyFromPrivateKey(string privateKeyWif, bool blockReward = false)
         {
-            if (privateKeyWif.IsNullOrEmpty())
+            if (privateKeyWif.IsNullOrEmpty(out _))
             {
                 return null;
             }
@@ -229,7 +226,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         /// <returns>Return a wallet address WIF.</returns>
         public static string GenerateWalletAddressFromPublicKey(string publicKeyWif)
         {
-            if (publicKeyWif.IsNullOrEmpty())
+            if (publicKeyWif.IsNullOrEmpty(out _))
             {
                 return null;
             }
@@ -291,7 +288,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         /// <returns>Return the signature of a transaction.</returns>
         public static string WalletGenerateSignature(string privateKeyWif, string hash)
         {
-            if (privateKeyWif.IsNullOrEmpty() || hash.IsNullOrEmpty())
+            if (privateKeyWif.IsNullOrEmpty(out _) || hash.IsNullOrEmpty(out _))
             {
                 return null;
             }
@@ -327,7 +324,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         /// <returns>Return check result from a signature.</returns>
         public static bool WalletCheckSignature(string hash, string signature, string publicKeyWif)
         {
-            if (hash.IsNullOrEmpty() || publicKeyWif.IsNullOrEmpty() || signature.IsNullOrEmpty())
+            if (hash.IsNullOrEmpty(out _) || publicKeyWif.IsNullOrEmpty(out _) || signature.IsNullOrEmpty(out _))
             {
                 return false;
             }
@@ -357,7 +354,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         /// <returns></returns>
         public static bool CheckWalletAddress(string walletAddress)
         {
-            if (walletAddress.IsNullOrEmpty())
+            if (walletAddress.IsNullOrEmpty(out _))
             {
                 return false;
             }
@@ -390,7 +387,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         /// <returns></returns>
         public static bool CheckWalletPublicKey(string walletPublicKey)
         {
-            if (walletPublicKey.IsNullOrEmpty())
+            if (walletPublicKey.IsNullOrEmpty(out _))
             {
                 return false;
             }

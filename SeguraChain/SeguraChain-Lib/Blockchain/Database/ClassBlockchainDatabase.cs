@@ -92,7 +92,7 @@ namespace SeguraChain_Lib.Blockchain.Database
 
             if (blockchainDatabaseSetting.DataSetting.EnableEncryptionDatabase)
             {
-                if (encryptionDatabaseKey.IsNullOrEmpty())
+                if (encryptionDatabaseKey.IsNullOrEmpty(out encryptionDatabaseKey))
                 {
 
                     ClassLog.WriteLine("The encryption key is empty, can't decrypt the database.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
@@ -296,7 +296,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                         {
                             foreach (var walletCheckpointObject in DictionaryCheckpointObjects[ClassCheckpointEnumType.WALLET_CHECKPOINT].ToArray())
                             {
-                                if (!walletCheckpointObject.PossibleWalletAddress.IsNullOrEmpty())
+                                if (!walletCheckpointObject.PossibleWalletAddress.IsNullOrEmpty(out walletCheckpointObject.PossibleWalletAddress))
                                 {
                                     if (!BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.ContainsKey(walletCheckpointObject.PossibleWalletAddress, null, out _))
                                     {
@@ -653,7 +653,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                             }
                         }
 
-                        if (!line.IsNullOrEmpty())
+                        if (!line.IsNullOrEmpty(out line))
                         {
                             if (ClassUtility.TryDeserialize(line, out ClassCheckpointObject checkpointObject))
                             {
@@ -709,7 +709,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                             {
                                 foreach (var checkpointObject in DictionaryCheckpointObjects[checkpointKey])
                                 {
-                                    string checkpointLineToWrite = JsonConvert.SerializeObject(checkpointObject);
+                                    string checkpointLineToWrite = ClassUtility.SerializeData(checkpointObject);
 
                                     if (blockchainDatabaseSetting.DataSetting.EnableEncryptionDatabase)
                                     {
@@ -895,7 +895,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             // Allow on types of tx who provide a wallet address has sender.
             if (transactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION && transactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
             {
-                if (!transactionObject.WalletAddressSender.IsNullOrEmpty())
+                if (!transactionObject.WalletAddressSender.IsNullOrEmpty(out _))
                 {
                     if (!BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.ContainsKey(transactionObject.WalletAddressSender, cancellation, out _))
                     {
@@ -904,7 +904,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                 }
             }
 
-            if (!transactionObject.WalletAddressReceiver.IsNullOrEmpty())
+            if (!transactionObject.WalletAddressReceiver.IsNullOrEmpty(out _))
             {
                 if (!BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.ContainsKey(transactionObject.WalletAddressReceiver, cancellation, out _))
                 {
@@ -1020,7 +1020,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                                         if (BlockchainMemoryManagement[blockHeight, cancellation].BlockHeight == blockHeight)
                                         {
                                             if (BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject == null
-                                                && BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner.IsNullOrEmpty()
+                                                && BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner.IsNullOrEmpty(out _)
                                                 && BlockchainMemoryManagement[blockHeight, cancellation].TimestampFound == 0
                                                 && BlockchainMemoryManagement[blockHeight, cancellation].BlockStatus == ClassBlockEnumStatus.LOCKED)
                                             {
@@ -1062,6 +1062,18 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                 {
                                                                                     Tuple<ClassBlockEnumMiningShareVoteStatus, bool> blockMiningShareVoteStatus = await ClassPeerNetworkBroadcastFunction.AskBlockMiningShareVoteToPeerListsAsync(apiServerIp, apiServerOpenNatIp, string.Empty, blockHeight, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject, cancellation, true);
 
+                                                                                    int countRetry = 0;
+                                                                                    while(blockMiningShareVoteStatus.Item1 == ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOCONSENSUS && 
+                                                                                         !blockMiningShareVoteStatus.Item2 && countRetry < 10)
+                                                                                    {
+                                                                                        blockMiningShareVoteStatus = await ClassPeerNetworkBroadcastFunction.AskBlockMiningShareVoteToPeerListsAsync(apiServerIp, apiServerOpenNatIp, string.Empty, blockHeight, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject, cancellation, true);
+                                                                                        countRetry++;
+                                                                                    }
+
+                                                                                    if (countRetry > 10 && !blockMiningShareVoteStatus.Item2 && blockMiningShareVoteStatus.Item1 == ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOCONSENSUS)
+                                                                                    {
+                                                                                        blockMiningShareVoteStatus = new Tuple<ClassBlockEnumMiningShareVoteStatus, bool>(ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED, false);
+                                                                                    }
 
                                                                                     if (blockMiningShareVoteStatus.Item2)
                                                                                     {
@@ -1397,7 +1409,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                 {
 
                     bool doBlockReward = false;
-                    if (BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner.IsNullOrEmpty() && BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject == null || fromSync)
+                    if (BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner.IsNullOrEmpty(out _) && BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject == null || fromSync)
                     {
                         doBlockReward = true;
                     }

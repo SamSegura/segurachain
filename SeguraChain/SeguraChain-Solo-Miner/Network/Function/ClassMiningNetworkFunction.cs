@@ -82,7 +82,7 @@ namespace SeguraChain_Solo_Miner.Network.Function
                                     {
                                         if (apiPeerPacketSendNetworkStats != null)
                                         {
-                                            if (!apiPeerPacketSendNetworkStats.CurrentBlockHash.IsNullOrEmpty() && apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting != null)
+                                            if (!apiPeerPacketSendNetworkStats.CurrentBlockHash.IsNullOrEmpty(out _) && apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting != null)
                                             {
                                                 if (apiPeerPacketSendNetworkStats.CurrentBlockHash.Length == BlockchainSetting.BlockHashHexSize)
                                                 {
@@ -92,7 +92,7 @@ namespace SeguraChain_Solo_Miner.Network.Function
 
                                                     if (ClassMiningPoWaCUtility.CheckMiningPoWaCSetting(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting))
                                                     {
-                                                        currentMiningPowacSettingSerializedString = JsonConvert.SerializeObject(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting);
+                                                        currentMiningPowacSettingSerializedString = ClassUtility.SerializeData(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting);
                                                     }
                                                 }
                                             }
@@ -187,7 +187,7 @@ namespace SeguraChain_Solo_Miner.Network.Function
 
                                 response.Close();
 
-                                if (!result.IsNullOrEmpty())
+                                if (!result.IsNullOrEmpty(out _))
                                 {
                                     if (ClassUtility.TryDeserialize(result, out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
                                     {
@@ -234,10 +234,10 @@ namespace SeguraChain_Solo_Miner.Network.Function
 
                 using (HttpClient client = new HttpClient())
                 {
-                    var response = client.PostAsync("http://" + peerIp + ":" + peerPort, new StringContent(JsonConvert.SerializeObject(new ClassApiPeerPacketObjectSend()
+                    var response = client.PostAsync("http://" + peerIp + ":" + peerPort, new StringContent(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
                     {
                         PacketType = ClassPeerApiEnumPacketSend.PUSH_MINING_SHARE,
-                        PacketContentObjectSerialized = JsonConvert.SerializeObject(new ClassApiPeerPacketSendMiningShare()
+                        PacketContentObjectSerialized = ClassUtility.SerializeData(new ClassApiPeerPacketSendMiningShare()
                         {
                             MiningPowShareObject = miningPoWaCShareObject,
                             PacketTimestamp = miningPoWaCShareObject.Timestamp,
@@ -261,10 +261,10 @@ namespace SeguraChain_Solo_Miner.Network.Function
 
 
                 /*
-                byte[] packet = ClassUtility.GetByteArrayFromString(JsonConvert.SerializeObject(new ClassApiPeerPacketObjectSend()
+                byte[] packet = ClassUtility.GetByteArrayFromString(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
                 {
                     PacketType = ClassPeerApiEnumPacketSend.PUSH_MINING_SHARE,
-                    PacketContentObjectSerialized = JsonConvert.SerializeObject(new ClassApiPeerPacketSendMiningShare()
+                    PacketContentObjectSerialized = ClassUtility.SerializeData(new ClassApiPeerPacketSendMiningShare()
                     {
                         MiningPowShareObject = miningPoWaCShareObject,
                         PacketTimestamp = miningPoWaCShareObject.Timestamp,

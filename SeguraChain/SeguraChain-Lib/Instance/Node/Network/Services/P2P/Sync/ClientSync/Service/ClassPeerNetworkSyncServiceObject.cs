@@ -406,7 +406,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                             {
                                 if (ClassPeerDatabase.DictionaryPeerDataObject[peer][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_DEAD)
                                 {
-                                    if (!peer.IsNullOrEmpty())
+                                    if (!peer.IsNullOrEmpty(out _))
                                     {
                                         peerListToCheck.Add(new Tuple<string, string>(peer, peerUniqueId));
                                     }
@@ -1820,12 +1820,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                 {
                                                     bool peerRanked = false;
 
-                                                    if (!result.Item2.PacketNumericHash.IsNullOrEmpty() && !result.Item2.PacketNumericSignature.IsNullOrEmpty())
+                                                    if (!result.Item2.PacketNumericHash.IsNullOrEmpty(out _) && !result.Item2.PacketNumericSignature.IsNullOrEmpty(out _))
                                                     {
                                                         if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                         {
 
-                                                            if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
+                                                            if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(ClassUtility.SerializeData(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                             {
                                                                 if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
                                                                 {
@@ -1886,7 +1886,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                 if (insert)
                                                                 {
-                                                                    string packetDataHash = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(packetData));
+                                                                    string packetDataHash = ClassUtility.GenerateSha3512FromString(ClassUtility.SerializeData(packetData));
 
                                                                     if (!listNetworkInformationsSynced.ContainsKey(packetDataHash))
                                                                     {
@@ -2032,7 +2032,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                         if (percentAgreeVoteNorm > 0 || percentAgreeVoteSeed > 0)
                         {
-                            if (!mostVotedDataHashSeed.IsNullOrEmpty())
+                            if (!mostVotedDataHashSeed.IsNullOrEmpty(out _))
                             {
                                 if (percentAgreeVoteSeed > percentAgreeVoteNorm)
                                 {
@@ -2043,7 +2043,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                 }
                                 else
                                 {
-                                    if (!mostVotedDataHashNorm.IsNullOrEmpty())
+                                    if (!mostVotedDataHashNorm.IsNullOrEmpty(out _))
                                     {
                                         if (listNetworkInformationsSynced.ContainsKey(mostVotedDataHashNorm))
                                         {
@@ -2052,7 +2052,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                     }
                                 }
                             }
-                            else if (!mostVotedDataHashNorm.IsNullOrEmpty())
+                            else if (!mostVotedDataHashNorm.IsNullOrEmpty(out _))
                             {
                                 if (listNetworkInformationsSynced.ContainsKey(mostVotedDataHashNorm))
                                 {
@@ -2160,7 +2160,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                 if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                 {
-                                                                    if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
+                                                                    if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(ClassUtility.SerializeData(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                     {
                                                                         // Do not allow multiple seed votes from the same numeric public key.
                                                                         if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
@@ -2182,7 +2182,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                 blockObject.BlockTotalTaskTransactionConfirmationDone = 0;
                                                                 blockObject.BlockTransactionConfirmationCheckTaskDone = false;
                                                                 blockObject?.BlockTransactions.Clear();
-                                                                string blockObjectHash = JsonConvert.SerializeObject(blockObject);
+                                                                string blockObjectHash = ClassUtility.SerializeData(blockObject);
 
                                                                 bool insertStatus = false;
 
@@ -2522,7 +2522,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                     if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                     {
-                                                                        if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
+                                                                        if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(ClassUtility.SerializeData(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                         {
                                                                             // Do not allow multiple seed votes from the same numeric public key.
                                                                             if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
@@ -2535,7 +2535,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                         }
                                                                     }
 
-                                                                    string txHashCompare = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(result.Item2.ObjectReturned.TransactionObject));
+                                                                    string txHashCompare = ClassUtility.GenerateSha3512FromString(ClassUtility.SerializeData(result.Item2.ObjectReturned.TransactionObject));
 
                                                                     if (!listTransactionObjects.ContainsKey(txHashCompare))
                                                                     {
@@ -2694,7 +2694,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     }
 
                     // Proceed to votes.
-                    if (!seedTxHashMaxVoted.IsNullOrEmpty() && !normTxHashMaxVoted.IsNullOrEmpty())
+                    if (!seedTxHashMaxVoted.IsNullOrEmpty(out _) && !normTxHashMaxVoted.IsNullOrEmpty(out _))
                     {
                         // Perfect equality
                         if (seedTxHashMaxVoted == normTxHashMaxVoted)
@@ -2713,12 +2713,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     }
 
                     // Seed win.
-                    if (!seedTxHashMaxVoted.IsNullOrEmpty())
+                    if (!seedTxHashMaxVoted.IsNullOrEmpty(out _))
                     {
                         return listTransactionObjects[seedTxHashMaxVoted];
                     }
                     // Norm win.
-                    if (!normTxHashMaxVoted.IsNullOrEmpty())
+                    if (!normTxHashMaxVoted.IsNullOrEmpty(out _))
                     {
                         return listTransactionObjects[normTxHashMaxVoted];
                     }
@@ -2802,7 +2802,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                     if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                                     {
-                                                                        if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
+                                                                        if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(ClassUtility.SerializeData(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                         {
                                                                             // Do not allow multiple seed votes from the same numeric public key.
                                                                             if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
@@ -2816,7 +2816,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                     }
 
 
-                                                                    string txHashCompare = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(result.Item2.ObjectReturned.ListTransactionObject));
+                                                                    string txHashCompare = ClassUtility.GenerateSha3512FromString(ClassUtility.SerializeData(result.Item2.ObjectReturned.ListTransactionObject));
 
                                                                     await semaphoreInsert.WaitAsync(cancellationTokenSourceTaskSync.Token);
                                                                     semaphoreUsed = true;
@@ -2987,7 +2987,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     }
 
                     // Proceed to votes.
-                    if (!seedTxHashMaxVoted.IsNullOrEmpty() && !normTxHashMaxVoted.IsNullOrEmpty())
+                    if (!seedTxHashMaxVoted.IsNullOrEmpty(out _) && !normTxHashMaxVoted.IsNullOrEmpty(out _))
                     {
                         // Perfect equality
                         if (seedTxHashMaxVoted == normTxHashMaxVoted)
@@ -3006,12 +3006,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     }
 
                     // Seed win.
-                    if (!seedTxHashMaxVoted.IsNullOrEmpty())
+                    if (!seedTxHashMaxVoted.IsNullOrEmpty(out _))
                     {
                         return listTransactionObjects[seedTxHashMaxVoted];
                     }
                     // Norm win.
-                    if (!normTxHashMaxVoted.IsNullOrEmpty())
+                    if (!normTxHashMaxVoted.IsNullOrEmpty(out _))
                     {
                         return listTransactionObjects[normTxHashMaxVoted];
                     }
@@ -3086,7 +3086,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                             if (ClassPeerCheckManager.PeerHasSeedRank(peerListTarget[i1].PeerIpTarget, peerListTarget[i1].PeerUniqueIdTarget, out string numericPublicKeyOut, out _))
                                                             {
-                                                                if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(JsonConvert.SerializeObject(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
+                                                                if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(ClassUtility.SerializeData(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                 {
                                                                     // Do not allow multiple seed votes from the same numeric public key.
                                                                     if (!listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut))
@@ -3147,7 +3147,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                 Environment.NewLine + "Block status: " + result.Item2.ObjectReturned.BlockData.BlockStatus +
                                                                                 Environment.NewLine + "Block Difficulty: " + result.Item2.ObjectReturned.BlockData.BlockDifficulty +
                                                                                 Environment.NewLine + "Block final transaction hash: " + result.Item2.ObjectReturned.BlockData.BlockFinalHashTransaction +
-                                                                                Environment.NewLine + "Block Mining pow share: " + JsonConvert.SerializeObject(result.Item2.ObjectReturned.BlockData.BlockMiningPowShareUnlockObject) +
+                                                                                Environment.NewLine + "Block Mining pow share: " + ClassUtility.SerializeData(result.Item2.ObjectReturned.BlockData.BlockMiningPowShareUnlockObject) +
                                                                                 Environment.NewLine + "Block wallet address winner: " + result.Item2.ObjectReturned.BlockData.BlockWalletAddressWinner);
 
                                                                 Debug.WriteLine("Internal: Height: " + blockObject.BlockHeight +
@@ -3157,7 +3157,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                 Environment.NewLine + "Block status: " + blockObject.BlockStatus +
                                                                                 Environment.NewLine + "Block Difficulty: " + blockObject.BlockDifficulty +
                                                                                 Environment.NewLine + "Block final transaction hash: " + blockObject.BlockFinalHashTransaction +
-                                                                                Environment.NewLine + "Block Mining pow share: " + JsonConvert.SerializeObject(blockObject.BlockMiningPowShareUnlockObject) +
+                                                                                Environment.NewLine + "Block Mining pow share: " + ClassUtility.SerializeData(blockObject.BlockMiningPowShareUnlockObject) +
                                                                                 Environment.NewLine + "Block wallet address winner: " + blockObject.BlockWalletAddressWinner);
                                                             }
 #endif
@@ -3406,10 +3406,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             #region Initialize the packet to send.
 
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, string.Empty)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, string.Empty, 0)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_PEER_AUTH_KEYS,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskPeerAuthKeys()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskPeerAuthKeys()
                 {
                     AesEncryptionKey = peerObject.PeerInternPacketEncryptionKey,
                     AesEncryptionIv = peerObject.PeerInternPacketEncryptionKeyIv,
@@ -3425,7 +3425,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             #endregion
 
-            bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS, true, false);
+            bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS, true, false);
 
             
 
@@ -3528,10 +3528,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             }
 
 
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_PEER_LIST,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskPeerList()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskPeerList()
                 {
                     PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
                 })
@@ -3541,7 +3541,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_LIST, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_LIST, true, false);
 
                 
 
@@ -3581,7 +3581,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     {
                         if (i < packetPeerList.PeerIpList.Count)
                         {
-                            if (!packetPeerList.PeerUniqueIdList[i].IsNullOrEmpty() && !packetPeerList.PeerIpList[i].IsNullOrEmpty())
+                            if (!packetPeerList.PeerUniqueIdList[i].IsNullOrEmpty(out _) && !packetPeerList.PeerIpList[i].IsNullOrEmpty(out _))
                             {
                                 if (packetPeerList.PeerIpList[i] != _peerNetworkSettingObject.ListenIp && packetPeerList.PeerIpList[i] != peerIp && packetPeerList.PeerIpList[i] != PeerOpenNatServerIp)
                                 {
@@ -3654,10 +3654,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 return new Tuple<bool, List<string>>(false, null);
             }
 
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_LIST_SOVEREIGN_UPDATE,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskListSovereignUpdate()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskListSovereignUpdate()
                 {
                     PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
                 })
@@ -3667,10 +3667,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_LIST_SOVEREIGN_UPDATE, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_LIST_SOVEREIGN_UPDATE, true, false);
 
-                
-
+               
                 if (!packetSendStatus)
                 {
                     ClassLog.WriteLine(peerIp + ":" + peerPort + " packet request failed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY);
@@ -3740,10 +3739,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             }
 
 
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_SOVEREIGN_UPDATE_FROM_HASH,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskSovereignUpdateFromHash()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskSovereignUpdateFromHash()
                 {
                     SovereignUpdateHash = sovereignHash,
                     PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
@@ -3754,7 +3753,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_SOVEREIGN_UPDATE_FROM_HASH, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_SOVEREIGN_UPDATE_FROM_HASH, true, false);
 
                 
 
@@ -3833,10 +3832,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 ClassLog.WriteLine("Peer IP: " + peerIp + " is not registered on peer list.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY);
                 return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendNetworkInformation>>(false, null);
             }
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_NETWORK_INFORMATION,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskPeerList()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskPeerList()
                 {
                     PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
                 })
@@ -3846,7 +3845,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_NETWORK_INFORMATION, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_NETWORK_INFORMATION, true, false);
 
                 
 
@@ -3933,10 +3932,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockData>>(false, null);
             }
 
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_BLOCK_DATA,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskBlockData()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskBlockData()
                 {
                     BlockHeight = blockHeightTarget,
                     PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
@@ -3948,7 +3947,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_DATA, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_DATA, true, false);
 
                 
 
@@ -4037,10 +4036,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionData>>(false, null);
             }
 
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_BLOCK_TRANSACTION_DATA,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskBlockTransactionData()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskBlockTransactionData()
                 {
                     BlockHeight = blockHeightTarget,
                     TransactionId = transactionId,
@@ -4053,7 +4052,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA, true, false);
 
                 
 
@@ -4144,10 +4143,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 return new Tuple<bool, ClassPeerSyncPacketObjectReturned<ClassPeerPacketSendBlockTransactionDataByRange>>(false, null);
             }
 
-            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey)
+            ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
             {
                 PacketOrder = ClassPeerEnumPacketSend.ASK_BLOCK_TRANSACTION_DATA_BY_RANGE,
-                PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketSendAskBlockTransactionDataByRange()
+                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskBlockTransactionDataByRange()
                 {
                     BlockHeight = blockHeightTarget,
                     TransactionIdStartRange = transactionIdRangeStart,
@@ -4161,7 +4160,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(JsonConvert.SerializeObject(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA_BY_RANGE, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA_BY_RANGE, true, false);
 
                 
 
@@ -4244,14 +4243,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
         private async Task<bool> SyncBlockDataTransaction(ClassBlockObject blockObject, Dictionary<int, ClassPeerTargetObject> peerTargetList, DisposableDictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
         {
             if (blockObject.BlockHeight > BlockchainSetting.GenesisBlockHeight)
-            {
                 if (blockObject.BlockMiningPowShareUnlockObject == null)
                 {
                     ClassLog.WriteLine("A block object target synced is invalid, the mining share is empty, retry again later.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-
                     return false;
                 }
-            }
+            
 
             // Reset the work of transaction confirmations done from other peers.
             blockObject.BlockTransactionFullyConfirmed = false;
@@ -4264,9 +4261,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             blockObject.BlockTransactionCountInSync = blockObject.TotalTransaction;
 
             if (blockObject.BlockHeight == BlockchainSetting.GenesisBlockHeight)
-            {
                 blockObject.BlockTransactionCountInSync = BlockchainSetting.GenesisBlockTransactionCount;
-            }
 
             if (blockObject.BlockTransactionCountInSync > 0)
             {
@@ -4364,10 +4359,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                             transactionObjectByRange.Clear();
 
                             if (totalSynced == blockObject.BlockTransactionCountInSync)
-                            {
                                 break;
-                            }
-
                         }
                     }
                     // The block contain less transactions than the range scheduled.
@@ -4466,7 +4458,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                             {
                                 ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + " failed, transaction data from tx hash: " + transactionObject.TransactionHash + " can't be inserted. Exception: " + exception.Message + " Cancel sync and retry again.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                                 return false;
-
                             }
                         }
                         else
@@ -4480,7 +4471,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 // Final check.
                 if (blockObject.BlockTransactions.Count == blockObject.BlockTransactionCountInSync)
                 {
-
                     ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + "  successfully done. " + blockObject.BlockTransactions.Count + " tx's retrieved, insert to the blockchain database.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
                     string finalTransactionHashToTest = ClassBlockUtility.GetFinalTransactionHashList(blockObject.BlockTransactions.Keys.ToList(), string.Empty);
@@ -4499,24 +4489,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                             blockObject.BlockUnlockValid = true;
                         }
 
+                        blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+
                         if (ClassBlockchainStats.ContainsBlockHeight(blockObject.BlockHeight))
                         {
                             bool failed = true;
 
-                            blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-
-                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject.DirectCloneBlockObject(), true, true, cancellation))
+                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, true, cancellation))
                             {
                                 failed = false;
-
-                                /*
-                                // Insert new tx's in wallet index.
-                                foreach (var tx in blockObject.BlockTransactions)
-                                {
-                                    cancellation?.Token.ThrowIfCancellationRequested();
-
-                                    ClassBlockchainDatabase.InsertWalletBlockTransactionHash(tx.Value.TransactionObject, cancellation);
-                                }*/
 
                                 await ClassMemPoolDatabase.RemoveMemPoolAllTxFromBlockHeightTarget(blockObject.BlockHeight, cancellation);
 
@@ -4531,9 +4512,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         }
                         else
                         {
-                            blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-
-                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject.DirectCloneBlockObject(), true, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_MOSTLY_USED, cancellation))
+                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, false, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_MOSTLY_USED, cancellation))
                             {
                                 // Insert new tx's in wallet index.
                                 foreach (var tx in blockObject.BlockTransactions)
@@ -4645,7 +4624,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                     case ClassPeerEnumPacketResponse.INVALID_PEER_PACKET:
                                         {
                                             ClassLog.WriteLine("The packet sent to the peer is invalid.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
-                                            if (peerUniqueId.IsNullOrEmpty())
+                                            if (peerUniqueId.IsNullOrEmpty(out _))
                                             {
                                                 result = true;
                                             }

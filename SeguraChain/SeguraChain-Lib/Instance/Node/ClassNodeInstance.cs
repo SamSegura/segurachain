@@ -353,7 +353,7 @@ namespace SeguraChain_Lib.Instance.Node
             {
                 ClassLog.WriteLine("Do you want to initialize again the peer setting? [Y/N]", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                 string choose = Console.ReadLine() ?? string.Empty;
-                if (!choose.IsNullOrEmpty())
+                if (!choose.IsNullOrEmpty(out _))
                 {
                     if (choose.ToLower() == "y")
                     {

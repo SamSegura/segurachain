@@ -124,7 +124,7 @@ namespace SeguraChain_Lib.Log
         {
             _logListOnCollect = new Dictionary<ClassEnumLogLevelType, List<ClassLogObject>>();
 
-            if (customLogFilePath.IsNullOrEmpty())
+            if (customLogFilePath.IsNullOrEmpty(out _))
             {
                 customLogFilePath = LogFilePath;
             }

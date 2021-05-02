@@ -843,7 +843,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     }
                 }
 
-                if (!blockchainWalletCheckpoints.IsNullOrEmpty())
+                if (!blockchainWalletCheckpoints.IsNullOrEmpty(out _))
                 {
                     yield return blockchainWalletCheckpoints;
                 }

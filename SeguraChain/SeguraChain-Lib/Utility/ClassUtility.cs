@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -15,8 +15,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using LZ4;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
+using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet;
 using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Other.Object.SHA3;
 
@@ -408,12 +410,12 @@ namespace SeguraChain_Lib.Utility
         /// <returns></returns>
         public static bool CheckHexStringFormat(string shaHexString)
         {
-            if (shaHexString.IsNullOrEmpty())
+            if (shaHexString.IsNullOrEmpty(out string shaHexStringTrimmed))
             {
                 return false;
             }
 
-            if (shaHexString.ToLower().Count(character => ListOfHexCharacters.Contains(character)) != shaHexString.Length)
+            if (shaHexStringTrimmed.ToLower().Count(character => ListOfHexCharacters.Contains(character)) != shaHexStringTrimmed.Length)
             {
                 return false;
             }
@@ -430,9 +432,9 @@ namespace SeguraChain_Lib.Utility
         {
             string newHexString = string.Empty;
 
-            if (!hexString.IsNullOrEmpty())
+            if (!hexString.IsNullOrEmpty(out string hexStringTrimmed))
             {
-                foreach (var hexCharacter in hexString.ToLower())
+                foreach (var hexCharacter in hexStringTrimmed.ToLower())
                 {
                     if (ListOfHexCharacters.Contains(hexCharacter))
                     {
@@ -649,26 +651,70 @@ namespace SeguraChain_Lib.Utility
         /// <param name="handling"></param>
         public static bool TryDeserialize<T>(string content, out T result, ObjectCreationHandling handling = ObjectCreationHandling.Auto)
         {
-            try
+            if (!content.IsNullOrEmpty(out string contentTrimmed))
             {
-                if (!content.IsNullOrEmpty())
+
+                bool isNull = false;
+                try
                 {
-                    // Remover whitespaces.
-                    content = content.Trim();
-                    if ((content.StartsWith("{") && content.EndsWith("}")))
+
+                    result = JObject.Parse(contentTrimmed).ToObject<T>();
+                    if (result == null)
+                        isNull = true;
+                    else
+                        return true;
+
+                }
+                catch
+                {
+                    // Ignored.
+                }
+
+                if (isNull)
+                {
+
+                    try
                     {
-                        result = JsonConvert.DeserializeObject<T>(content, new JsonSerializerSettings() { ObjectCreationHandling = handling });
+                        result = JsonConvert.DeserializeObject<T>(contentTrimmed, new JsonSerializerSettings() { ObjectCreationHandling = handling });
                         return true;
                     }
+                    catch
+                    {
+                        // Ignored.
+                    }
                 }
-            }
-            catch
-            {
-                // Ignored, the format is invalid or the JSON string is empty.
+
             }
 
             result = default;
             return false;
+        }
+
+        public static bool TryDeserializePacket<T>(byte[] content, out T packet)
+        {
+            try
+            {
+                packet = new BinarySerializer().Deserialize<T>(content);
+                return true;
+            }
+            catch
+            {
+                packet = default;
+                return false;
+            }
+        }
+
+        public static string SerializeData<T>(T content, Formatting formatting = Formatting.None)
+        {
+            if (content != null)
+                return JsonConvert.SerializeObject(content, formatting);
+
+            return string.Empty;
+        }
+
+        public static byte[] SerializePacketData<T>(T content)
+        {
+            return new BinarySerializer().Serialize(content);
         }
 
         #endregion
@@ -721,7 +767,7 @@ namespace SeguraChain_Lib.Utility
         {
             try
             {
-                
+
                 if (socket?.Client != null)
                 {
                     lock (socket)
@@ -768,7 +814,7 @@ namespace SeguraChain_Lib.Utility
                     }
 
                 }
-            
+
             }
             catch
             {
@@ -1028,12 +1074,12 @@ namespace SeguraChain_Lib.Utility
 
             if (src.Length > 0)
             {
-               
+
                 foreach (var word in src.Split(new[] { seperatorStr }, StringSplitOptions.None))
                 {
-                    if (!word.IsNullOrEmpty())
+                    if (!word.IsNullOrEmpty(out string wordTrimmed))
                     {
-                        listSplitted.Add(word);
+                        listSplitted.Add(wordTrimmed);
                     }
                 }
 
@@ -1058,7 +1104,7 @@ namespace SeguraChain_Lib.Utility
                         string wordComplete = word.ToString();
                         word.Clear();
 
-                        if (!wordComplete.IsNullOrEmpty())
+                        if (!wordComplete.IsNullOrEmpty(out _))
                         {
                             listSplitted.Add(wordComplete);
                             seperatorFound = true;
@@ -1077,7 +1123,7 @@ namespace SeguraChain_Lib.Utility
                 if (!seperatorFound)
                 {
                     string wordComplete = word.ToString();
-                    if (!wordComplete.IsNullOrEmpty())
+                    if (!wordComplete.IsNullOrEmpty(out _))
                     {
                         listSplitted.Add(wordComplete);
                     }
@@ -1098,18 +1144,34 @@ namespace SeguraChain_Lib.Utility
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
-        public static bool IsNullOrEmpty(this string str)
+        public static bool IsNullOrEmpty(this string str, out string strTrimmed)
         {
+            strTrimmed = string.Empty;
             if (str == null) return true;
             if (str.Length == 0) return true;
             if (str == "") return true;
 
-            if (string.IsNullOrEmpty(str.Trim()))
-            {
-                return true;
-            }
+            strTrimmed = str.TrimFast();
+
+            if (strTrimmed.Length == 0) return true;
+            if (string.IsNullOrEmpty(strTrimmed)) return true;
 
             return false;
+        }
+
+        public static string TrimFast(this string str)
+        {
+            int startIndex = 0;
+            int endIndex = str.Length - 1;
+
+            while (char.IsWhiteSpace(str[startIndex]))
+                startIndex += 1;
+
+            while (char.IsWhiteSpace(str[endIndex]))
+                endIndex -= 1;
+            endIndex += 1;
+
+            return str.Substring(startIndex, (endIndex - startIndex));
         }
 
         /// <summary>
@@ -1199,7 +1261,7 @@ namespace SeguraChain_Lib.Utility
                 if (packetBytesToSend.Length > 0)
                 {
 
-                    if (packetBytesToSend.Length > packetMaxSize)
+                    if (packetBytesToSend.Length >= packetMaxSize)
                     {
                         int packetLength = packetBytesToSend.Length;
                         int countPacketSendLength = 0;
@@ -1245,13 +1307,6 @@ namespace SeguraChain_Lib.Utility
             {
                 sendStatus = false;
             }
-
-            if (packetBytesToSend.Length > 0)
-            {
-                Array.Clear(packetBytesToSend, 0, packetBytesToSend.Length);
-                GC.SuppressFinalize(packetBytesToSend);
-            }
-
             return sendStatus;
         }
     }
@@ -1295,8 +1350,28 @@ namespace SeguraChain_Lib.Utility
         }
     }
 
+    public class BinarySerializer
+    {
+        private static readonly BinaryFormatter Formatter = new BinaryFormatter();
+
+        public byte[] Serialize(object toSerialize)
+        {
+            using (var stream = new MemoryStream())
+            {
+                Formatter.Serialize(stream, toSerialize);
+                return stream.ToArray();
+            }
+        }
+
+        public T Deserialize<T>(byte[] serialized)
+        {
+            using (var stream = new MemoryStream(serialized))
+            {
+                var result = (T)Formatter.Deserialize(stream);
+                return result;
+            }
+        }
+    }
 
     #endregion
-
-
 }

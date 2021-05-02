@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -123,7 +124,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// <param name="keepAlive"></param>
         /// <param name="broadcast"></param>
         /// <returns></returns>
-        public async Task<bool> TrySendPacketToPeerTarget(string packet, CancellationTokenSource cancellation, ClassPeerEnumPacketResponse packetResponseExpected, bool keepAlive, bool broadcast)
+        public async Task<bool> TrySendPacketToPeerTarget(byte[] packet, CancellationTokenSource cancellation, ClassPeerEnumPacketResponse packetResponseExpected, bool keepAlive, bool broadcast)
         {
             bool result = false;
 
@@ -489,7 +490,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
 
                                             if (!failed)
                                             {
-                                                if (ClassUtility.TryDeserialize(base64Packet.GetStringFromByteArrayAscii(), out ClassPeerPacketRecvObject peerPacketReceived, ObjectCreationHandling.Reuse))
+                                                if (ClassUtility.TryDeserializePacket(base64Packet, out ClassPeerPacketRecvObject peerPacketReceived))
                                                 {
                                                     if (peerPacketReceived != null)
                                                     {
@@ -500,6 +501,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                                                         }
                                                         else
                                                         {
+                                                            if (peerTargetExist)
+                                                                ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketReceived.PeerLastTimestampSignatureWhitelist;
+
                                                             PeerPacketReceived = peerPacketReceived;
                                                             PeerPacketReceivedStatus = true;
                                                         }
@@ -631,16 +635,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                         {
                             try
                             {
-                                ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerInternPublicKey)
+                                ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
                                 {
                                     PacketOrder = ClassPeerEnumPacketSend.ASK_KEEP_ALIVE,
-                                    PacketContent = JsonConvert.SerializeObject(new ClassPeerPacketAskKeepAlive()
+                                    PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskKeepAlive()
                                     {
                                         PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
                                     }),
                                 };
 
-                                if (!await SendPeerPacket(JsonConvert.SerializeObject(sendObject), _peerCancellationTokenTaskSendPeerPacketKeepAlive))
+                                if (!await SendPeerPacket(ClassUtility.SerializePacketData(sendObject), _peerCancellationTokenTaskSendPeerPacketKeepAlive))
                                 {
                                     PeerConnectStatus = false;
                                     _peerTaskKeepAliveStatus = false;
@@ -713,7 +717,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// <param name="packet"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<bool> SendPeerPacket(string packet, CancellationTokenSource cancellation)
+        private async Task<bool> SendPeerPacket(byte[] packet, CancellationTokenSource cancellation)
         {
             try
             {
@@ -721,7 +725,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                 {
                     using (NetworkStream networkStream = new NetworkStream(_peerSocketClient))
                     {
-                        byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(ClassUtility.GetByteArrayFromStringAscii(packet)) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
+                        byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(packet) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
 
                         if (!await networkStream.TrySendSplittedPacket(packetBytesToSend, cancellation, _peerNetworkSetting.PeerMaxPacketSplitedSendSize))
                         {

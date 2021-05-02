@@ -90,7 +90,7 @@ namespace SeguraChain_Peer.CommandLine
         {
             try
             {
-                if (!commandLine.IsNullOrEmpty())
+                if (!commandLine.IsNullOrEmpty(out _))
                 {
                     string[] splitCommandLine = commandLine.Split(new[] { " " }, StringSplitOptions.None);
                     switch (splitCommandLine[0])
@@ -370,11 +370,11 @@ namespace SeguraChain_Peer.CommandLine
                             {
                                 if (splitCommandLine.Length >= 4)
                                 {
-                                    if (!splitCommandLine[1].IsNullOrEmpty())
+                                    if (!splitCommandLine[1].IsNullOrEmpty(out _))
                                     {
-                                        if (!splitCommandLine[2].IsNullOrEmpty())
+                                        if (!splitCommandLine[2].IsNullOrEmpty(out _))
                                         {
-                                            if (!splitCommandLine[3].IsNullOrEmpty())
+                                            if (!splitCommandLine[3].IsNullOrEmpty(out _))
                                             {
                                                 if (int.TryParse(splitCommandLine[2], out var peerPort))
                                                 {
@@ -442,7 +442,7 @@ namespace SeguraChain_Peer.CommandLine
                             {
                                 if (splitCommandLine.Length >= 2)
                                 {
-                                    if (!splitCommandLine[1].IsNullOrEmpty())
+                                    if (!splitCommandLine[1].IsNullOrEmpty(out _))
                                     {
                                         if (ClassBase58.DecodeWithCheckSum(splitCommandLine[1], true) != null)
                                         {

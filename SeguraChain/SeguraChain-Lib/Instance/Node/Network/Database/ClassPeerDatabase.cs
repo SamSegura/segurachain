@@ -76,7 +76,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
                                 {
                                     ClassPeerObject peerObject = JsonConvert.DeserializeObject<ClassPeerObject>(LZ4.LZ4Codec.Unwrap(result).GetStringFromByteArrayAscii());
 
-                                    if (!peerObject.PeerIp.IsNullOrEmpty())
+                                    if (!peerObject.PeerIp.IsNullOrEmpty(out _))
                                     {
                                         if (IPAddress.TryParse(peerObject.PeerIp, out _))
                                         {
@@ -149,7 +149,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
         /// <returns></returns>
         public static bool SavePeers(string peerKey, bool fullSave = false)
         {
-            if (_peerDataDirectoryPath.IsNullOrEmpty() || _peerDataFilePath.IsNullOrEmpty())
+            if (_peerDataDirectoryPath.IsNullOrEmpty(out _) || _peerDataFilePath.IsNullOrEmpty(out _))
             {
                 _peerDataDirectoryPath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassPeerDataSetting.PeerDataDirectoryName);
                 _peerDataFilePath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassPeerDataSetting.PeerDataDirectoryName + ClassPeerDataSetting.PeerDataFileName);
@@ -181,19 +181,19 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
                         {
                             foreach (var peerIp in DictionaryPeerDataObject.Keys)
                             {
-                                if (!peerIp.IsNullOrEmpty())
+                                if (!peerIp.IsNullOrEmpty(out _))
                                 {
                                     if (DictionaryPeerDataObject[peerIp].Count > 0)
                                     {
                                         foreach (string peerUniqueId in DictionaryPeerDataObject[peerIp].Keys)
                                         {
                                             // Serialize -> byte array -> compress LZ4 -> encryption -> base 64 string format.
-                                            if (ClassAes.EncryptionProcess(LZ4.LZ4Codec.Wrap(ClassUtility.GetByteArrayFromStringAscii(JsonConvert.SerializeObject(DictionaryPeerDataObject[peerIp][peerUniqueId], Formatting.None))), _peerDataStandardEncryptionKey, _peerDataStandardEncryptionKeyIv, out var result))
+                                            if (ClassAes.EncryptionProcess(LZ4.LZ4Codec.Wrap(ClassUtility.GetByteArrayFromStringAscii(ClassUtility.SerializeData(DictionaryPeerDataObject[peerIp][peerUniqueId], Formatting.None))), _peerDataStandardEncryptionKey, _peerDataStandardEncryptionKeyIv, out var result))
                                             {
                                                 peerWriter.WriteLine(Convert.ToBase64String(result));
 
                                                 // Uncompressed peer data.
-                                                peerUncompressedWriter.WriteLine(JsonConvert.SerializeObject(DictionaryPeerDataObject[peerIp][peerUniqueId], Formatting.Indented));
+                                                peerUncompressedWriter.WriteLine(ClassUtility.SerializeData(DictionaryPeerDataObject[peerIp][peerUniqueId], Formatting.Indented));
                                             }
                                         }
                                     }
@@ -210,18 +210,18 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
                         {
                             using (StreamWriter peerUncompressedWriter = new StreamWriter(ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassPeerDataSetting.PeerDataDirectoryName + ClassPeerDataSetting.PeerDataUncompressedFileName)))
                             {
-                                if (!peerKey.IsNullOrEmpty())
+                                if (!peerKey.IsNullOrEmpty(out _))
                                 {
                                     if (DictionaryPeerDataObject[peerKey].Count > 0)
                                     {
                                         foreach (string peerUniqueId in DictionaryPeerDataObject[peerKey].Keys)
                                         {
                                             // Serialize -> byte array -> compress LZ4 -> encryption -> base 64 string format.
-                                            if (ClassAes.EncryptionProcess(LZ4.LZ4Codec.Wrap(ClassUtility.GetByteArrayFromStringAscii(JsonConvert.SerializeObject(DictionaryPeerDataObject[peerKey][peerUniqueId], Formatting.None))), _peerDataStandardEncryptionKey, _peerDataStandardEncryptionKeyIv, out var result))
+                                            if (ClassAes.EncryptionProcess(LZ4.LZ4Codec.Wrap(ClassUtility.GetByteArrayFromStringAscii(ClassUtility.SerializeData(DictionaryPeerDataObject[peerKey][peerUniqueId], Formatting.None))), _peerDataStandardEncryptionKey, _peerDataStandardEncryptionKeyIv, out var result))
                                             {
                                                 peerWriter.WriteLine(Convert.ToBase64String(result));
                                                 // Uncompressed peer data.
-                                                peerUncompressedWriter.WriteLine(JsonConvert.SerializeObject(DictionaryPeerDataObject[peerKey][peerUniqueId], Formatting.Indented));
+                                                peerUncompressedWriter.WriteLine(ClassUtility.SerializeData(DictionaryPeerDataObject[peerKey][peerUniqueId], Formatting.Indented));
                                             }
                                         }
                                     }
@@ -251,7 +251,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
         /// <returns></returns>
         public static int GetPeerPort(string peerKey, string peerUniqueId)
         {
-            if (!peerKey.IsNullOrEmpty())
+            if (!peerKey.IsNullOrEmpty(out _))
             {
                 if (DictionaryPeerDataObject.ContainsKey(peerKey))
                 {
@@ -276,7 +276,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
         /// <returns></returns>
         public static ClassPeerEnumInsertStatus InputPeer(string peerIp, int peerPort, string peerUniqueId)
         {
-            if (!peerIp.IsNullOrEmpty())
+            if (!peerIp.IsNullOrEmpty(out _))
             {
                 if (peerPort >= BlockchainSetting.PeerMinPort && peerPort <= BlockchainSetting.PeerMaxPort)
                 {
@@ -404,7 +404,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
         /// <returns></returns>
         public static bool ContainsPeer(string peerIp, string peerUniqueId)
         {
-            if (!peerUniqueId.IsNullOrEmpty())
+            if (!peerUniqueId.IsNullOrEmpty(out _))
             {
                 if (DictionaryPeerDataObject.ContainsKey(peerIp))
                 {

@@ -407,7 +407,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <returns>Return a public key WIF.</returns>
         public static string GeneratePeerPublicKeyFromPrivateKey(string privateKeyWif)
         {
-            if (privateKeyWif.IsNullOrEmpty())
+            if (privateKeyWif.IsNullOrEmpty(out _))
             {
                 return null;
             }

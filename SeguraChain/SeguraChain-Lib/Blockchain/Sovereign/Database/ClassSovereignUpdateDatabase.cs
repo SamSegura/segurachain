@@ -53,7 +53,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
             DictionarySovereignUpdateObject = new Dictionary<string, ClassSovereignUpdateObject>();
             DictionarySortedSovereignUpdateList = new Dictionary<ClassSovereignEnumUpdateType, SortedList<long, string>>();
 
-            if (_sovereignDatabaseDirectoryPath.IsNullOrEmpty())
+            if (_sovereignDatabaseDirectoryPath.IsNullOrEmpty(out _))
             {
                 _sovereignDatabaseDirectoryPath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassSovereignUpdateDataSetting.SovereignUpdateDirectoryName);
                 _sovereignDatabaseFilePath = ClassUtility.ConvertPath(_sovereignDatabaseDirectoryPath + ClassSovereignUpdateDataSetting.SovereignUpdateDatabaseFilename);
@@ -62,7 +62,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
 
             if (_useEncryption)
             {
-                if (encryptionKey.IsNullOrEmpty())
+                if (encryptionKey.IsNullOrEmpty(out _))
                 {
                     if (!ClassAes.GenerateKey(BlockchainSetting.BlockchainMarkKey, true, out _sovereignDataStandardEncryptionKey))
                     {
@@ -119,7 +119,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                 }
                             }
 
-                            if (!line.IsNullOrEmpty())
+                            if (!line.IsNullOrEmpty(out _))
                             {
                                 ClassSovereignUpdateObject sovereignUpdateObject = JsonConvert.DeserializeObject<ClassSovereignUpdateObject>(line);
                                 totalSovereignUpdateFileLoaded++;
@@ -200,7 +200,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
 
                         if (_useEncryption)
                         {
-                            if (ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(JsonConvert.SerializeObject(sovereignUpdateObject.Value, Formatting.None)), _sovereignDataStandardEncryptionKey, _sovereignDataStandardEncryptionKeyIv, out byte[] encryptedResult))
+                            if (ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(ClassUtility.SerializeData(sovereignUpdateObject.Value, Formatting.None)), _sovereignDataStandardEncryptionKey, _sovereignDataStandardEncryptionKeyIv, out byte[] encryptedResult))
                             {
                                 writerSovUpdate.WriteLine(Convert.ToBase64String(encryptedResult));
                                 totalSaved++;
@@ -213,7 +213,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                         }
                         else
                         {
-                            writerSovUpdate.WriteLine(JsonConvert.SerializeObject(sovereignUpdateObject.Value, Formatting.None));
+                            writerSovUpdate.WriteLine(ClassUtility.SerializeData(sovereignUpdateObject.Value, Formatting.None));
                             totalSaved++;
 
                         }
@@ -277,17 +277,17 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_CONTENT;
             }
 
-            if (sovereignUpdateObject.SovereignUpdateHash.IsNullOrEmpty())
+            if (sovereignUpdateObject.SovereignUpdateHash.IsNullOrEmpty(out _))
             {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_HASH;
             }
 
-            if (sovereignUpdateObject.SovereignUpdateSignature.IsNullOrEmpty())
+            if (sovereignUpdateObject.SovereignUpdateSignature.IsNullOrEmpty(out _))
             {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_SIGNATURE;
             }
 
-            if (sovereignUpdateObject.SovereignUpdateDevWalletAddress.IsNullOrEmpty())
+            if (sovereignUpdateObject.SovereignUpdateDevWalletAddress.IsNullOrEmpty(out _))
             {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS;
             }
@@ -350,12 +350,12 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                 case ClassSovereignEnumUpdateType.SOVEREIGN_SEED_NODE_GRANT_RANK_UPDATE:
                 case ClassSovereignEnumUpdateType.SOVEREIGN_SEED_NODE_REVOKE_RANK_UPDATE:
                     {
-                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty())
+                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
                         {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_SEED_NODE_NUMERIC_PUBLIC_KEY_CONTENT;
                         }
 
-                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty())
+                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty(out _))
                         {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_SEED_NODE_MAX_RANK_DELAY_CONTENT;
                         }
@@ -380,12 +380,12 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                     break;
                 case ClassSovereignEnumUpdateType.SOVEREIGN_DEV_SIGNATURE_CHANGE_UPDATE:
                     {
-                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty())
+                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
                         {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS_CONTENT;
                         }
 
-                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty())
+                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty(out _))
                         {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_DEV_PUBLIC_KEY_CONTENT;
                         }
@@ -418,7 +418,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                     break;
                 case ClassSovereignEnumUpdateType.SOVEREIGN_MINING_POWAC_SETTING_UPDATE:
                     {
-                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty())
+                        if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
                         {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_MINING_POW_SETTING;
                         }
@@ -722,7 +722,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                                                     {
                                                                         SovereignUpdateContent = new ClassSovereignUpdateContentObject()
                                                                         {
-                                                                            PossibleContent1 = JsonConvert.SerializeObject(new ClassMiningPoWaCSettingObject(false)
+                                                                            PossibleContent1 = ClassUtility.SerializeData(new ClassMiningPoWaCSettingObject(false)
                                                                             {
                                                                                 PowRoundAesShare = roundAesParsed,
                                                                                 PocRoundShaNonce = roundShaParsed,
@@ -797,7 +797,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                 SovereignUpdateSignature = string.Empty
             };
 
-            sovereignUpdateHash = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(copySovereignUpdateObject, Formatting.None));
+            sovereignUpdateHash = ClassUtility.GenerateSha3512FromString(ClassUtility.SerializeData(copySovereignUpdateObject, Formatting.None));
         }
 
         /// <summary>
@@ -1002,9 +1002,9 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                         {
                             if (DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateType == ClassSovereignEnumUpdateType.SOVEREIGN_SEED_NODE_GRANT_RANK_UPDATE)
                             {
-                                if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent1.IsNullOrEmpty())
+                                if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
                                 {
-                                    if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent2.IsNullOrEmpty())
+                                    if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent2.IsNullOrEmpty(out _))
                                     {
                                         if (ClassBase58.DecodeWithCheckSum(DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent1, false) != null)
                                         {
@@ -1039,10 +1039,10 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                 {
                                     if (DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateType == ClassSovereignEnumUpdateType.SOVEREIGN_SEED_NODE_REVOKE_RANK_UPDATE)
                                     {
-                                        if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent1.IsNullOrEmpty())
+                                        if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
                                         {
 
-                                            if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent2.IsNullOrEmpty())
+                                            if (!DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent2.IsNullOrEmpty(out _))
                                             {
                                                 if (ClassBase58.DecodeWithCheckSum(DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent1, false) != null)
                                                 {

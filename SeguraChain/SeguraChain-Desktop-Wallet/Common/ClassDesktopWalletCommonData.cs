@@ -112,7 +112,7 @@ namespace SeguraChain_Desktop_Wallet.Common
                 WalletSettingObject = new ClassWalletSettingObject();
                 using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
                 {
-                    writer.Write(JsonConvert.SerializeObject(WalletSettingObject, Formatting.Indented));
+                    writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
                 }
             }
             catch
@@ -222,7 +222,7 @@ namespace SeguraChain_Desktop_Wallet.Common
                 // Save wallet setting file.
                 using (StreamWriter writer = new StreamWriter(ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassWalletDefaultSetting.WalletSettingFile)) { AutoFlush = true })
                 {
-                    writer.Write(JsonConvert.SerializeObject(WalletSettingObject, Formatting.Indented));
+                    writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
                 }
 
 #if DEBUG

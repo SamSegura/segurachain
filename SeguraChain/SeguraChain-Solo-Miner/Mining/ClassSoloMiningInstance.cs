@@ -424,7 +424,7 @@ namespace SeguraChain_Solo_Miner.Mining
                                     // Submit the share if this one reach the difficulty of the block or if this one is higher.
                                     if (pocShareObject.PoWaCShareDifficulty >= _currentBlockDifficulty)
                                     {
-                                        Debug.WriteLine(JsonConvert.SerializeObject(pocShareObject));
+                                        Debug.WriteLine(ClassUtility.SerializeData(pocShareObject));
                                         _miningNetworkFunction.UnlockCurrentBlockTemplate(pocShareObject);
                                     }
 

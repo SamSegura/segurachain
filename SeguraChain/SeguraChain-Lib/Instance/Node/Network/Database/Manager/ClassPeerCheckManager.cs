@@ -147,7 +147,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <returns></returns>
         public static bool CheckPeerClientWhitelistStatus(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject)
         {
-            if (peerUniqueId.IsNullOrEmpty())
+            if (peerUniqueId.IsNullOrEmpty(out _))
             {
                 peerUniqueId = string.Empty;
             }
@@ -160,6 +160,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature++;
                         if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature >= peerNetworkSettingObject.PeerMaxWhiteListPacket)
                         {
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = ClassUtility.GetCurrentTimestampInSecond() + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats;
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
                             ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket = 0;
                         }
                         return true;
@@ -167,6 +169,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                 }
                 else
                 {
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
                 }
             }
@@ -186,9 +189,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
             {
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
                 {
-                    if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIp.IsNullOrEmpty())
+                    if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIp.IsNullOrEmpty(out _))
                     {
-                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId.IsNullOrEmpty())
+                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId.IsNullOrEmpty(out _))
                         {
                             if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort != 0)
                             {
@@ -196,15 +199,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                                 {
                                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv != null)
                                     {
-                                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey.IsNullOrEmpty())
+                                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey.IsNullOrEmpty(out _))
                                         {
-                                            if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey.IsNullOrEmpty())
+                                            if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey.IsNullOrEmpty(out _))
                                             {
                                                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKey != null)
                                                 {
                                                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKeyIv != null)
                                                     {
-                                                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey.IsNullOrEmpty())
+                                                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey.IsNullOrEmpty(out _))
                                                         {
                                                             return true;
                                                         }
@@ -233,7 +236,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         {
             if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
-                if (!peerPublicKeyReceived.IsNullOrEmpty())
+                if (!peerPublicKeyReceived.IsNullOrEmpty(out _))
                 {
                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey == peerPublicKeyReceived)
                     {
@@ -429,6 +432,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                 }
                 if (!unBanOrUnDead)
                 {
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt = 0;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalAttemptConnection = 0;
@@ -457,7 +461,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerBanDate = ClassUtility.GetCurrentTimestampInSecond();
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket = 0;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
-
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
                     ClassLog.WriteLine("Peer: " + peerIp + " | Unique ID: " + peerUniqueId + " state has been set to banned temporaly.", ClassEnumLogLevelType.LOG_LEVEL_PEER_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
                 }
             }
@@ -492,6 +496,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalAttemptConnection = 0;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt = 0;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastDeadTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
 
                     ClassLog.WriteLine("Peer: " + peerIp + " | Unique ID: " + peerUniqueId + " state has been set to dead temporaly.", ClassEnumLogLevelType.LOG_LEVEL_PEER_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
                 }
@@ -518,7 +523,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         {
             if (ClassPeerDatabase.GetPeerNumericPublicKey(peerIp, peerUniqueId, out numericPublicKeyOut))
             {
-                if (!numericPublicKeyOut.IsNullOrEmpty())
+                if (!numericPublicKeyOut.IsNullOrEmpty(out _))
                 {
                     if (ClassSovereignUpdateDatabase.CheckIfNumericPublicKeyPeerIsRanked(numericPublicKeyOut, out timestampRankDelay))
                     {
@@ -541,7 +546,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <returns></returns>
         public static bool CheckPeerSeedNumericPacketSignature(string data, string packetNumericHash, string packetNumericSignature, string peerNumericPublicKey, CancellationTokenSource cancellation)
         {
-            if (!packetNumericHash.IsNullOrEmpty() && !packetNumericSignature.IsNullOrEmpty() && !peerNumericPublicKey.IsNullOrEmpty())
+            if (!packetNumericHash.IsNullOrEmpty(out _) && !packetNumericSignature.IsNullOrEmpty(out _) && !peerNumericPublicKey.IsNullOrEmpty(out _))
             {
                 if (ClassUtility.GenerateSha3512FromString(data) == packetNumericHash)
                 {
@@ -575,7 +580,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastBadStatePacket = ClassUtility.GetCurrentTimestampInSecond();
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket = 0;
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
-
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
             }
 
             if (!exist)

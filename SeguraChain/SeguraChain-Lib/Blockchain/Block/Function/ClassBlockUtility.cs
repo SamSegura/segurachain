@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Database;
@@ -178,14 +179,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
             {
                 if (blockHashTransactionList.Count > 0)
                 {
-                    string blockFinalTransactionHash = string.Empty;
-                    foreach (var txHash in blockHashTransactionList)
-                    {
-                        blockFinalTransactionHash += txHash;
-                    }
-
-                    blockFinalTransactionHash = ClassUtility.GenerateSha3512FromString(blockFinalTransactionHash);
-                    return blockFinalTransactionHash;
+                    return ClassUtility.GenerateSha3512FromString(string.Join("", blockHashTransactionList));
                 }
             }
 
@@ -540,7 +534,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     return false;
                 }
 
-                if (blockObject.BlockWalletAddressWinner.IsNullOrEmpty())
+                if (blockObject.BlockWalletAddressWinner.IsNullOrEmpty(out _))
                 {
                     return false;
                 }
@@ -595,7 +589,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     return false;
                 }
 
-                if (blockObject.BlockFinalHashTransaction.IsNullOrEmpty())
+                if (blockObject.BlockFinalHashTransaction.IsNullOrEmpty(out _))
                 {
                     return false;
                 }
@@ -608,12 +602,12 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     return false;
                 }
 
-                if (!blockObject.BlockFinalHashTransaction.IsNullOrEmpty())
+                if (!blockObject.BlockFinalHashTransaction.IsNullOrEmpty(out _))
                 {
                     return false;
                 }
 
-                if (!blockObject.BlockWalletAddressWinner.IsNullOrEmpty())
+                if (!blockObject.BlockWalletAddressWinner.IsNullOrEmpty(out _))
                 {
                     return false;
                 }
@@ -665,12 +659,12 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
             if (blockObject.BlockMiningPowShareUnlockObject != null)
             {
-                miningShareJson = JsonConvert.SerializeObject(blockObject.BlockMiningPowShareUnlockObject);
+                miningShareJson = ClassUtility.SerializeData(blockObject.BlockMiningPowShareUnlockObject);
             }
 
             string finalTransactionHash = "empty";
 
-            if (!blockObject.BlockFinalHashTransaction.IsNullOrEmpty() && blockObject.BlockFinalHashTransaction != "empty")
+            if (!blockObject.BlockFinalHashTransaction.IsNullOrEmpty(out _) && blockObject.BlockFinalHashTransaction != "empty")
             {
                 finalTransactionHash = blockObject.BlockFinalHashTransaction;
             }
@@ -841,7 +835,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
             else
             {
                 blockObject.DeepCloneBlockObject(false, out ClassBlockObject blockObjectCopy);
-                yield return JsonConvert.SerializeObject(blockObjectCopy);
+                yield return ClassUtility.SerializeData(blockObjectCopy);
             }
 
 
@@ -858,7 +852,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     }
                     else
                     {
-                        transactionLine += JsonConvert.SerializeObject(blockObject.BlockTransactions[transactionHash]) + StringBlockDataCharacterSeperator;
+                        transactionLine += ClassUtility.SerializeData(blockObject.BlockTransactions[transactionHash]) + StringBlockDataCharacterSeperator;
                         totalLineTransactionOnLine++;
                     }
 
@@ -871,7 +865,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     }
                 }
 
-                if (!transactionLine.IsNullOrEmpty())
+                if (!transactionLine.IsNullOrEmpty(out _))
                 {
                     yield return transactionLine;
                 }

@@ -348,7 +348,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         {
             try
             {
-                if (!ioDataLine.IsNullOrEmpty())
+                if (!ioDataLine.IsNullOrEmpty(out _))
                 {
                     if (ioDataLine.StartsWith(IoDataBeginBlockString))
                     {

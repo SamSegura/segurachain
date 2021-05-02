@@ -23,7 +23,7 @@ namespace SeguraChain_Solo_Miner.Setting.Function
         /// <returns></returns>
         public static ClassSoloMinerSettingLoadEnum LoadSoloMinerSettingFile(string selectPath, out ClassSoloMinerSettingObject soloMinerSettingObject)
         {
-            if (selectPath.IsNullOrEmpty())
+            if (selectPath.IsNullOrEmpty(out _))
             {
                 selectPath = DefaultSoloMinerSettingFilePath;
             }
@@ -37,7 +37,7 @@ namespace SeguraChain_Solo_Miner.Setting.Function
                 }
 
 
-                if (!dataRead.IsNullOrEmpty())
+                if (!dataRead.IsNullOrEmpty(out _))
                 {
                     if (ClassUtility.TryDeserialize(dataRead, out soloMinerSettingObject))
                     {
@@ -147,7 +147,7 @@ namespace SeguraChain_Solo_Miner.Setting.Function
 
             using (StreamWriter writer = new StreamWriter(DefaultSoloMinerSettingFilePath))
             {
-                writer.Write(JsonConvert.SerializeObject(soloMinerSettingObject, Formatting.Indented));
+                writer.Write(ClassUtility.SerializeData(soloMinerSettingObject, Formatting.Indented));
             }
 
             ClassLog.SimpleWriteLine(DefaultSoloMinerSettingFilename + " saved successfully.", ConsoleColor.Magenta);

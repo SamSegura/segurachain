@@ -527,7 +527,7 @@ namespace SeguraChain_Peer.Mining.Instance
                                         // Submit the share if this one reach the difficulty of the block or if this one is higher.
                                         if (pocShareObject.PoWaCShareDifficulty >= _currentBlockDifficulty)
                                         {
-                                            ClassBlockEnumMiningShareVoteStatus unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, false, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenMiningTasks);
+                                            ClassBlockEnumMiningShareVoteStatus unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, true, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenMiningTasks);
                                        
                                          
                                             switch (unlockResult)

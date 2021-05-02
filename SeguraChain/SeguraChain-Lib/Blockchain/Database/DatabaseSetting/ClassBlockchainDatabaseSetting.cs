@@ -33,7 +33,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         /// Default data settings.
         /// </summary>
         public const bool DefaultEnableEncryptionDatabase = false;
-        public const bool DefaultEnableCompressingDatabase = true;
+        public const bool DefaultEnableCompressingDatabase = false;
         public const bool DefaultEnableCachingDatabase = true;
         public const bool DefaultDataFormatIsJson = false;
         public const ClassBlockchainDatabaseCacheTypeEnum DefaultCacheType = ClassBlockchainDatabaseCacheTypeEnum.CACHE_DISK;
@@ -54,19 +54,19 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         public const int DefaultIoCacheDiskMinPercentReadFromBlockDataSize = 5;
         public const int DefaultIoCacheDiskMinPercentWriteFromBlockDataSize = 5;
         public const int DefaultIoCacheDiskParallelTaskWaitDelay = 1000;  // The delay of waiting in milliseconds per while pending parallel tasks are running on the IO Cache system.
-        public const bool DefaultIoCacheDiskEnableCompressBlockData = true;
+        public const bool DefaultIoCacheDiskEnableCompressBlockData = false;
         public const bool DefaultIoCacheDiskEnableMultiTask = true;
 
         /// <summary>
         /// Global default memory transaction cache settings.
         /// </summary>
-        public const int DefaultGlobalCacheMaxBlockTransactionKeepAliveMemorySize = 131 * 1024 * 1024; // Max amount of memory allowed to the block transactions cache to keep alive from of io cache files. (Around 131MB of ram used by 100 000 transaction(s)).
+        public const int DefaultGlobalCacheMaxBlockTransactionKeepAliveMemorySize = 128 * 1024 * 1024; // Max amount of memory allowed to the block transactions cache to keep alive from of io cache files. (Around 131MB of ram used by 100 000 transaction(s)).
         public const int DefaultGlobalMaxDelayKeepAliveBlockTransactionCached = 60; // Keep alive a transaction cached pending 60 seconds.
 
         /// <summary>
         /// Global default memory wallet index cache settings.
         /// </summary>
-        public const long DefaultGlobalCacheMaxWalletIndexKeepMemorySize = 50 * 1024 * 1024; // Max amount of memory allowed to the wallet index cache to keep alive from the cache files.
+        public const long DefaultGlobalCacheMaxWalletIndexKeepMemorySize = 128 * 1024 * 1024; // Max amount of memory allowed to the wallet index cache to keep alive from the cache files.
         public const long DefaultGlobalMaxDelayKeepAliveWalletIndexCached = 60 * 1000; // Keep alive a wallet index pending 60000 milliseconds.
         public const long DefaultGlobalCacheMaxWalletIndexPerFile = 10000;
         public const long DefaultGlobalCacheMaxWalletIndexCheckpointsPerLine = 10000;
@@ -74,12 +74,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         /// <summary>
         /// Global default memory cache management settings.
         /// </summary>
-        public const int DefaultGlobalActiveMemoryAllocationPercent = 30; // Calculate 30% of the whole memory of the host.
-        public const int DefaultGlobalActiveMemoryAllocationPercentFromCache = 70; // Calculate 70% of memory allocation percent.
-        public const int DefaultGlobalCacheMaxBlockTransactionKeepAliveMemoryPercent = 20; // Calculate 20% of memory allocation percent.
-        public const int DefaultGlobalCacheMaxWalletIndexKeepMemoryPercent = 10; // Calculate 10% of memory allocation percent.
-
-        public const long DefaultGlobalMaxActiveMemoryAllocationFromCache = 331 * 1024 * 1024; // Allow a maximum of 331MB of ram allocated.
+        public const long DefaultGlobalMaxActiveMemoryAllocationFromCache = 512 * 1024 * 1024; // Allow a maximum of 512MB of ram allocated.
         public const long DefaultGlobalMaxBlockCountToKeepInMemory = 2; // The maxmimum of blocks to keep alive in the active memory, it's always latests blocks who are keep alive.
         public const long DefaultGlobalMaxRangeReadBlockDataFromCache = 2; // The maximum of blocks to retrieve back from the cache by range.
         public const int DefaultGlobalTaskManageMemoryInterval = 60 * 1000;  // Task interval who manage the active memory.
@@ -137,12 +132,6 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
                 ClassLog.WriteLine("[WARNING] - The host memory is lower than the default setting.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
             }
 
-            long maxActiveMemoryAllocation = (long)(totalMemoryHost * ClassBlockchainDatabaseDefaultSetting.DefaultGlobalActiveMemoryAllocationPercent) / 100;
-
-
-            long maxActiveMemoryCacheAllocation = (ClassBlockchainDatabaseDefaultSetting.DefaultGlobalActiveMemoryAllocationPercentFromCache * maxActiveMemoryAllocation) / 100;
-            long maxActiveMemoryTransactionCacheAllocation = (ClassBlockchainDatabaseDefaultSetting.DefaultGlobalCacheMaxBlockTransactionKeepAliveMemoryPercent * maxActiveMemoryAllocation) / 100;
-            long maxActiveMemoryWalletIndexCacheAllocation = (ClassBlockchainDatabaseDefaultSetting.DefaultGlobalCacheMaxWalletIndexKeepMemoryPercent * maxActiveMemoryAllocation) / 100;
 
             BlockchainCacheSetting = new ClassBlockchainCacheSetting()
             {
@@ -169,17 +158,17 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
                 IoCacheDiskEnableMultiTask = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskEnableMultiTask,
 
                 // Global wallet index cache memory setting.
-                GlobalCacheMaxWalletIndexKeepMemorySize = maxActiveMemoryWalletIndexCacheAllocation,
+                GlobalCacheMaxWalletIndexKeepMemorySize = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalCacheMaxWalletIndexKeepMemorySize,
                 GlobalMaxDelayKeepAliveWalletIndexCached = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxDelayKeepAliveWalletIndexCached,
                 GlobalCacheMaxWalletIndexPerFile = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalCacheMaxWalletIndexPerFile,
                 GlobalCacheMaxWalletIndexCheckpointsPerLine = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalCacheMaxWalletIndexCheckpointsPerLine,
 
                 // Global block transaction cache memory setting.
-                GlobalCacheMaxBlockTransactionKeepAliveMemorySize = maxActiveMemoryTransactionCacheAllocation,
+                GlobalCacheMaxBlockTransactionKeepAliveMemorySize = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalCacheMaxBlockTransactionKeepAliveMemorySize,
                 GlobalMaxDelayKeepAliveBlockTransactionCached = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxDelayKeepAliveBlockTransactionCached,
 
                 // Global memory cache setting.
-                GlobalMaxActiveMemoryAllocationFromCache = maxActiveMemoryCacheAllocation,
+                GlobalMaxActiveMemoryAllocationFromCache = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxActiveMemoryAllocationFromCache,
                 GlobalMaxBlockCountToKeepInMemory = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxBlockCountToKeepInMemory,
                 GlobalMaxRangeReadBlockDataFromCache = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxRangeReadBlockDataFromCache,
                 GlobalTaskManageMemoryInterval = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalTaskManageMemoryInterval,

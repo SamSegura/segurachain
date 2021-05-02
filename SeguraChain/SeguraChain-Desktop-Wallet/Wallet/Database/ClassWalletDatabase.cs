@@ -96,7 +96,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                             }
                             else
                             {
-                                if (!GetWalletFileNameFromWalletAddress(walletDataObjectLoaded.WalletAddress).IsNullOrEmpty())
+                                if (!GetWalletFileNameFromWalletAddress(walletDataObjectLoaded.WalletAddress).IsNullOrEmpty(out _))
                                 {
                                     resultLoad = ClassWalletLoadFileEnumResult.WALLET_LOAD_ALREADY_LOADED_ERROR;
                                 }
@@ -131,7 +131,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                             {
                                                 if (!ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(DictionaryWalletData[walletFileName].WalletAddress))
                                                 {
-                                                    ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.TryAdd(DictionaryWalletData[walletFileName].WalletAddress, new ClassSyncCacheObject());
+                                                    ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.Add(DictionaryWalletData[walletFileName].WalletAddress, new ClassSyncCacheObject());
                                                     DictionaryWalletData[walletFileName].WalletEnableRescan = true;
                                                 }
 
@@ -236,7 +236,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                         {
                             using (StreamWriter walletFileStreamReader = new StreamWriter(walletFileStream) { AutoFlush = true })
                             {
-                                walletFileStreamReader.Write(JsonConvert.SerializeObject(DictionaryWalletData[walletFileName], Formatting.Indented));
+                                walletFileStreamReader.Write(ClassUtility.SerializeData(DictionaryWalletData[walletFileName], Formatting.Indented));
                             }
                         }
 

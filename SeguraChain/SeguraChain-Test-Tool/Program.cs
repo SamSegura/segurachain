@@ -150,7 +150,7 @@ namespace SeguraChain_Test_Tool
             Console.WriteLine("Private Key WIF: " + walletObject.WalletPrivateKey);
             Console.WriteLine("Public Key WIF: " + walletObject.WalletPublicKey);
             Console.WriteLine("Wallet Address: " + walletObject.WalletAddress);
-            if (!baseWord.IsNullOrEmpty())
+            if (!baseWord.IsNullOrEmpty(out _))
             {
                 Console.WriteLine("Base word(s) used: " + baseWord);
             }
@@ -244,7 +244,7 @@ namespace SeguraChain_Test_Tool
                 Console.WriteLine("Private Key WIF: " + walletObject.WalletPrivateKey);
                 Console.WriteLine("Public Key WIF: " + walletObject.WalletPublicKey);
                 Console.WriteLine("Wallet Address: " + walletObject.WalletAddress);
-                if (!baseWord.IsNullOrEmpty())
+                if (!baseWord.IsNullOrEmpty(out _))
                 {
                     Console.WriteLine("Base word(s) used: " + baseWord);
                 }
@@ -409,7 +409,7 @@ namespace SeguraChain_Test_Tool
 
                 Console.WriteLine("Transaction generated and signed: ");
 
-                Console.WriteLine(JsonConvert.SerializeObject(transactionObject, Formatting.Indented));
+                Console.WriteLine(ClassUtility.SerializeData(transactionObject, Formatting.Indented));
 
                 Console.WriteLine("Check transaction signature..");
 
@@ -571,7 +571,7 @@ namespace SeguraChain_Test_Tool
 
                 Console.WriteLine("Transaction generated and signed: ");
 
-                Console.WriteLine(JsonConvert.SerializeObject(transactionObject, Formatting.Indented));
+                Console.WriteLine(ClassUtility.SerializeData(transactionObject, Formatting.Indented));
 
                 Console.WriteLine("Check transaction signature..");
 
@@ -631,7 +631,7 @@ namespace SeguraChain_Test_Tool
 
             string peerIp = Console.ReadLine() ?? string.Empty;
 
-            while (peerIp.IsNullOrEmpty() || !IPAddress.TryParse(peerIp, out _))
+            while (peerIp.IsNullOrEmpty(out _) || !IPAddress.TryParse(peerIp, out _))
             {
                 Console.WriteLine("Invalid IP, please write a valid IP:");
                 peerIp = Console.ReadLine() ?? string.Empty;
@@ -641,7 +641,7 @@ namespace SeguraChain_Test_Tool
 
             string peerPort = Console.ReadLine() ?? string.Empty;
 
-            while (peerPort.IsNullOrEmpty() || !int.TryParse(peerPort, out _))
+            while (peerPort.IsNullOrEmpty(out _) || !int.TryParse(peerPort, out _))
             {
                 Console.WriteLine("Invalid port, please write a valid port:");
                 peerPort = Console.ReadLine() ?? string.Empty;
@@ -666,7 +666,7 @@ namespace SeguraChain_Test_Tool
                     result = reader.ReadToEndAsync().Result;
                 }
 
-                if (!result.IsNullOrEmpty())
+                if (!result.IsNullOrEmpty(out _))
                 {
                     if (ClassUtility.TryDeserialize(result, out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
                     {
@@ -674,7 +674,7 @@ namespace SeguraChain_Test_Tool
                         {
                             if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out ClassApiPeerPacketSendNetworkStats apiPeerPacketSendNetworkStats))
                             {
-                                Console.WriteLine(JsonConvert.SerializeObject(apiPeerPacketSendNetworkStats));
+                                Console.WriteLine(ClassUtility.SerializeData(apiPeerPacketSendNetworkStats));
                             }
                         }
                     }
@@ -845,7 +845,7 @@ namespace SeguraChain_Test_Tool
                         miningPoWaCSettingObject.MiningSettingContentHashSignature = null;
                         miningPoWaCSettingObject.MiningSettingContentDevPublicKey = BlockchainSetting.DefaultWalletAddressDevPublicKey;
 
-                        string miningPoWacSettingObjectContentHash = ClassUtility.GenerateSha3512FromString(JsonConvert.SerializeObject(miningPoWaCSettingObject));
+                        string miningPoWacSettingObjectContentHash = ClassUtility.GenerateSha3512FromString(ClassUtility.SerializeData(miningPoWaCSettingObject));
                         string miningPoWacSettingObjectContentSignature = ClassWalletUtility.WalletGenerateSignature(privateKey, miningPoWacSettingObjectContentHash);
 
                         Console.WriteLine("Do not forget to update the BlockchainSetting source code file with the final block transaction hash: "+ finalTransactionHash);

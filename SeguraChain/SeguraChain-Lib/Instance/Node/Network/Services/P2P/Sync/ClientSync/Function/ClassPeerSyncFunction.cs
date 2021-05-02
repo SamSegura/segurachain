@@ -46,6 +46,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             {
                 bool peerIgnorePacketSignature = ClassPeerCheckManager.CheckPeerClientWhitelistStatus(peerIp, peerUniqueId, peerNetworkSetting);
 
+                if (!peerIgnorePacketSignature)
+                    peerIgnorePacketSignature = ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist >= ClassUtility.GetCurrentTimestampInSecond();
+
                 bool peerPacketSignatureValid = true;
 
                 if (!peerIgnorePacketSignature)
@@ -138,7 +141,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
         private bool CheckPeerUniqueId(string peerUniqueId)
         {
             // Empty peer unique id.
-            if (peerUniqueId.IsNullOrEmpty())
+            if (peerUniqueId.IsNullOrEmpty(out _))
             {
                 return false;
             }
@@ -309,7 +312,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
 
                 foreach (string peerIp in packetPeerList.PeerIpList)
                 {
-                    if (peerIp.IsNullOrEmpty())
+                    if (peerIp.IsNullOrEmpty(out _))
                     {
                         return false;
                     }
@@ -394,7 +397,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (peerPacketNetworkInformation.CurrentBlockHash.IsNullOrEmpty())
+            if (peerPacketNetworkInformation.CurrentBlockHash.IsNullOrEmpty(out _))
             {
                 return false;
             }
@@ -501,7 +504,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             {
                 foreach (var sovereignUpdateHash in packetPeerSendSovereignUpdateList.SovereignUpdateHashList)
                 {
-                    if (sovereignUpdateHash.IsNullOrEmpty())
+                    if (sovereignUpdateHash.IsNullOrEmpty(out _))
                     {
                         return false;
                     }
@@ -572,17 +575,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateContent.Description.IsNullOrEmpty())
+            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateContent.Description.IsNullOrEmpty(out _))
             {
                 return false;
             }
 
-            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty())
+            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
             {
                 return false;
             }
 
-            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty())
+            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty(out _))
             {
                 return false;
             }
@@ -592,17 +595,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                 return false;
             }
 
-            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateDevWalletAddress.IsNullOrEmpty())
+            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateDevWalletAddress.IsNullOrEmpty(out _))
             {
                 return false;
             }
 
-            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateHash.IsNullOrEmpty())
+            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateHash.IsNullOrEmpty(out _))
             {
                 return false;
             }
 
-            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateSignature.IsNullOrEmpty())
+            if (packetSovereignUpdateData.SovereignUpdateObject.SovereignUpdateSignature.IsNullOrEmpty(out _))
             {
                 return false;
             }

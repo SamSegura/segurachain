@@ -1,18 +1,12 @@
 ﻿using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using System.Collections.Generic;
-using System.Threading;
 using System.Linq;
-using SeguraChain_Lib.Utility;
 using System.Numerics;
 
 namespace SeguraChain_Desktop_Wallet.Sync.Object
 {
     public class ClassSyncCacheObject
     {
-        /// <summary>
-        /// Handle multithreading access.
-        /// </summary>
-        private SemaphoreSlim _semaphoreDictionaryAccess;
 
         /// <summary>
         /// Store the cache.
@@ -33,7 +27,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
 
                 if (_syncCacheDatabase.Count > 0)
                 {
-                    foreach (long blockHeight in _syncCacheDatabase.Keys)
+                    foreach (long blockHeight in _syncCacheDatabase.Keys.ToArray())
                     {
                         totalTransactions += _syncCacheDatabase[blockHeight].Count;
                     }
@@ -49,7 +43,6 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         public ClassSyncCacheObject()
         {
             _syncCacheDatabase = new Dictionary<long, Dictionary<string, ClassSyncCacheBlockTransactionObject>>();
-            _semaphoreDictionaryAccess = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
         }
 
         /// <summary>
@@ -66,126 +59,47 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// <summary>
         /// Get the list of block heights.
         /// </summary>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public List<long> BlockHeightKeys(CancellationTokenSource cancellation)
+        public List<long> BlockHeightKeys()
         {
-            List<long> listBlockHeight = new List<long>();
-            bool semaphoreUsed = false;
-
-            try
-            {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                listBlockHeight = _syncCacheDatabase.Keys.ToList();
-            }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
-            }
-
-            return listBlockHeight;
+            return _syncCacheDatabase.Keys.ToList();
         }
 
         /// <summary>
         /// Check if a block height is stored.
         /// </summary>
         /// <param name="blockHeight"></param>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public bool ContainsBlockHeight(long blockHeight, CancellationTokenSource cancellation)
+        public bool ContainsBlockHeight(long blockHeight)
         {
-            bool result = false;
-            bool semaphoreUsed = false;
-            try
-            {
-
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                result = _syncCacheDatabase.ContainsKey(blockHeight);
-
-            }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
-            }
-            return result;
+            return _syncCacheDatabase.ContainsKey(blockHeight);
         }
 
         /// <summary>
         /// Insert a block height to the cache.
         /// </summary>
         /// <param name="blockHeight"></param>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public bool InsertBlockHeight(long blockHeight, CancellationTokenSource cancellation)
+        public bool InsertBlockHeight(long blockHeight)
         {
-            bool result = false;
-            bool semaphoreUsed = false;
-            try
+            if (!_syncCacheDatabase.ContainsKey(blockHeight))
             {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                if (!_syncCacheDatabase.ContainsKey(blockHeight))
-                {
-                    _syncCacheDatabase.Add(blockHeight, new Dictionary<string, ClassSyncCacheBlockTransactionObject>());
-                    result = true;
-                }
-                else
-                {
-                    result = true;
-                }
+                _syncCacheDatabase.Add(blockHeight, new Dictionary<string, ClassSyncCacheBlockTransactionObject>());
+                return true;
             }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
-            }
-            return result;
+            else return true;
         }
 
         /// <summary>
         /// Count the amount of block transaction stored at a specific block height.
         /// </summary>
         /// <param name="blockHeight"></param>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public int CountBlockTransactionFromBlockHeight(long blockHeight, CancellationTokenSource cancellation)
+        public int CountBlockTransactionFromBlockHeight(long blockHeight)
         {
-            int count = 0;
-
-            bool semaphoreUsed = false;
-            try
-            {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                if (_syncCacheDatabase.ContainsKey(blockHeight))
-                {
-                    count = _syncCacheDatabase[blockHeight].Count;
-                }
-
-            }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
-            }
-
-            return count;
+            if (_syncCacheDatabase.ContainsKey(blockHeight)) return _syncCacheDatabase[blockHeight].Count;
+            
+            return 0;
         }
 
         /// <summary>
@@ -193,75 +107,44 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// </summary>
         /// <param name="blockHeight"></param>
         /// <param name="transactionHash"></param>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public bool ContainsBlockTransactionFromTransactionHashAndBlockHeight(long blockHeight, string transactionHash, CancellationTokenSource cancellation)
+        public bool ContainsBlockTransactionFromTransactionHashAndBlockHeight(long blockHeight, string transactionHash)
         {
-            bool result = false;
-            bool semaphoreUsed = false;
-            try
-            {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
+            if (_syncCacheDatabase.ContainsKey(blockHeight))
+                return _syncCacheDatabase[blockHeight].ContainsKey(transactionHash);
 
-                if (_syncCacheDatabase.ContainsKey(blockHeight))
-                {
-                    result = _syncCacheDatabase[blockHeight].ContainsKey(transactionHash);
-                }
-            }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
-            }
-
-            return result;
+            return false;
         }
 
         /// <summary>
         /// Insert a block transaction to the cache.
         /// </summary>
         /// <param name="syncCacheBlockTransactionObject"></param>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public bool InsertBlockTransaction(ClassSyncCacheBlockTransactionObject syncCacheBlockTransactionObject, CancellationTokenSource cancellation)
+        public bool InsertBlockTransaction(ClassSyncCacheBlockTransactionObject syncCacheBlockTransactionObject)
         {
             bool result = false;
-            bool semaphoreUsed = false;
-            try
+
+
+            bool insertBlockHeight = true;
+
+            if (!_syncCacheDatabase.ContainsKey(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction))
             {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                bool insertBlockHeight = true;
-
-                if (!_syncCacheDatabase.ContainsKey(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction))
-                {
-                    _syncCacheDatabase.Add(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction, new Dictionary<string, ClassSyncCacheBlockTransactionObject>());
-                    insertBlockHeight = true;
-                }
-
-                if (insertBlockHeight)
-                {
-                    if (!_syncCacheDatabase[syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction].ContainsKey(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.TransactionHash))
-                    {
-                        _syncCacheDatabase[syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction].Add(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.TransactionHash, syncCacheBlockTransactionObject);
-                        result = true;
-                    }
-                    else
-                    {
-                        _syncCacheDatabase[syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction][syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.TransactionHash] = syncCacheBlockTransactionObject;
-                        result = true;
-                    }
-                }
+                _syncCacheDatabase.Add(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction, new Dictionary<string, ClassSyncCacheBlockTransactionObject>());
+                insertBlockHeight = true;
             }
-            finally
+
+            if (insertBlockHeight)
             {
-                if (semaphoreUsed)
+                if (!_syncCacheDatabase[syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction].ContainsKey(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.TransactionHash))
                 {
-                    _semaphoreDictionaryAccess.Release();
+                    _syncCacheDatabase[syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction].Add(syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.TransactionHash, syncCacheBlockTransactionObject);
+                    result = true;
+                }
+                else
+                {
+                    _syncCacheDatabase[syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.BlockHeightTransaction][syncCacheBlockTransactionObject.BlockTransaction.TransactionObject.TransactionHash] = syncCacheBlockTransactionObject;
+                    result = true;
                 }
             }
 
@@ -282,55 +165,22 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// <summary>
         /// Clear the cache.
         /// </summary>
-        /// <param name="cancellation"></param>
-        public void Clear(CancellationTokenSource cancellation)
+        public void Clear()
         {
-            bool semaphoreUsed = false;
-            try
-            {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                _syncCacheDatabase.Clear();
-            }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
-            }
+            _syncCacheDatabase.Clear();
         }
 
         /// <summary>
         /// Return every block transactions stored at a specific block height.
         /// </summary>
         /// <param name="blockHeight"></param>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public IEnumerable<KeyValuePair<string, ClassSyncCacheBlockTransactionObject>> GetBlockTransactionFromBlockHeight(long blockHeight, CancellationTokenSource cancellation)
+        public IEnumerable<KeyValuePair<string, ClassSyncCacheBlockTransactionObject>> GetBlockTransactionFromBlockHeight(long blockHeight)
         {
-            bool semaphoreUsed = false;
-
-            try
+            if (_syncCacheDatabase.ContainsKey(blockHeight))
             {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                if (_syncCacheDatabase.ContainsKey(blockHeight))
-                {
-                    foreach (var syncCacheBlockTransactionPair in _syncCacheDatabase[blockHeight])
-                    {
-                        yield return syncCacheBlockTransactionPair;
-                    }
-                }
-            }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
+                foreach (var syncCacheBlockTransactionPair in _syncCacheDatabase[blockHeight].ToArray())
+                    yield return syncCacheBlockTransactionPair;
             }
         }
 
@@ -338,29 +188,14 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// Return a list of block transaction at a specific block height.
         /// </summary>
         /// <param name="blockHeight"></param>
-        /// <param name="cancellation"></param>
         /// <returns></returns>
-        public List<string> GetListBlockTransactionHashFromBlockHeight(long blockHeight, CancellationTokenSource cancellation)
+        public List<string> GetListBlockTransactionHashFromBlockHeight(long blockHeight)
         {
             List<string> listBlockTransactionHash = new List<string>();
-            bool semaphoreUsed = false;
 
-            try
+            if (_syncCacheDatabase.ContainsKey(blockHeight))
             {
-                _semaphoreDictionaryAccess.Wait(cancellation.Token);
-                semaphoreUsed = true;
-
-                if (_syncCacheDatabase.ContainsKey(blockHeight))
-                {
-                    listBlockTransactionHash = _syncCacheDatabase[blockHeight].Keys.ToList();
-                }
-            }
-            finally
-            {
-                if (semaphoreUsed)
-                {
-                    _semaphoreDictionaryAccess.Release();
-                }
+               return _syncCacheDatabase[blockHeight].Keys.ToList();
             }
 
             return listBlockTransactionHash;
@@ -375,12 +210,9 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         public ClassSyncCacheBlockTransactionObject GetSyncBlockTransactionCached(long blockHeight, string transactionHash)
         {
             if (_syncCacheDatabase.ContainsKey(blockHeight))
-            {
                 if (_syncCacheDatabase[blockHeight].ContainsKey(transactionHash))
-                {
                     return _syncCacheDatabase[blockHeight][transactionHash];
-                }
-            }
+            
             return null;
         }
     }

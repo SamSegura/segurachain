@@ -57,7 +57,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
                             {
                                 if (languageObject != null)
                                 {
-                                    if (!languageObject.LanguageName.IsNullOrEmpty() && !languageObject.LanguageMinName.IsNullOrEmpty())
+                                    if (!languageObject.LanguageName.IsNullOrEmpty(out _) && !languageObject.LanguageMinName.IsNullOrEmpty(out _))
                                     {
                                         readStatus = true;
                                         if (!_dictionaryLanguageObjects.ContainsKey(languageObject.LanguageName))
@@ -108,7 +108,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
 
             using (StreamWriter writer = new StreamWriter(languageDirectoryPath + defaultLanguageObject.LanguageName + ClassWalletDefaultSetting.LanguageFileFormat.Replace("*", "")))
             {
-                writer.Write(JsonConvert.SerializeObject(defaultLanguageObject, Formatting.Indented));
+                writer.Write(ClassUtility.SerializeData(defaultLanguageObject, Formatting.Indented));
             }
         }
 
