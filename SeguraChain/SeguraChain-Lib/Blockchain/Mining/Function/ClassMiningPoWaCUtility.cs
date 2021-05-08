@@ -961,8 +961,8 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             }
 
             if (miningPoWaCSettingObject.MathOperatorList.Count == 0 ||
-                miningPoWaCSettingObject.RandomDataShareSize != (miningPoWaCSettingObject.RandomDataShareNumberSize + miningPoWaCSettingObject.RandomDataShareTimestampSize + miningPoWaCSettingObject.RandomDataShareBlockHeightSize + miningPoWaCSettingObject.RandomDataShareChecksum + miningPoWaCSettingObject.WalletAddressDataSize) ||
-                miningPoWaCSettingObject.ShareHexStringSize != ClassAes.EncryptionKeySize + (32 * (miningPoWaCSettingObject.PowRoundAesShare - 1)))
+                miningPoWaCSettingObject.RandomDataShareSize != (miningPoWaCSettingObject.RandomDataShareNumberSize + miningPoWaCSettingObject.RandomDataShareTimestampSize + miningPoWaCSettingObject.RandomDataShareBlockHeightSize + miningPoWaCSettingObject.RandomDataShareChecksum + miningPoWaCSettingObject.WalletAddressDataSize + miningPoWaCSettingObject.RandomDataShareNumberSize) ||
+                miningPoWaCSettingObject.ShareHexStringSize != ClassAes.EncryptionKeySize + (32 * miningPoWaCSettingObject.PowRoundAesShare))
             {
                 return false;
             }
