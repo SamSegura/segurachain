@@ -1674,7 +1674,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 }
             }
 
-            if (cancellation != null) await _ioDataStructureFileLockStream.FlushAsync(cancellation.Token);
+            //if (cancellation != null) await _ioDataStructureFileLockStream.FlushAsync(cancellation.Token);
 
             if (listBlockHeightFound.Count < listBlockHeight.Count)
             {
@@ -1829,7 +1829,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         }
                     }
 
-                    var writeResult = await WriteByBlockAsync(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, _ioDataStructureFileLockStream);
+                    var writeResult = WriteByBlock(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, _ioDataStructureFileLockStream);
 
                     if (writeResult.Item1)
                     {
@@ -1949,7 +1949,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                                                 long position = writer.Position;
 
-                                                var writeResult = await WriteByBlockAsync(readResult.Item2, cancellation, writer);
+                                                var writeResult = WriteByBlock(readResult.Item2, cancellation, writer);
 
                                                 if (writeResult.Item1)
                                                 {
@@ -2021,7 +2021,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                     }
 
 
-                                    var writeResult = await WriteByBlockAsync(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, writer);
+                                    var writeResult = WriteByBlock(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, writer);
 
                                     if (writeResult.Item1)
                                     {
@@ -2116,8 +2116,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                         break;
                                     }
                                 }
-
-                                var writeResult = await WriteByBlockAsync(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, _ioDataStructureFileLockStream);
+                                var writeResult = WriteByBlock(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, _ioDataStructureFileLockStream);
 
                                 if (writeResult.Item1)
                                 {
@@ -2162,7 +2161,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                             }
                         }
 
-                        if (cancellation != null) await _ioDataStructureFileLockStream.FlushAsync(cancellation.Token);
+                        //if (cancellation != null) await _ioDataStructureFileLockStream.FlushAsync(cancellation.Token);
                     }
                 }
 
@@ -2183,7 +2182,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// <param name="cancellation"></param>
         /// <param name="ioFileStream"></param>
         /// <returns></returns>
-        private async Task<Tuple<bool, long>> WriteByBlockAsync(byte[] data, CancellationTokenSource cancellation, FileStream ioFileStream)
+        private Tuple<bool, long> WriteByBlock(byte[] data, CancellationTokenSource cancellation, FileStream ioFileStream)
         {
             bool writeStatus = true;
             long dataSizeWritten = 0;
@@ -2199,7 +2198,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         writeStatus = false;
                         break;
                     }
-                
+
                 percentWrite--;
                 if (percentWrite <= 0)
                 {
@@ -2228,72 +2227,58 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             {
                 long tmpWriteBeforeSleep = 0;
 
-                    while (dataSizeWritten != data.Length && writeStatus)
+                while (dataSizeWritten != data.Length && writeStatus)
+                {
+                    try
                     {
-                        try
+                        if (cancellation != null)
                         {
-                            if (cancellation != null)
+                            if (cancellation.IsCancellationRequested)
                             {
-                                if (cancellation.IsCancellationRequested)
-                                {
-                                    writeStatus = false;
-                                    break;
-                                }
+                                writeStatus = false;
+                                break;
                             }
-                            if (dataSizeWritten + sizeByBlockToWrite < data.Length)
+                        }
+                        if (dataSizeWritten + sizeByBlockToWrite < data.Length)
+                        {
+                            byte[] blockData = new byte[sizeByBlockToWrite];
+
+                            Array.Copy(data, dataSizeWritten, blockData, 0, blockData.Length);
+
+                            ioFileStream.Write(blockData, 0, blockData.Length);
+
+                            dataSizeWritten += sizeByBlockToWrite;
+                            tmpWriteBeforeSleep += sizeByBlockToWrite;
+                        }
+                        else
+                        {
+                            long rest = data.Length - dataSizeWritten;
+
+                            if (rest > 0)
                             {
-                                byte[] blockData = new byte[sizeByBlockToWrite];
+                                byte[] blockData = new byte[rest];
 
                                 Array.Copy(data, dataSizeWritten, blockData, 0, blockData.Length);
 
                                 ioFileStream.Write(blockData, 0, blockData.Length);
 
-                                dataSizeWritten += sizeByBlockToWrite;
-                                tmpWriteBeforeSleep += sizeByBlockToWrite;
-                            }
-                            else
-                            {
-                                long rest = data.Length - dataSizeWritten;
-
-                                if (rest > 0)
-                                {
-                                    byte[] blockData = new byte[rest];
-
-                                    Array.Copy(data, dataSizeWritten, blockData, 0, blockData.Length);
-
-                                    ioFileStream.Write(blockData, 0, blockData.Length);
-
-                                    dataSizeWritten += rest;
-                                    tmpWriteBeforeSleep += rest;
-                                }
-                            }
-
-                            if (dataSizeWritten >= data.Length)
-                            {
-                                break;
-                            }
-
-                            if (cancellation != null)
-                            {
-                                if (tmpWriteBeforeSleep > 0)
-                                {
-                                    float percentWrittenBeforeSleep = (tmpWriteBeforeSleep / data.Length) * 100f;
-
-                                    if (percentWrittenBeforeSleep >= percentWrite)
-                                    {
-                                        await Task.Delay(1, cancellation.Token);
-                                        tmpWriteBeforeSleep = 0;
-                                    }
-                                }
+                                dataSizeWritten += rest;
+                                tmpWriteBeforeSleep += rest;
                             }
                         }
-                        catch
+
+                        if (dataSizeWritten >= data.Length)
                         {
-                            writeStatus = false;
                             break;
                         }
                     }
-                
+                    catch
+                    {
+                        writeStatus = false;
+                        break;
+                    }
+                }
+
             }
 
             return new Tuple<bool, long>(writeStatus, dataSizeWritten);

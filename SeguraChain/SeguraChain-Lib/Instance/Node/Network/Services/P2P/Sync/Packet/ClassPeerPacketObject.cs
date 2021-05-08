@@ -1,9 +1,9 @@
 ﻿using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
+using SeguraChain_Lib.Utility;
 using System;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
 {
-    [Serializable]
     public class ClassPeerPacketSendObject
     {
         public ClassPeerEnumPacketSend PacketOrder;
@@ -24,9 +24,44 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
             PublicKey = publicKey;
             PeerLastTimestampSignatureWhitelist = lastTimestampSignatureWhitelist;
         }
+
+        public ClassPeerPacketSendObject(byte[] packetData, out bool status)
+        {
+            status = false;
+            try
+            {
+                string[] splitPacketData = packetData.GetStringFromByteArrayAscii().Split(new[] { "#" }, StringSplitOptions.None);
+
+                PacketOrder = (ClassPeerEnumPacketSend)int.Parse(splitPacketData[0]);
+                PacketContent = splitPacketData[1];
+                PacketHash = splitPacketData[2];
+                PacketSignature = splitPacketData[3];
+                PacketPeerUniqueId = splitPacketData[4];
+                PublicKey = splitPacketData[5];
+                PeerLastTimestampSignatureWhitelist = long.Parse(splitPacketData[6]);
+                status = true;
+
+            }
+            catch 
+            {
+               // Ignored.
+            }
+        }
+
+        public byte[] GetPacketData()
+        {
+
+            return ClassUtility.GetByteArrayFromStringAscii((int)PacketOrder + "#" +
+                PacketContent + "#" +
+                PacketHash + "#" +
+                PacketSignature + "#" +
+                PacketPeerUniqueId + "#" +
+                PublicKey + "#" +
+                PeerLastTimestampSignatureWhitelist);
+        }
     }
 
-    [Serializable]
+
     public class ClassPeerPacketRecvObject
     {
         public ClassPeerEnumPacketResponse PacketOrder;
@@ -46,6 +81,43 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
             PacketPeerUniqueId = packetPeerUniqueId;
             PublicKey = publicKey;
             PeerLastTimestampSignatureWhitelist = lastTimestampSignatureWhitelist;
+        }
+
+        public ClassPeerPacketRecvObject(byte[] packetData, out bool status)
+        {
+            status = false;
+
+            try
+            {
+                string[] splitPacketData = packetData.GetStringFromByteArrayAscii().Split(new[] { "#" }, StringSplitOptions.None);
+
+                PacketOrder = (ClassPeerEnumPacketResponse)int.Parse(splitPacketData[0]);
+                PacketContent = splitPacketData[1];
+                PacketHash = splitPacketData[2];
+                PacketSignature = splitPacketData[3];
+                PacketPeerUniqueId = splitPacketData[4];
+                PublicKey = splitPacketData[5];
+                PeerLastTimestampSignatureWhitelist = long.Parse(splitPacketData[6]);
+                status = true;
+
+            }
+            catch
+            {
+                // Ignored.
+            }
+        }
+
+        public byte[] GetPacketData()
+        {
+
+            return ClassUtility.GetByteArrayFromStringAscii((int)PacketOrder + "#" +
+                PacketContent + "#" +
+                PacketHash + "#" +
+                PacketSignature + "#" +
+                PacketPeerUniqueId + "#" +
+                PublicKey + "#" +
+                PeerLastTimestampSignatureWhitelist);
+
         }
     }
 }

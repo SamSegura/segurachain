@@ -89,6 +89,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database
 
                                             if (insert)
                                             {
+                                                peerObject.PeerTimestampSignatureWhitelist = 0;
+
                                                 if (DictionaryPeerDataObject.ContainsKey(peerObject.PeerIp))
                                                 {
                                                     if (!DictionaryPeerDataObject[peerObject.PeerIp].ContainsKey(peerObject.PeerUniqueId))

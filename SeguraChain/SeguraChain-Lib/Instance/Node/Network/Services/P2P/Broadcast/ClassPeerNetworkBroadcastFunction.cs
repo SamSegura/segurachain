@@ -248,11 +248,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                             })
                         };
 
-                        packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, cancellation);
+                        packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerTargetObject.PeerIpTarget, peerTargetObject.PeerUniqueIdTarget, true, cancellation);
 
                         if (packetSendObject != null)
                         {
-                            await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(packetSendObject), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, false, true);
+                            await peerTargetObject.PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(packetSendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, false, true);
                         }
 
                         peerTargetObject.PeerNetworkClientSyncObject.DisconnectFromTarget();
@@ -349,11 +349,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                 })
                             };
 
-                            packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMiningShareVote);
+                            packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, true, cancellationTokenSourceMiningShareVote);
 
                             if (packetSendObject != null)
                             {
-                                if (await peerListTarget[peerKey].PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(packetSendObject), cancellationTokenSourceMiningShareVote, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, false, false))
+                                if (await peerListTarget[peerKey].PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(packetSendObject.GetPacketData(), cancellationTokenSourceMiningShareVote, ClassPeerEnumPacketResponse.SEND_MINING_SHARE_VOTE, false, false))
                                 {
                                     if (peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived != null)
                                     {
@@ -884,11 +884,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                 })
                             };
 
-                            packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, cancellationTokenSourceMemPoolTxVote);
+                            packetSendObject = BuildSignedPeerSendPacketObject(packetSendObject, peerIpTarget, peerUniqueIdTarget, true, cancellationTokenSourceMemPoolTxVote);
 
                             if (packetSendObject != null)
                             {
-                                if (await peerListTarget[peerKey].PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(packetSendObject), cancellationTokenSourceMemPoolTxVote, ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE, false, false))
+                                if (await peerListTarget[peerKey].PeerNetworkClientSyncObject.TrySendPacketToPeerTarget(packetSendObject.GetPacketData(), cancellationTokenSourceMemPoolTxVote, ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE, false, false))
                                 {
                                     if (peerListTarget[peerKey].PeerNetworkClientSyncObject.PeerPacketReceived != null)
                                     {
@@ -1245,7 +1245,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
         /// <param name="cancellation"></param>
         /// 
         /// <returns></returns>
-        public static ClassPeerPacketSendObject BuildSignedPeerSendPacketObject(ClassPeerPacketSendObject sendObject, string peerIp, string peerUniqueId, CancellationTokenSource cancellation)
+        public static ClassPeerPacketSendObject BuildSignedPeerSendPacketObject(ClassPeerPacketSendObject sendObject, string peerIp, string peerUniqueId, bool forceSignature, CancellationTokenSource cancellation)
         {
             if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
             {
@@ -1286,7 +1286,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                 sendObject.PacketHash = ClassUtility.GenerateSha3512FromString(sendObject.PacketContent + sendObject.PacketOrder);
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
                 {
-                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTimestampSignatureWhitelist < ClassUtility.GetCurrentTimestampInSecond())
+                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTimestampSignatureWhitelist < ClassUtility.GetCurrentTimestampInSecond() || forceSignature)
                     {
                         if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject != null && cancellation != null)
                         {

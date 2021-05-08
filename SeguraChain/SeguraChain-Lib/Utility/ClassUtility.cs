@@ -690,20 +690,7 @@ namespace SeguraChain_Lib.Utility
             return false;
         }
 
-        public static bool TryDeserializePacket<T>(byte[] content, out T packet)
-        {
-            try
-            {
-                packet = new BinarySerializer().Deserialize<T>(content);
-                return true;
-            }
-            catch
-            {
-                packet = default;
-                return false;
-            }
-        }
-
+  
         public static string SerializeData<T>(T content, Formatting formatting = Formatting.None)
         {
             if (content != null)
@@ -712,10 +699,6 @@ namespace SeguraChain_Lib.Utility
             return string.Empty;
         }
 
-        public static byte[] SerializePacketData<T>(T content)
-        {
-            return new BinarySerializer().Serialize(content);
-        }
 
         #endregion
 
@@ -1346,29 +1329,6 @@ namespace SeguraChain_Lib.Utility
                 {
                     // ignored, the capacity can change.
                 }
-            }
-        }
-    }
-
-    public class BinarySerializer
-    {
-        private static readonly BinaryFormatter Formatter = new BinaryFormatter();
-
-        public byte[] Serialize(object toSerialize)
-        {
-            using (var stream = new MemoryStream())
-            {
-                Formatter.Serialize(stream, toSerialize);
-                return stream.ToArray();
-            }
-        }
-
-        public T Deserialize<T>(byte[] serialized)
-        {
-            using (var stream = new MemoryStream(serialized))
-            {
-                var result = (T)Formatter.Deserialize(stream);
-                return result;
             }
         }
     }

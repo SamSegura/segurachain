@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
-using Newtonsoft.Json;
 using SeguraChain_Lib.Algorithm;
 using SeguraChain_Lib.Blockchain.Mining.Enum;
 using SeguraChain_Lib.Blockchain.Mining.Object;
@@ -92,6 +92,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
 
             BigInteger pocShareDifficulty = CalculateDifficultyShare(pocShareData, blockDifficulty);
+
 
             // Clean up.
             Array.Clear(pocShareData, 0, pocShareData.Length);
@@ -410,7 +411,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
             #region Generate two numbers and the timestamp of the share from random data for calculate the proof of compatibility.
 
-            GetCompatibilityDataFromPocRandomData(currentMiningSetting, pocShareDecryptedBytes, out long timestampShare, out long blockHeightShare, out int numberOne, out int numberTwo);
+            GetCompatibilityDataFromPocRandomData(currentMiningSetting, pocShareDecryptedBytes, out long timestampShare, out long blockHeightShare, out int numberOne, out int numberTwo, out long nonce);
 
             if (timestampShare != pocShareObject.Timestamp)
             {
@@ -422,6 +423,12 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             {
                 jobCompatibilityValue = -1;
                 return ClassMiningPoWaCEnumStatus.INVALID_BLOCK_HEIGHT;
+            }
+
+            if (nonce != pocShareObject.Nonce)
+            {
+                jobCompatibilityValue = -1;
+                return ClassMiningPoWaCEnumStatus.INVALID_NONCE_SHARE;
             }
 
             if (CheckPoc(currentMiningSetting, numberOne, numberTwo, previousBlockTransactionCount, out jobCompatibilityValue))
@@ -502,7 +509,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
         /// <param name="walletAddressDecoded"></param>
         /// <param name="pocTxCount"></param>
         /// <returns></returns>
-        public static byte[] GenerateRandomPocData(ClassMiningPoWaCSettingObject currentMiningSetting, int previousBlockTransactionCount, long blockHeight, long timestampSecond, byte[] walletAddressDecoded, out int pocTxCount)
+        public static byte[] GenerateRandomPocData(ClassMiningPoWaCSettingObject currentMiningSetting, int previousBlockTransactionCount, long blockHeight, long timestampSecond, byte[] walletAddressDecoded, long nonce, out int pocTxCount)
         {
             // timestamp of the share into bytes one time.
             byte[] timestampSecondBytes = BitConverter.GetBytes(timestampSecond);
@@ -548,6 +555,9 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
                         // Copy the block height.
                         Array.Copy(BitConverter.GetBytes(blockHeight), 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize, currentMiningSetting.RandomDataShareBlockHeightSize);
+
+                        // Copy the nonce.
+                        Array.Copy(BitConverter.GetBytes(nonce), 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize + currentMiningSetting.RandomDataShareBlockHeightSize, currentMiningSetting.RandomDataShareNumberSize);
 
                         // Clean up.
                         Array.Clear(timestampSecondBytes, 0, timestampSecondBytes.Length);
@@ -730,12 +740,13 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
         /// <param name="blockHeight"></param>
         /// <param name="timestampShare"></param>
         /// <returns></returns>
-        public static byte[] UpdateRandomPocDataTimestampAndBlockHeightTarget(ClassMiningPoWaCSettingObject currentMiningSetting, byte[] pocRandomData, long blockHeight, out long timestampShare)
+        public static byte[] UpdateRandomPocDataTimestampAndBlockHeightTarget(ClassMiningPoWaCSettingObject currentMiningSetting, byte[] pocRandomData, long blockHeight, long nonce, out long timestampShare)
         {
             timestampShare = ClassUtility.GetCurrentTimestampInSecond();
 
             Buffer.BlockCopy(BitConverter.GetBytes(timestampShare), 0, pocRandomData, currentMiningSetting.RandomDataShareTimestampSize, currentMiningSetting.RandomDataShareTimestampSize);
             Buffer.BlockCopy(BitConverter.GetBytes(blockHeight), 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize, currentMiningSetting.RandomDataShareBlockHeightSize);
+            Buffer.BlockCopy(BitConverter.GetBytes(nonce), 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize + currentMiningSetting.RandomDataShareBlockHeightSize, currentMiningSetting.RandomDataShareNumberSize);
 
 
             return pocRandomData;
@@ -751,28 +762,32 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
         /// <param name="numberOne"></param>
         /// <param name="numberTwo"></param>
         /// <returns></returns>
-        public static void GetCompatibilityDataFromPocRandomData(ClassMiningPoWaCSettingObject currentMiningSetting, byte[] pocRandomData, out long timestampShare, out long blockHeightShare, out int numberOne, out int numberTwo)
+        public static void GetCompatibilityDataFromPocRandomData(ClassMiningPoWaCSettingObject currentMiningSetting, byte[] pocRandomData, out long timestampShare, out long blockHeightShare, out int numberOne, out int numberTwo, out long nonce)
         {
             byte[] numberOneBytes = new byte[currentMiningSetting.RandomDataShareNumberSize / 2];
             byte[] numberTwoBytes = new byte[currentMiningSetting.RandomDataShareNumberSize / 2];
             byte[] timestampBytes = new byte[currentMiningSetting.RandomDataShareTimestampSize];
             byte[] blockHeightBytes = new byte[currentMiningSetting.RandomDataShareBlockHeightSize];
+            byte[] nonceBytes = new byte[currentMiningSetting.RandomDataShareNumberSize];
 
             Array.Copy(pocRandomData, 0, numberOneBytes, 0, currentMiningSetting.RandomDataShareNumberSize / 2);
             Array.Copy(pocRandomData, currentMiningSetting.RandomDataShareNumberSize / 2, numberTwoBytes, 0, currentMiningSetting.RandomDataShareNumberSize / 2);
             Array.Copy(pocRandomData, currentMiningSetting.RandomDataShareTimestampSize, timestampBytes, 0, currentMiningSetting.RandomDataShareTimestampSize);
             Array.Copy(pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize, blockHeightBytes, 0, currentMiningSetting.RandomDataShareBlockHeightSize);
+            Array.Copy(pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize + currentMiningSetting.RandomDataShareBlockHeightSize, nonceBytes, 0, currentMiningSetting.RandomDataShareNumberSize);
 
             numberOne = BitConverter.ToInt32(numberOneBytes, 0);
             numberTwo = BitConverter.ToInt32(numberTwoBytes, 0);
             timestampShare = BitConverter.ToInt64(timestampBytes, 0);
             blockHeightShare = BitConverter.ToInt64(blockHeightBytes, 0);
+            nonce = BitConverter.ToInt64(nonceBytes, 0);
 
             // Clean up.
             Array.Clear(numberOneBytes, 0, numberOneBytes.Length);
             Array.Clear(numberTwoBytes, 0, numberTwoBytes.Length);
             Array.Clear(timestampBytes, 0, timestampBytes.Length);
             Array.Clear(blockHeightBytes, 0, blockHeightBytes.Length);
+            Array.Clear(nonceBytes, 0, nonceBytes.Length);
         }
 
         /// <summary>

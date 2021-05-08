@@ -93,9 +93,9 @@ namespace SeguraChain_Lib.Blockchain.Mining.Object
             RandomDataShareBlockHeightSize = 8;
             RandomDataShareChecksum = 32;
             WalletAddressDataSize = 65;
-            RandomDataShareSize = RandomDataShareNumberSize + RandomDataShareTimestampSize + RandomDataShareBlockHeightSize + RandomDataShareChecksum + WalletAddressDataSize;
+            RandomDataShareSize = RandomDataShareNumberSize + RandomDataShareTimestampSize + RandomDataShareBlockHeightSize + RandomDataShareChecksum + WalletAddressDataSize + RandomDataShareNumberSize;
 
-            ShareHexStringSize = ClassAes.EncryptionKeySize + (32 * (PowRoundAesShare - 1));
+            ShareHexStringSize = ClassAes.EncryptionKeySize + (32 * PowRoundAesShare);
             ShareHexByteArraySize = ShareHexStringSize / 2;
 
             MathOperatorList = new List<string>  {
@@ -118,9 +118,9 @@ namespace SeguraChain_Lib.Blockchain.Mining.Object
                 ClassMiningPoWaCEnumInstructions.DO_ENCRYPTED_POC_SHARE,
             };
 
-            MiningSettingTimestamp = 1615588135;
-            MiningSettingContentHash = "20947CA51CC5412019E1A226B3D48CE5D52C39BCA5F062F2EBB14D3CD3447374950D0BA3A7C9EDECC4974E72A6FAD87B899EBEE17076E4E6057EF2DE91F00521";
-            MiningSettingContentHashSignature = "MIGUAkgDUL4mqunmDschJ1pIJd87bUAu5FvoqJQYNnRZBnlLFR6GIfeggmHdTwWe4ITNMYIVAa9kWFRwUVsdmRPinTvX/W2SVqUdj8sCSAJ7CCF8gtaKMGIPTK53gse5nRei4BM6dJqs2TUdrlg7V+djJgEYbsDwpvnbeSPDdg07ALD2Az29VBTAUt4LhjOeOeiLkROdPQ==";
+            MiningSettingTimestamp = 1620490689;
+            MiningSettingContentHash = "2EE874D1273F2FC258C976AE44A2D072C0368D7BA43B43B17294A959FC567EC451BD1C7566ECD535D2CECDF0AA70731E3039474748FDAD22A14CDBC32EB6041B";
+            MiningSettingContentHashSignature = "MIGUAkgA9jnbn3ilf5GjPxzwu1MIkGWHL88hWneffrCYaFStNg8fgib0u5F0Nl9xL/mzaViUwluKi1D1EEgWiHQkVILOAHe6SnLJhvsCSAEZZPKtdCFSCoNb06pEmQl1ChoGTQUMT0GCDvxYwFjRYvAXSMfB2gvBGFERvsqxStMmP7mV4KF/mxK4NytILZnbmxwgzA3GiA==";
             MiningSettingContentDevPublicKey = "YK8jgSUoBeRBbNZjfs7USuwpZXpuof4rffhk33bLzePd4YA4nGz1zXQeiwE4GAxigoiYrSZYMgBg82AXZmM8CDei6s1Uh3BReek8nLHYcandnzrdGEnpgcoZ3zfiKBFJX3RyDoYHbnN6nXJ3J2ZEKjA4xG3PM3nL5V3USCfqY9AaMNGWKzArivpVfCKZSNbhg27kyuGHUraNuHVe8yE5fKnwYVi";
         }
     }

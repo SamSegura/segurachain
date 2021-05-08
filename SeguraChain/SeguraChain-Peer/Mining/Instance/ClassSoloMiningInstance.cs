@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -396,7 +397,7 @@ namespace SeguraChain_Peer.Mining.Instance
                                                     _minRangeNonce[i] = ((rangeNonce * i) - 1);
                                                     _maxRangeNonce[i] = ((rangeNonce * (i + 1)) - 1);
                                                     _nextNonce[i] = _minRangeNonce[i];
-                                                    _pocRandomData[i] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, lastBlockHeight, ClassUtility.GetCurrentTimestampInSecond(), _walletAddressDecoded, out _);
+                                                    _pocRandomData[i] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, lastBlockHeight, ClassUtility.GetCurrentTimestampInSecond(), _walletAddressDecoded, _nextNonce[i], out _);
 
                                                 }
 
@@ -474,6 +475,8 @@ namespace SeguraChain_Peer.Mining.Instance
                     // Initialize timestamp of share.
                     long timestampShare = ClassUtility.GetCurrentTimestampInSecond();
 
+
+
                     while (GetMiningStatus)
                     {
                         try
@@ -487,12 +490,6 @@ namespace SeguraChain_Peer.Mining.Instance
                                 }
                                 else
                                 {
-                                    // Intialize PoC random data if null.
-                                    if (_pocRandomData[idThread] == null)
-                                    {
-                                        timestampShare = ClassUtility.GetCurrentTimestampInSecond();
-                                        _pocRandomData[idThread] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, _currentBlockHeight, timestampShare, _walletAddressDecoded, out _);
-                                    }
 
                                     // Put the thread in pause pending an update.
                                     while (_miningPauseStatus)
@@ -504,7 +501,26 @@ namespace SeguraChain_Peer.Mining.Instance
                                     if (_nextNonce[idThread] >= BlockchainSetting.CurrentMiningPoWaCSettingObject(_currentBlockHeight).PocShareNonceMax || _nextNonce[idThread] >= _maxRangeNonce[idThread])
                                     {
                                         _nextNonce[idThread] = _minRangeNonce[idThread];
-                                        _pocRandomData[idThread] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, _currentBlockHeight, timestampShare, _walletAddressDecoded, out _);
+                                        timestampShare = ClassUtility.GetCurrentTimestampInSecond();
+                                        _pocRandomData[idThread] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, _currentBlockHeight, timestampShare, _walletAddressDecoded, _nextNonce[idThread], out _);
+                                    }
+                                    // Increase nonce.
+                                    else
+                                    {
+                                        _nextNonce[idThread]++;
+                                    }
+
+
+                                    // Intialize PoC random data if null.
+                                    if (_pocRandomData[idThread] == null)
+                                    {
+                                        timestampShare = ClassUtility.GetCurrentTimestampInSecond();
+                                        _pocRandomData[idThread] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, _currentBlockHeight, timestampShare, _walletAddressDecoded, _nextNonce[idThread], out _);
+                                    }
+                                    else
+                                    {
+                                        // Update the timestamp share data of the random poc data.
+                                        _pocRandomData[idThread] = ClassMiningPoWaCUtility.UpdateRandomPocDataTimestampAndBlockHeightTarget(_currentMiningPocSettingObject, _pocRandomData[idThread], _currentBlockHeight, _nextNonce[idThread], out timestampShare);
                                     }
 
                                     // Build a poc share.
@@ -512,7 +528,6 @@ namespace SeguraChain_Peer.Mining.Instance
 
                                     if (pocShareObject != null)
                                     {
-
                                         #region Update miner stats.
 
                                         _totalHash[idThread]++;
@@ -527,8 +542,8 @@ namespace SeguraChain_Peer.Mining.Instance
                                         // Submit the share if this one reach the difficulty of the block or if this one is higher.
                                         if (pocShareObject.PoWaCShareDifficulty >= _currentBlockDifficulty)
                                         {
+
                                             ClassBlockEnumMiningShareVoteStatus unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, true, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenMiningTasks);
-                                       
                                          
                                             switch (unlockResult)
                                             {
@@ -545,12 +560,6 @@ namespace SeguraChain_Peer.Mining.Instance
                                             }
                                         }
                                     }
-
-                                    // Increase nonce.
-                                    _nextNonce[idThread]++;
-
-                                    // Update the timestamp share data of the random poc data.
-                                    _pocRandomData[idThread] = ClassMiningPoWaCUtility.UpdateRandomPocDataTimestampAndBlockHeightTarget(_currentMiningPocSettingObject, _pocRandomData[idThread], _currentBlockHeight, out timestampShare);
                                 }
                             }
                             else

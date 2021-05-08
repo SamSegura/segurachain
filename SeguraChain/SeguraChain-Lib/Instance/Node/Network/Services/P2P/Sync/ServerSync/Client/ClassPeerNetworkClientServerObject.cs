@@ -481,7 +481,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
 
             try
             {
-                if (!ClassUtility.TryDeserializePacket(packet, out ClassPeerPacketSendObject packetSendObject))
+                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(packet, out bool status);
+
+                if (!status)
                 {
                     return ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_TYPE_PACKET;
                 }
@@ -2420,7 +2422,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                             }
                         }
 
-                        byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(ClassUtility.SerializePacketData(packetSendObject)) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
+                        byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(packetSendObject.GetPacketData()) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
 
                         // Clean up.
                         Array.Clear(packetContentEncrypted, 0, packetContentEncrypted.Length);
@@ -2457,7 +2459,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         return false;
                     }
 
-                    byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(ClassUtility.SerializePacketData(packetSendObject)) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
+                    byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(packetSendObject.GetPacketData()) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
 
                     using (NetworkStream networkStream = new NetworkStream(_tcpClientPeer.Client))
                     {

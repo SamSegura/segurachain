@@ -2464,6 +2464,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         return blockObject;
                     }
 
+                    ClassLog.WriteLine("Failed to increment confirmations on block height: " + blockObject.BlockHeight, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 #if DEBUG
                     Debug.WriteLine("Failed to increment confirmations on block height: " + blockObject.BlockHeight);
 #endif
@@ -2471,12 +2472,18 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 }
                 else
                 {
+                    ClassLog.WriteLine("Increment transactions confirmations on the block height: " + blockObject.BlockHeight + " already done. Heights: " + blockObject.BlockLastHeightTransactionConfirmationDone + "/" + lastBlockHeightUnlockedObject.BlockHeight, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 #if DEBUG
-                    Debug.WriteLine("Increment transactions confirmations on the block height: " + blockObject.BlockHeight + " already done.");
+                    Debug.WriteLine("Increment transactions confirmations on the block height: " + blockObject.BlockHeight + " already done. Heights: " + blockObject.BlockLastHeightTransactionConfirmationDone + "/" + lastBlockHeightUnlockedObject.BlockHeight);
 
 #endif
                     return blockObject;
                 }
+            }
+            else
+            {
+                ClassLog.WriteLine("The block height: " + blockObject.BlockHeight + " is invalid.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+
             }
 
             return null;
@@ -2497,6 +2504,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 {
                     try
                     {
+                        if (blockObject.BlockTransactions.Count > 0 && blockObject.TotalTransaction == 0 && blockObject.BlockTotalTaskTransactionConfirmationDone == 0)
+                        {
+                            blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
+                        }
                         if (blockObject.BlockTransactions.Count == blockObject.TotalTransaction)
                         {
 
@@ -2527,11 +2538,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                             {
                                                                 countTx++;
 
-                                                                ClassBlockConfirmationTransactionStatusObject blockTransactionStatus = new ClassBlockConfirmationTransactionStatusObject()
-                                                                {
-                                                                    BlockObject = blockObject,
-                                                                    BlockTransactionStatus = ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_HEIGHT_NOT_REACH
-                                                                };
+                                                                ClassBlockTransactionEnumStatus blockTransactionStatus = ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_HEIGHT_NOT_REACH;
+
 
                                                                 long totalConfirmationsDone = blockObject.BlockTransactions[blockTransactionHash].TransactionTotalConfirmation;
                                                                 bool noError = true;
@@ -2550,8 +2558,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                     blockObject.BlockTransactions[blockTransactionHash].TransactionInvalidStatus = ClassTransactionEnumStatus.INVALID_TRANSACTION_SOURCE_LIST;
                                                                     blockObject.BlockTransactions[blockTransactionHash].TransactionInvalidRemoveTimestamp = blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TimestampSend + BlockchainSetting.TransactionInvalidDelayRemove;
 
+
+                                                                    ClassLog.WriteLine(blockObject.BlockHeight + " | Invalid amount sources | last unlocked: " + lastBlockObjectUnlocked.BlockHeight, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                                                                    ClassLog.WriteLine("Transaction hash: " + blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionHash, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                                                                    ClassLog.WriteLine("Transaction Type: " + System.Enum.GetName(typeof(ClassTransactionEnumType), blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionType), ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+
 #if DEBUG
-                                                                    Debug.WriteLine(blockTransactionStatus.BlockObject.BlockHeight + " | Invalid amount sources | last unlocked: " + lastBlockObjectUnlocked.BlockHeight);
+                                                                    Debug.WriteLine(blockObject.BlockHeight + " | Invalid amount sources | last unlocked: " + lastBlockObjectUnlocked.BlockHeight);
                                                                     Debug.WriteLine("Transaction hash: " + blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionHash);
                                                                     Debug.WriteLine("Transaction Type: " + System.Enum.GetName(typeof(ClassTransactionEnumType), blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionType));
 
@@ -2573,19 +2586,19 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                     {
                                                                         #region If the block height transaction is behind the last block height transaction checkpoint, we admit to have a transaction fully valided.
 
-                                                                        blockTransactionStatus.BlockTransactionStatus = ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_ENOUGH_CONFIRMATIONS_REACH;
+                                                                        blockTransactionStatus = ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_ENOUGH_CONFIRMATIONS_REACH;
 
                                                                         #endregion
                                                                     }
                                                                 }
 
-                                                                switch (blockTransactionStatus.BlockTransactionStatus)
+                                                                switch (blockTransactionStatus)
                                                                 {
                                                                     case ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_ENOUGH_CONFIRMATIONS_REACH:
                                                                     case ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_CONFIRMATIONS_INCREMENTED:
                                                                         {
                                                                             blockObject.BlockTransactions[blockTransactionHash].TransactionTotalConfirmation = (lastBlockObjectUnlocked.BlockHeight - blockObject.BlockHeight);
-                                                                            if (blockTransactionStatus.BlockTransactionStatus == ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_ENOUGH_CONFIRMATIONS_REACH)
+                                                                            if (blockTransactionStatus == ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_ENOUGH_CONFIRMATIONS_REACH)
                                                                             {
                                                                                 countTxConfirmed++;
                                                                             }
@@ -2593,8 +2606,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                         break;
                                                                     case ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_HEIGHT_NOT_REACH:
                                                                         {
+                                                                            ClassLog.WriteLine(blockObject.BlockHeight + " | Status " + blockTransactionStatus + " | last unlocked: " + lastBlockObjectUnlocked.BlockHeight, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 #if DEBUG
-                                                                            Debug.WriteLine(blockTransactionStatus.BlockObject.BlockHeight + " |Status " + blockTransactionStatus.BlockTransactionStatus + " | last unlocked: " + lastBlockObjectUnlocked.BlockHeight);
+                                                                            Debug.WriteLine(blockObject.BlockHeight + " | Status " + blockTransactionStatus + " | last unlocked: " + lastBlockObjectUnlocked.BlockHeight);
 #endif
                                                                         }
                                                                         break;
@@ -2604,11 +2618,15 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                         {
                                                                             blockObject.BlockTransactions[blockTransactionHash].TransactionStatus = false;
                                                                             blockObject.BlockTransactions[blockTransactionHash].TransactionInvalidRemoveTimestamp = blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TimestampSend + BlockchainSetting.TransactionInvalidDelayRemove;
+
+                                                                            ClassLog.WriteLine(blockObject.BlockHeight + " | Status " + blockTransactionStatus + " | last unlocked: " + lastBlockObjectUnlocked.BlockHeight, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                                                                            ClassLog.WriteLine("Transaction hash: " + blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionHash, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                                                                            ClassLog.WriteLine("Transaction Type: " + System.Enum.GetName(typeof(ClassTransactionEnumType), blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionType), ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+
 #if DEBUG
-                                                                            Debug.WriteLine(blockTransactionStatus.BlockObject.BlockHeight + " |Status " + blockTransactionStatus.BlockTransactionStatus + " | last unlocked: " + lastBlockObjectUnlocked.BlockHeight);
+                                                                            Debug.WriteLine(blockObject.BlockHeight + " | Status " + blockTransactionStatus + " | last unlocked: " + lastBlockObjectUnlocked.BlockHeight);
                                                                             Debug.WriteLine("Transaction hash: " + blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionHash);
                                                                             Debug.WriteLine("Transaction Type: " + System.Enum.GetName(typeof(ClassTransactionEnumType), blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionType));
-
 #endif
                                                                         }
                                                                         break;
@@ -2639,7 +2657,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                         break;
                                 }
                             }
-
                         }
                         else
                         {
@@ -2827,7 +2844,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         /// <param name="useCheckpoint"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<ClassBlockConfirmationTransactionStatusObject> IncreaseBlockTransactionConfirmationFromTxHash(ClassBlockObject blockObject, string transactionHash, ClassBlockObject lastBlockHeightUnlocked, DisposableDictionary<string, string> listWalletAndPublicKeysCache, bool useSemaphore, bool useCheckpoint, CancellationTokenSource cancellation)
+        private async Task<ClassBlockTransactionEnumStatus> IncreaseBlockTransactionConfirmationFromTxHash(ClassBlockObject blockObject, string transactionHash, ClassBlockObject lastBlockHeightUnlocked, DisposableDictionary<string, string> listWalletAndPublicKeysCache, bool useSemaphore, bool useCheckpoint, CancellationTokenSource cancellation)
         {
             ClassBlockTransactionEnumStatus transactionResult = ClassBlockTransactionEnumStatus.TRANSACTION_BLOCK_HEIGHT_NOT_REACH;
 
@@ -3005,11 +3022,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 }
             }
 
-            return new ClassBlockConfirmationTransactionStatusObject()
-            {
-                BlockObject = blockObject,
-                BlockTransactionStatus = transactionResult
-            };
+            return transactionResult;
         }
 
         #endregion

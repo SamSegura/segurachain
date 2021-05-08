@@ -3425,7 +3425,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             #endregion
 
-            bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS, true, false);
+            bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS, true, false);
 
             
 
@@ -3537,11 +3537,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, false, cancellation);
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_LIST, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_LIST, true, false);
 
                 
 
@@ -3663,11 +3663,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, false, cancellation);
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_LIST_SOVEREIGN_UPDATE, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_LIST_SOVEREIGN_UPDATE, true, false);
 
                
                 if (!packetSendStatus)
@@ -3749,11 +3749,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, false, cancellation);
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_SOVEREIGN_UPDATE_FROM_HASH, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_SOVEREIGN_UPDATE_FROM_HASH, true, false);
 
                 
 
@@ -3841,11 +3841,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 })
             };
 
-            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, false, cancellation);
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_NETWORK_INFORMATION, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_NETWORK_INFORMATION, true, false);
 
                 
 
@@ -3943,11 +3943,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             };
 
 
-            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, false, cancellation);
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_DATA, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_DATA, true, false);
 
                 
 
@@ -4048,11 +4048,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             };
 
 
-            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, false, cancellation);
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA, true, false);
 
                 
 
@@ -4156,11 +4156,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             };
 
 
-            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, cancellation);
+            sendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(sendObject, peerIp, peerUniqueId, false, cancellation);
 
             if (sendObject != null)
             {
-                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(ClassUtility.SerializePacketData(sendObject), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA_BY_RANGE, true, false);
+                bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA_BY_RANGE, true, false);
 
                 
 

@@ -522,7 +522,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_BROADCAST_MODE,
                 };
 
-                if (!await TrySendPacketToPeer(ClassUtility.SerializePacketData(packetSendObject)))
+                if (!await TrySendPacketToPeer(packetSendObject.GetPacketData()))
                 {
                     IsAlive = false;
                     return false;
@@ -580,53 +580,48 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                         if (containSeperator)
                                         {
-                                            if (ClassUtility.TryDeserializePacket(Convert.FromBase64String(memoryStream.ToArray().GetStringFromByteArrayAscii()), out ClassPeerPacketRecvObject peerPacketRecvObject))
-                                            {
-                                                if (peerPacketRecvObject == null)
-                                                {
-                                                    failed = true;
-                                                    break;
-                                                }
+                                            ClassPeerPacketRecvObject peerPacketRecvObject = new ClassPeerPacketRecvObject(Convert.FromBase64String(memoryStream.ToArray().GetStringFromByteArrayAscii()), out bool status);
 
-                                                if (peerPacketRecvObject.PacketContent.IsNullOrEmpty(out _))
-                                                {
-                                                    failed = true;
-                                                    break;
-                                                }
-
-                                                if (peerPacketRecvObject.PacketOrder != ClassPeerEnumPacketResponse.SEND_MEM_POOL_BROADCAST_RESPONSE)
-                                                {
-                                                    failed = true;
-                                                    break;
-                                                }
-
-                                                if (!ClassUtility.TryDeserialize(peerPacketRecvObject.PacketContent, out ClassPeerPacketSendBroadcastMemPoolResponse packetSendBroadcastMemPoolResponse, ObjectCreationHandling.Reuse))
-                                                {
-                                                    failed = true;
-                                                    break;
-                                                }
-
-                                                if (packetSendBroadcastMemPoolResponse == null)
-                                                {
-                                                    failed = true;
-                                                    break;
-                                                }
-
-                                                if (!packetSendBroadcastMemPoolResponse.Status)
-                                                {
-                                                    failed = true;
-                                                    break;
-                                                }
-
-                                                ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
-
-                                                broadcastResponsePacketStatus = true;
-                                            }
-                                            else
+                                            if (!status)
                                             {
                                                 failed = true;
                                                 break;
                                             }
+
+                                            if (peerPacketRecvObject.PacketContent.IsNullOrEmpty(out _))
+                                            {
+                                                failed = true;
+                                                break;
+                                            }
+
+                                            if (peerPacketRecvObject.PacketOrder != ClassPeerEnumPacketResponse.SEND_MEM_POOL_BROADCAST_RESPONSE)
+                                            {
+                                                failed = true;
+                                                break;
+                                            }
+
+                                            if (!ClassUtility.TryDeserialize(peerPacketRecvObject.PacketContent, out ClassPeerPacketSendBroadcastMemPoolResponse packetSendBroadcastMemPoolResponse, ObjectCreationHandling.Reuse))
+                                            {
+                                                failed = true;
+                                                break;
+                                            }
+
+                                            if (packetSendBroadcastMemPoolResponse == null)
+                                            {
+                                                failed = true;
+                                                break;
+                                            }
+
+                                            if (!packetSendBroadcastMemPoolResponse.Status)
+                                            {
+                                                failed = true;
+                                                break;
+                                            }
+
+                                            ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
+
+                                            broadcastResponsePacketStatus = true;
+
 
                                             // Clean up.
                                             memoryStream.Clear();
@@ -788,7 +783,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                     }),
                                 };
 
-                                if (!await TrySendPacketToPeer(ClassUtility.SerializePacketData(packetSendObject)))
+                                if (!await TrySendPacketToPeer(packetSendObject.GetPacketData()))
                                 {
                                     IsAlive = false;
                                     break;
@@ -849,9 +844,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                     }),
                                 };
 
-                                packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
+                                packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, true, _peerCancellationToken);
 
-                                if (!await TrySendPacketToPeer(ClassUtility.SerializePacketData(packetSendObject)))
+                                if (!await TrySendPacketToPeer(packetSendObject.GetPacketData()))
                                 {
                                     IsAlive = false;
                                     break;
@@ -928,9 +923,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             }),
                                                         };
 
-                                                        packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
+                                                        packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, true, _peerCancellationToken);
 
-                                                        if (!await TrySendPacketToPeer(ClassUtility.SerializePacketData(packetSendObject)))
+                                                        if (!await TrySendPacketToPeer(packetSendObject.GetPacketData()))
                                                         {
                                                             IsAlive = false;
                                                             failed = true;
@@ -1032,9 +1027,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             })
                                                         };
 
-                                                        packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, _peerCancellationToken);
+                                                        packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, true, _peerCancellationToken);
 
-                                                        if (!await TrySendPacketToPeer(ClassUtility.SerializePacketData(packetSendObject)))
+                                                        if (!await TrySendPacketToPeer(packetSendObject.GetPacketData()))
                                                         {
                                                             IsAlive = false;
                                                             break;
@@ -1203,30 +1198,24 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                 }
                                                 if (!exceptionBase64)
                                                 {
-                                                    if (ClassUtility.TryDeserializePacket(base64Packet, out peerPacketRecvObject))
-                                                    {
-                                                        if (peerPacketRecvObject == null)
-                                                        {
-                                                            failed = true;
-                                                        }
+                                                    peerPacketRecvObject = new ClassPeerPacketRecvObject(base64Packet, out bool status);
 
-                                                        if (peerPacketRecvObject.PacketContent.IsNullOrEmpty(out _))
-                                                        {
-                                                            failed = true;
-                                                        }
-
-                                                        if (peerPacketRecvObject.PacketOrder != ClassPeerEnumPacketResponse.SEND_MEM_POOL_BLOCK_HEIGHT_LIST_BROADCAST_MODE)
-                                                        {
-                                                            failed = true;
-                                                        }
-
-                                                        ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
-
-                                                    }
-                                                    else
+                                                    if (!status)
                                                     {
                                                         failed = true;
                                                     }
+
+                                                    if (peerPacketRecvObject.PacketContent.IsNullOrEmpty(out _))
+                                                    {
+                                                        failed = true;
+                                                    }
+
+                                                    if (peerPacketRecvObject.PacketOrder != ClassPeerEnumPacketResponse.SEND_MEM_POOL_BLOCK_HEIGHT_LIST_BROADCAST_MODE)
+                                                    {
+                                                        failed = true;
+                                                    }
+
+                                                    ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
                                                 }
 
 
@@ -1375,131 +1364,130 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                 {
                                                                     try
                                                                     {
+                                                                        ClassPeerPacketRecvObject peerPacketRecvObject = new ClassPeerPacketRecvObject(base64Data, out bool status);
 
-                                                                        if (ClassUtility.TryDeserializePacket(base64Data, out ClassPeerPacketRecvObject peerPacketRecvObject))
+                                                                        if (!status)
                                                                         {
-                                                                            if (peerPacketRecvObject == null)
-                                                                            {
-                                                                                receiveStatus = false;
-                                                                                break;
-                                                                            }
+                                                                            receiveStatus = false;
+                                                                            break;
+                                                                        }
 
-                                                                            if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE ||
-                                                                            peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_END_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE)
-                                                                            {
-                                                                                ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
+                                                                        if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE ||
+                                                                        peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_END_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE)
+                                                                        {
+                                                                            ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
 
-                                                                                // Receive transaction.
-                                                                                if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE)
+                                                                            // Receive transaction.
+                                                                            if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE)
+                                                                            {
+
+                                                                                bool sendReceiveConfirmation = false;
+
+                                                                                ClassTranslatePacket<ClassPeerPacketSendMemPoolTransaction> packetTranslated = TranslatePacketReceived<ClassPeerPacketSendMemPoolTransaction>(peerPacketRecvObject, ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE);
+
+                                                                                if (packetTranslated.Status)
                                                                                 {
-
-                                                                                    bool sendReceiveConfirmation = false;
-
-                                                                                    ClassTranslatePacket<ClassPeerPacketSendMemPoolTransaction> packetTranslated = TranslatePacketReceived<ClassPeerPacketSendMemPoolTransaction>(peerPacketRecvObject, ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE);
-
-                                                                                    if (packetTranslated.Status)
+                                                                                    if (packetTranslated.PacketTranslated.ListTransactionObject.Count > 0)
                                                                                     {
-                                                                                        if (packetTranslated.PacketTranslated.ListTransactionObject.Count > 0)
+                                                                                        foreach (ClassTransactionObject transactionObject in packetTranslated.PacketTranslated.ListTransactionObject)
                                                                                         {
-                                                                                            foreach (ClassTransactionObject transactionObject in packetTranslated.PacketTranslated.ListTransactionObject)
+                                                                                            if (transactionObject != null)
                                                                                             {
-                                                                                                if (transactionObject != null)
+                                                                                                if (transactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
+                                                                                                transactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
                                                                                                 {
-                                                                                                    if (transactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
-                                                                                                    transactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
+
+                                                                                                    txCountReceived++;
+                                                                                                    if (!_memPoolListBlockHeightTransactionReceived[blockHeight].Contains(transactionObject.TransactionHash))
                                                                                                     {
+                                                                                                        bool canInsert = false;
 
-                                                                                                        txCountReceived++;
-                                                                                                        if (!_memPoolListBlockHeightTransactionReceived[blockHeight].Contains(transactionObject.TransactionHash))
+                                                                                                        if (transactionObject.BlockHeightTransaction > ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight)
                                                                                                         {
-                                                                                                            bool canInsert = false;
 
-                                                                                                            if (transactionObject.BlockHeightTransaction > ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight)
+                                                                                                            ClassTransactionEnumStatus checkTxResult = await ClassTransactionUtility.CheckTransactionWithBlockchainData(transactionObject, true, true, true, null, 0, listWalletAddressAndPublicKeyCache, true, _peerCancellationToken);
+
+                                                                                                            bool invalid = true;
+
+                                                                                                            if (checkTxResult == ClassTransactionEnumStatus.VALID_TRANSACTION || checkTxResult == ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH)
                                                                                                             {
-
-                                                                                                                ClassTransactionEnumStatus checkTxResult = await ClassTransactionUtility.CheckTransactionWithBlockchainData(transactionObject, true, true, true, null, 0, listWalletAddressAndPublicKeyCache, true, _peerCancellationToken);
-
-                                                                                                                bool invalid = true;
-
-                                                                                                                if (checkTxResult == ClassTransactionEnumStatus.VALID_TRANSACTION || checkTxResult == ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH)
-                                                                                                                {
-                                                                                                                    canInsert = true;
-                                                                                                                    invalid = false;
-                                                                                                                }
-
-                                                                                                                if (invalid)
-                                                                                                                {
-                                                                                                                    Debug.WriteLine("Invalid tx's received from MemPool broadcast mode: " + checkTxResult);
-                                                                                                                    IsAlive = false;
-                                                                                                                    endBroadcast = true;
-                                                                                                                    break;
-                                                                                                                }
+                                                                                                                canInsert = true;
+                                                                                                                invalid = false;
                                                                                                             }
 
-                                                                                                            if (!sendReceiveConfirmation)
+                                                                                                            if (invalid)
                                                                                                             {
-                                                                                                                // Send the confirmation of receive.
-                                                                                                                if (!await TrySendPacketToPeer(ClassUtility.SerializePacketData(new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId,
-                                                                                                                    ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey,
-                                                                                                                    ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
-                                                                                                                {
-                                                                                                                    PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_BROADCAST_CONFIRMATION_RECEIVED,
-                                                                                                                    PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskMemPoolTransactionBroadcastConfirmationReceived()
-                                                                                                                    {
-                                                                                                                        PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
-                                                                                                                    })
-                                                                                                                })))
-                                                                                                                {
-                                                                                                                    IsAlive = false;
-                                                                                                                    endBroadcast = true;
-                                                                                                                    break;
-                                                                                                                }
-
-                                                                                                                sendReceiveConfirmation = true;
-                                                                                                            }
-
-                                                                                                            if (!listWalletAddressAndPublicKeyCache.ContainsKey(transactionObject.WalletAddressSender))
-                                                                                                            {
-                                                                                                                listWalletAddressAndPublicKeyCache.Add(transactionObject.WalletAddressSender, transactionObject.WalletPublicKeySender);
-                                                                                                            }
-
-                                                                                                            if (transactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
-                                                                                                            {
-                                                                                                                listWalletAddressAndPublicKeyCache.Add(transactionObject.WalletAddressReceiver, transactionObject.WalletPublicKeyReceiver);
-                                                                                                            }
-
-                                                                                                            if (canInsert)
-                                                                                                            {
-                                                                                                                listTransactionObject.Add(transactionObject);
+                                                                                                                Debug.WriteLine("Invalid tx's received from MemPool broadcast mode: " + checkTxResult);
+                                                                                                                IsAlive = false;
+                                                                                                                endBroadcast = true;
+                                                                                                                break;
                                                                                                             }
                                                                                                         }
 
-                                                                                                        if (listTransactionObject.Count >= countTransactionToSync)
+                                                                                                        if (!sendReceiveConfirmation)
                                                                                                         {
-                                                                                                            endBroadcast = true;
-                                                                                                            break;
+                                                                                                            // Send the confirmation of receive.
+                                                                                                            if (!await TrySendPacketToPeer(new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId,
+                                                                                                                ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey,
+                                                                                                                ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                                                                                                            {
+                                                                                                                PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_BROADCAST_CONFIRMATION_RECEIVED,
+                                                                                                                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskMemPoolTransactionBroadcastConfirmationReceived()
+                                                                                                                {
+                                                                                                                    PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
+                                                                                                                })
+                                                                                                            }.GetPacketData()))
+                                                                                                            {
+                                                                                                                IsAlive = false;
+                                                                                                                endBroadcast = true;
+                                                                                                                break;
+                                                                                                            }
+
+                                                                                                            sendReceiveConfirmation = true;
                                                                                                         }
 
-                                                                                                        timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
+                                                                                                        if (!listWalletAddressAndPublicKeyCache.ContainsKey(transactionObject.WalletAddressSender))
+                                                                                                        {
+                                                                                                            listWalletAddressAndPublicKeyCache.Add(transactionObject.WalletAddressSender, transactionObject.WalletPublicKeySender);
+                                                                                                        }
+
+                                                                                                        if (transactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
+                                                                                                        {
+                                                                                                            listWalletAddressAndPublicKeyCache.Add(transactionObject.WalletAddressReceiver, transactionObject.WalletPublicKeyReceiver);
+                                                                                                        }
+
+                                                                                                        if (canInsert)
+                                                                                                        {
+                                                                                                            listTransactionObject.Add(transactionObject);
+                                                                                                        }
                                                                                                     }
+
+                                                                                                    if (listTransactionObject.Count >= countTransactionToSync)
+                                                                                                    {
+                                                                                                        endBroadcast = true;
+                                                                                                        break;
+                                                                                                    }
+
+                                                                                                    timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
                                                                                                 }
                                                                                             }
                                                                                         }
                                                                                     }
                                                                                 }
-                                                                                // End broadcast transaction.
-                                                                                else if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_END_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE)
-                                                                                {
-                                                                                    endBroadcast = true;
-                                                                                    break;
-                                                                                }
                                                                             }
-                                                                            else
+                                                                            // End broadcast transaction.
+                                                                            else if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_END_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE)
                                                                             {
-                                                                                receiveStatus = false;
+                                                                                endBroadcast = true;
                                                                                 break;
                                                                             }
                                                                         }
+                                                                        else
+                                                                        {
+                                                                            receiveStatus = false;
+                                                                            break;
+                                                                        }
+
                                                                     }
                                                                     catch
                                                                     {
@@ -1660,34 +1648,28 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                 {
                                                     try
                                                     {
-                                                        if (ClassUtility.TryDeserializePacket(base64Data, out ClassPeerPacketRecvObject peerPacketRecvObject))
+                                                        ClassPeerPacketRecvObject peerPacketRecvObject = new ClassPeerPacketRecvObject(base64Data, out bool status);
+
+
+                                                        if (status)
                                                         {
-
-                                                            if (peerPacketRecvObject != null)
+                                                            if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE)
                                                             {
-                                                                if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE)
+
+                                                                ClassTranslatePacket<ClassPeerPacketSendMemPoolTransactionVote> packetTranslated = TranslatePacketReceived<ClassPeerPacketSendMemPoolTransactionVote>(peerPacketRecvObject, ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE);
+
+                                                                if (packetTranslated.Status)
                                                                 {
+                                                                    ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
 
-                                                                    ClassTranslatePacket<ClassPeerPacketSendMemPoolTransactionVote> packetTranslated = TranslatePacketReceived<ClassPeerPacketSendMemPoolTransactionVote>(peerPacketRecvObject, ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE);
-
-                                                                    if (packetTranslated.Status)
+                                                                    if (packetTranslated.PacketTranslated.TransactionStatus == ClassTransactionEnumStatus.VALID_TRANSACTION ||
+                                                                        packetTranslated.PacketTranslated.TransactionStatus == ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH)
                                                                     {
-                                                                        ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
-
-                                                                        if (packetTranslated.PacketTranslated.TransactionStatus == ClassTransactionEnumStatus.VALID_TRANSACTION ||
-                                                                            packetTranslated.PacketTranslated.TransactionStatus == ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH)
-                                                                        {
-                                                                            voteStatus = true;
-                                                                        }
+                                                                        voteStatus = true;
                                                                     }
-                                                                    taskDone = true;
-                                                                    break;
                                                                 }
-                                                                else
-                                                                {
-                                                                    IsAlive = false;
-                                                                    break;
-                                                                }
+                                                                taskDone = true;
+                                                                break;
                                                             }
                                                             else
                                                             {
@@ -1695,6 +1677,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                 break;
                                                             }
                                                         }
+                                                        else
+                                                        {
+                                                            IsAlive = false;
+                                                            break;
+                                                        }
+
                                                     }
                                                     catch
                                                     {
