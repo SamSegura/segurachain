@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
+using Newtonsoft.Json;
 using SeguraChain_Lib.Algorithm;
 using SeguraChain_Lib.Blockchain.Mining.Enum;
 using SeguraChain_Lib.Blockchain.Mining.Object;
@@ -1025,7 +1026,8 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                 PocShareNonceNoSquareFoundShaRounds = miningPoWaCSettingObject.PocShareNonceNoSquareFoundShaRounds,
                 PocShareNonceIvIteration = miningPoWaCSettingObject.PocShareNonceIvIteration,
                 ShareHexByteArraySize = miningPoWaCSettingObject.ShareHexByteArraySize,
-                PocRoundShaNonce = miningPoWaCSettingObject.PocRoundShaNonce
+                PocRoundShaNonce = miningPoWaCSettingObject.PocRoundShaNonce,
+                
             };
 
             if (ClassUtility.GenerateSha3512FromString(ClassUtility.SerializeData(miningPoWaCSettingObjectCopy)) != miningPoWaCSettingObject.MiningSettingContentHash)

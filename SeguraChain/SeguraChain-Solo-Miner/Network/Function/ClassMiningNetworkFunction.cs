@@ -94,6 +94,10 @@ namespace SeguraChain_Solo_Miner.Network.Function
                                                     {
                                                         currentMiningPowacSettingSerializedString = ClassUtility.SerializeData(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting);
                                                     }
+                                                    else
+                                                    {
+                                                        Debug.WriteLine("invalid setting: "+ ClassUtility.SerializeData(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting));
+                                                    }
                                                 }
                                             }
                                         }

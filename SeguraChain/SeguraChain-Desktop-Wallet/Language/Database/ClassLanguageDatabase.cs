@@ -151,9 +151,13 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
                         return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSendTransactionConfirmationFormLanguage, typeof(T));
                     }
                 case ClassLanguageEnumType.LANGUAGE_TYPE_SEND_TRANSACTION_WAIT_REQUEST_FORM:
-                {
-                    return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSendTransactionWaitRequestFormLanguage, typeof(T));
-                }
+                    {
+                        return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSendTransactionWaitRequestFormLanguage, typeof(T));
+                    }
+                case ClassLanguageEnumType.LANGUAGE_TYPE_IMPORT_WALLET_PRIVATE_KEY_FORM:
+                    {
+                        return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletImportPrivateKeyFormLanguage, typeof(T));
+                    }
             }
 
             return default(T);

@@ -132,7 +132,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 if (_dictionaryBlockchainWalletIndexDataObjectMemory.ContainsKey(walletAddress))
                 {
                     _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].LastTimestampCallOrUpdate = ClassUtility.GetCurrentTimestampInMillisecond();
-                    blockchainWalletMemoryObject = _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress];
+                    blockchainWalletMemoryObject = new BlockchainWalletMemoryObject()
+                    {
+                        LastTimestampCallOrUpdate = _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].LastTimestampCallOrUpdate,
+                        ListBlockchainWalletBalanceCheckpoints = _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].ListBlockchainWalletBalanceCheckpoints,
+                        MemorySize = _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].MemorySize,
+                        Updated = _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].Updated
+                    };
                     result = true;
                 }
                 else

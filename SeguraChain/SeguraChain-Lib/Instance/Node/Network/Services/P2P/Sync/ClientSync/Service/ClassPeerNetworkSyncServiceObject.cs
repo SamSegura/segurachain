@@ -3265,6 +3265,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 {
                     float totalSeedVote = listCheckBlockDataSeedVote[true] + listCheckBlockDataSeedVote[false];
                     float totalNormVote = listCheckBlockDataNormVote[true] + listCheckBlockDataNormVote[false];
+                    float totalNormVoteAgree = listCheckBlockDataNormVote[true];
+                    float totalNormVoteDenied = listCheckBlockDataNormVote[false];
 
                     bool seedResult = false;
                     float percentSeedAgree = 0;
@@ -3326,6 +3328,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                     return ClassPeerNetworkSyncServiceEnumCheckBlockDataUnlockedResult.VALID_BLOCK;
                                 }
                             }
+                            Debug.WriteLine("Agree: " + percentNormAgree + "% | Denied: " + percentNormDenied + " | Norm result: " + normResult + " | Total agree: " + totalNormVoteAgree + " | Total denied: " + totalNormVoteDenied);
                             return ClassPeerNetworkSyncServiceEnumCheckBlockDataUnlockedResult.INVALID_BLOCK;
                     }
 

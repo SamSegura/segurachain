@@ -1863,86 +1863,85 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                             {
                                 if (ClassUtility.CheckPacketTimestamp(packetSendAskMemPoolTransactionVote.PacketTimestamp, _peerNetworkSettingObject.PeerMaxTimestampDelayPacket, _peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
                                 {
-                                    if (packetSendAskMemPoolTransactionVote.TransactionObject != null)
+                                    if (packetSendAskMemPoolTransactionVote.ListTransactionObject != null)
                                     {
-                                        bool alreadyExist = await ClassMemPoolDatabase.CheckTxHashExist(packetSendAskMemPoolTransactionVote.TransactionObject.TransactionHash, _cancellationTokenAccessData);
-                                        ClassTransactionEnumStatus transactionStatus = ClassTransactionEnumStatus.EMPTY_TRANSACTION; // Default.
-                                        if (!alreadyExist)
-                                        {
-                                            transactionStatus = await ClassTransactionUtility.CheckTransactionWithBlockchainData(packetSendAskMemPoolTransactionVote.TransactionObject, true, true, false, null, 0, null, true, _cancellationTokenAccessData);
 
-                                            if (transactionStatus != ClassTransactionEnumStatus.VALID_TRANSACTION)
+                                            using (DisposableDictionary<string, ClassTransactionEnumStatus> listTransactionResult = new DisposableDictionary<string, ClassTransactionEnumStatus>())
                                             {
-                                                ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            ClassTransactionObject memPoolTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxFromTransactionHash(packetSendAskMemPoolTransactionVote.TransactionObject.TransactionHash, _cancellationTokenAccessData);
-
-                                            if (memPoolTransactionObject != null)
-                                            {
-                                                alreadyExist = true;
-                                                if (!ClassTransactionUtility.CompareTransactionObject(memPoolTransactionObject, packetSendAskMemPoolTransactionVote.TransactionObject))
+                                                foreach (ClassTransactionObject transactionObject in packetSendAskMemPoolTransactionVote.ListTransactionObject)
                                                 {
-                                                    transactionStatus = ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH;
-                                                    ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                    ClassTransactionEnumStatus transactionStatus = ClassTransactionEnumStatus.EMPTY_TRANSACTION; // Default.
+                                                    bool alreadyExist = await ClassMemPoolDatabase.CheckTxHashExist(transactionObject.TransactionHash, _cancellationTokenAccessData);
+                                                    if (!alreadyExist)
+                                                    {
+                                                        transactionStatus = await ClassTransactionUtility.CheckTransactionWithBlockchainData(transactionObject, true, true, false, null, 0, null, true, _cancellationTokenAccessData);
+
+                                                        if (transactionStatus != ClassTransactionEnumStatus.VALID_TRANSACTION)
+                                                        {
+                                                            ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        ClassTransactionObject memPoolTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxFromTransactionHash(transactionObject.TransactionHash, _cancellationTokenAccessData);
+
+                                                        if (memPoolTransactionObject != null)
+                                                        {
+                                                            alreadyExist = true;
+                                                            if (!ClassTransactionUtility.CompareTransactionObject(memPoolTransactionObject, transactionObject))
+                                                            {
+                                                                transactionStatus = ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH;
+                                                                ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                            }
+                                                            else
+                                                            {
+                                                                transactionStatus = ClassTransactionEnumStatus.VALID_TRANSACTION;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            transactionStatus = ClassTransactionEnumStatus.EMPTY_TRANSACTION;
+                                                            ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
+                                                        }
+                                                    }
+
+                                                    if (transactionStatus == ClassTransactionEnumStatus.VALID_TRANSACTION)
+                                                    {
+                                                        if (!alreadyExist)
+                                                        {
+                                                            await ClassMemPoolDatabase.InsertTxToMemPoolAsync(transactionObject, _cancellationTokenAccessData);
+                                                        }
+                                                    }
+
+                                                    listTransactionResult.Add(transactionObject.TransactionHash, transactionStatus);
                                                 }
-                                                else
+
+                                                ClassPeerPacketSendMemPoolTransactionVote packetSendMemPoolTransactionVote = new ClassPeerPacketSendMemPoolTransactionVote()
                                                 {
-                                                    transactionStatus = ClassTransactionEnumStatus.VALID_TRANSACTION;
+                                                    ListTransactionHashResult = listTransactionResult.GetList,
+                                                    PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
+                                                };
+
+                                                SignPacketWithNumericPrivateKey(packetSendMemPoolTransactionVote, out string hashNumeric, out string numericSignature);
+                                                packetSendMemPoolTransactionVote.PacketNumericHash = hashNumeric;
+                                                packetSendMemPoolTransactionVote.PacketNumericSignature = numericSignature;
+
+                                                if (!await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                                                {
+                                                    PacketOrder = ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE,
+                                                    PacketContent = ClassUtility.SerializeData(packetSendMemPoolTransactionVote),
+                                                }, true))
+                                                {
+                                                    return ClassPeerNetworkClientServerHandlePacketEnumStatus.SEND_EXCEPTION_PACKET;
                                                 }
                                             }
-                                            else
-                                            {
-                                                transactionStatus = ClassTransactionEnumStatus.EMPTY_TRANSACTION;
-                                                ClassPeerCheckManager.InputPeerClientInvalidPacket(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
-                                            }
-                                        }
-
-                                        if (transactionStatus == ClassTransactionEnumStatus.VALID_TRANSACTION
-                                            && !alreadyExist)
-                                        {
-                                            if (!_enableMemPoolBroadcastClientMode)
-                                            {
-                                                await Task.Factory.StartNew(async () =>
-                                                {
-                                                    await ClassMemPoolDatabase.InsertTxToMemPoolAsync(packetSendAskMemPoolTransactionVote.TransactionObject, new CancellationTokenSource());
-                                                }).ConfigureAwait(false);
-                                            }
-                                            else
-                                            {
-                                                await ClassMemPoolDatabase.InsertTxToMemPoolAsync(packetSendAskMemPoolTransactionVote.TransactionObject, _cancellationTokenAccessData);
-                                            }
-                                        }
-
-
-                                        ClassPeerPacketSendMemPoolTransactionVote packetSendMemPoolTransactionVote = new ClassPeerPacketSendMemPoolTransactionVote()
-                                        {
-                                            TransactionHash = packetSendAskMemPoolTransactionVote.TransactionObject.TransactionHash,
-                                            TransactionStatus = transactionStatus,
-                                            PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
-                                        };
-
-                                        SignPacketWithNumericPrivateKey(packetSendMemPoolTransactionVote, out string hashNumeric, out string numericSignature);
-                                        packetSendMemPoolTransactionVote.PacketNumericHash = hashNumeric;
-                                        packetSendMemPoolTransactionVote.PacketNumericSignature = numericSignature;
-
-                                        if (!await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
-                                        {
-                                            PacketOrder = ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_VOTE,
-                                            PacketContent = ClassUtility.SerializeData(packetSendMemPoolTransactionVote),
-                                        }, true))
-                                        {
-                                            return ClassPeerNetworkClientServerHandlePacketEnumStatus.SEND_EXCEPTION_PACKET;
-                                        }
+                                        
                                     }
                                     else
                                     {
                                         ClassPeerPacketSendMemPoolTransactionVote packetSendMemPoolTransactionVote = new ClassPeerPacketSendMemPoolTransactionVote()
                                         {
-                                            TransactionHash = string.Empty,
-                                            TransactionStatus = ClassTransactionEnumStatus.EMPTY_TRANSACTION,
+                                            ListTransactionHashResult = new Dictionary<string, ClassTransactionEnumStatus>(),
                                             PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
                                         };
 

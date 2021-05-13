@@ -4944,32 +4944,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
             if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
             {
-                bool blockIsLocked = false;
-                bool blockTransactionIsLocked = false;
-                try
+                if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions.ContainsKey(transactionHash))
                 {
-                    if (Monitor.TryEnter(_dictionaryBlockObjectMemory[blockHeight].Content))
+                    resultBlockTransaction = _dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions[transactionHash];
+
+                    if (resultBlockTransaction != null)
                     {
-                        blockIsLocked = true;
-                        if (Monitor.TryEnter(_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions))
-                        {
-                            blockTransactionIsLocked = true;
-                            if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions.ContainsKey(transactionHash))
-                            {
-                                resultBlockTransaction = _dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions[transactionHash];
-                            }
-                        }
-                    }
-                }
-                finally
-                {
-                    if (blockTransactionIsLocked)
-                    {
-                        Monitor.Exit(_dictionaryBlockObjectMemory[blockHeight].Content.BlockTransactions);
-                    }
-                    if (blockIsLocked)
-                    {
-                        Monitor.Exit(_dictionaryBlockObjectMemory[blockHeight].Content);
+                        return resultBlockTransaction;
                     }
                 }
             }
@@ -4979,14 +4960,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 if (resultBlockTransaction == null)
                 {
                     resultBlockTransaction = await GetBlockTransactionCached(transactionHash, blockHeight, cancellation);
+
+                    if (resultBlockTransaction != null)
+                    {
+                        return resultBlockTransaction;
+                    }
                 }
             }
-
-            if (resultBlockTransaction != null)
-            {
-                return resultBlockTransaction;
-            }
-
 
             if (_blockchainDatabaseSetting.BlockchainCacheSetting.EnableCacheDatabase)
             {
@@ -4995,7 +4975,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     case CacheEnumName.IO_CACHE:
                         {
                             resultBlockTransaction = await _cacheIoSystem.GetBlockTransactionFromTransactionHashOnIoBlockCached(transactionHash, blockHeight, cancellation);
-                            if (resultBlockTransaction != null)
+                            if (resultBlockTransaction != null && useBlockTransactionCache)
                             {
                                 await UpdateBlockTransactionCache(resultBlockTransaction, cancellation);
                             }
@@ -5193,8 +5173,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 {
                                     try
                                     {
-                                        listBlockHeightTargetCached.Sort();
-
                                         // Calculated again the new range to retrieve.
                                         long minBlockHeight = listBlockHeightTargetCached[0];
                                         long maxBlockHeight = listBlockHeightTargetCached[listBlockHeightTargetCached.Count - 1];
@@ -5245,8 +5223,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         }
                     }
                 }
-                #endregion
 
+                #endregion
             }
             return listBlockObjects;
         }

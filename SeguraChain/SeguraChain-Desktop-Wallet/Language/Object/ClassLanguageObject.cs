@@ -6,8 +6,8 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
     /// </summary>
     public class ClassLanguageObject
     {
-        public string LanguageName = "English";
-        public string LanguageMinName = "EN";
+        public string LanguageName = "English"; // Default.
+        public string LanguageMinName = "EN"; // Default.
         public ClassWalletStartupFormLanguage WalletStartupFormLanguage;
         public ClassWalletMainFormLanguage WalletMainFormLanguage;
         public ClassWalletCreateFormLanguage WalletCreateFormLanguage;
@@ -16,6 +16,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public ClassWalletSendTransactionPassphraseFormLanguage WalletSendTransactionPassphraseFormLanguage;
         public ClassWalletSendTransactionConfirmationFormLanguage WalletSendTransactionConfirmationFormLanguage;
         public ClassWalletSendTransactionWaitRequestFormLanguage WalletSendTransactionWaitRequestFormLanguage;
+        public ClassWalletImportPrivateKeyFormLanguage WalletImportPrivateKeyFormLanguage;
 
         /// <summary>
         /// Default initialization.
@@ -30,6 +31,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
             WalletSendTransactionPassphraseFormLanguage = new ClassWalletSendTransactionPassphraseFormLanguage();
             WalletSendTransactionConfirmationFormLanguage = new ClassWalletSendTransactionConfirmationFormLanguage();
             WalletSendTransactionWaitRequestFormLanguage = new ClassWalletSendTransactionWaitRequestFormLanguage();
+            WalletImportPrivateKeyFormLanguage = new ClassWalletImportPrivateKeyFormLanguage();
         }
     }
 
@@ -311,5 +313,15 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
     public class ClassWalletSendTransactionWaitRequestFormLanguage
     {
         public string LABEL_SEND_TRANSACTION_WAIT_REQUEST_TEXT = "Broadcasting your transaction to peers, please wait a moment..";
+    }
+
+    public class ClassWalletImportPrivateKeyFormLanguage
+    {
+        public string FORM_IMPORT_WALLET_PRIVATE_KEY_TITLE_TEXT = " - Import wallet private key";
+        public string LABEL_IMPORT_WALLET_PRIVATE_KEY_TEXT = "Input your private key, you will be redirect to the wallet create menu\n to backup QR codes and save your wallet file.";
+        public string BUTTON_IMPORT_WALLET_PRIVATE_KEY_TEXT = "Import private key";
+        public string MESSAGEBOX_IMPORT_WALLET_PRIVATE_KEY_ERROR_TITLE_TEXT = "Invalid private key format";
+        public string MESSAGEBOX_IMPORT_WALLET_PRIVATE_KEY_ERROR_TEXT = "The input private key format is invalid, please input a valid private key";
+
     }
 }

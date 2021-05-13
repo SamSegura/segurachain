@@ -16,6 +16,7 @@ using SeguraChain_Lib.Blockchain.Mining.Function;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Stats.Function;
 using SeguraChain_Lib.Blockchain.Transaction.Enum;
+using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Instance.Node.Network.Database;
 using SeguraChain_Lib.Instance.Node.Network.Enum.API.Packet;
@@ -673,9 +674,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                                 if (await ClassBlockchainStats.CheckTransaction(apiPeerPacketPushWalletTransaction.TransactionObject, null, false, null, CancellationTokenApiClient, true) == ClassTransactionEnumStatus.VALID_TRANSACTION)
                                                 {
 
-                                                    ClassTransactionEnumStatus transactionStatus = await ClassPeerNetworkBroadcastFunction.AskMemPoolTxVoteToPeerListsAsync(_peerNetworkSettingObject.ListenIp, _apiServerOpenNatIp, _clientIp, apiPeerPacketPushWalletTransaction.TransactionObject, _peerNetworkSettingObject, _peerFirewallSettingObject, CancellationTokenApiClient, true);
+                                                    var transactionStatus = await ClassPeerNetworkBroadcastFunction.AskMemPoolTxVoteToPeerListsAsync(_peerNetworkSettingObject.ListenIp, _apiServerOpenNatIp, _clientIp, new List<ClassTransactionObject>() { apiPeerPacketPushWalletTransaction.TransactionObject }, _peerNetworkSettingObject, _peerFirewallSettingObject, CancellationTokenApiClient, true);
 
-                                                    if (transactionStatus == ClassTransactionEnumStatus.VALID_TRANSACTION)
+                                                    bool isValid = false;
+
+                                                    if (transactionStatus.ContainsKey(apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash))
+                                                        if (transactionStatus[apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash] == ClassTransactionEnumStatus.VALID_TRANSACTION) 
+                                                            isValid = true;
+                                                    
+
+                                                    if (isValid)
                                                     {
 
                                                         ClassBlockTransactionInsertEnumStatus blockTransactionInsertStatus = ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_INVALID;
@@ -721,11 +729,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                                     }
                                                     else
                                                     {
-                                                        if (transactionStatus == ClassTransactionEnumStatus.INVALID_TRANSACTION_FROM_VOTE)
-                                                        {
-                                                            // Remove the invalid transaction from the mem pool.
-                                                            await ClassMemPoolDatabase.RemoveMemPoolTxObject(apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash, CancellationTokenApiClient);
-                                                        }
                                                         typeResponse = ClassPeerApiEnumTypeResponse.INVALID_PUSH_TRANSACTION;
                                                     }
                                                 }

@@ -40,6 +40,7 @@ namespace SeguraChain_Desktop_Wallet
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rescanToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.importWalletPrivateKeytoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.comboBoxListWalletFile = new System.Windows.Forms.ComboBox();
             this.labelWalletOpened = new System.Windows.Forms.Label();
             this.labelMainInterfaceSyncProgress = new System.Windows.Forms.Label();
@@ -152,6 +153,7 @@ namespace SeguraChain_Desktop_Wallet
             this.openWalletToolStripMenuItem,
             this.closeWalletToolStripMenuItem,
             this.createWalletToolStripMenuItem,
+            this.importWalletPrivateKeytoolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fichierToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.fichierToolStripMenuItem.ForeColor = System.Drawing.Color.Ivory;
@@ -162,27 +164,27 @@ namespace SeguraChain_Desktop_Wallet
             // openWalletToolStripMenuItem
             // 
             this.openWalletToolStripMenuItem.Name = "openWalletToolStripMenuItem";
-            this.openWalletToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.openWalletToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openWalletToolStripMenuItem.Text = "Open Wallet";
             // 
             // closeWalletToolStripMenuItem
             // 
             this.closeWalletToolStripMenuItem.Name = "closeWalletToolStripMenuItem";
-            this.closeWalletToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.closeWalletToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.closeWalletToolStripMenuItem.Text = "Close Wallet";
             this.closeWalletToolStripMenuItem.Click += new System.EventHandler(this.closeWalletToolStripMenuItem_Click);
             // 
             // createWalletToolStripMenuItem
             // 
             this.createWalletToolStripMenuItem.Name = "createWalletToolStripMenuItem";
-            this.createWalletToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.createWalletToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.createWalletToolStripMenuItem.Text = "Create Wallet";
             this.createWalletToolStripMenuItem.Click += new System.EventHandler(this.createWalletToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -536,16 +538,11 @@ namespace SeguraChain_Desktop_Wallet
             this.panelInternalRecentTransactions.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(249)))), ((int)(((byte)(252)))));
             this.panelInternalRecentTransactions.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(91)))), ((int)(((byte)(106)))), ((int)(((byte)(128)))));
             this.panelInternalRecentTransactions.BorderSize = 2F;
+            this.panelInternalRecentTransactions.Location = new System.Drawing.Point(22, 85);
             this.panelInternalRecentTransactions.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.panelInternalRecentTransactions.Name = "panelInternalRecentTransactions";
             this.panelInternalRecentTransactions.Radius = 10;
-#if NET5_0_OR_GREATER
-            this.panelInternalRecentTransactions.Location = new System.Drawing.Point(22, 85);
             this.panelInternalRecentTransactions.Size = new System.Drawing.Size(467, 375);
-#else
-            this.panelInternalRecentTransactions.Location = new System.Drawing.Point(22, 48);
-            this.panelInternalRecentTransactions.Size = new System.Drawing.Size(467, 433);
-#endif
             this.panelInternalRecentTransactions.TabIndex = 2;
             this.panelInternalRecentTransactions.Click += new System.EventHandler(this.panelInternalRecentTransactions_Click);
             this.panelInternalRecentTransactions.Paint += new System.Windows.Forms.PaintEventHandler(this.panelInternalRecentTransactions_Paint);
@@ -1164,6 +1161,14 @@ namespace SeguraChain_Desktop_Wallet
             this.progressBarMainInterfaceSyncProgress.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
             this.progressBarMainInterfaceSyncProgress.TabIndex = 5;
             // 
+            // importWalletPrivateKeytoolStripMenuItem
+            // 
+            this.importWalletPrivateKeytoolStripMenuItem.Name = "importWalletPrivateKeytoolStripMenuItem";
+            this.importWalletPrivateKeytoolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.importWalletPrivateKeytoolStripMenuItem.Text = "Import Private Key";
+            this.importWalletPrivateKeytoolStripMenuItem.Click += new System.EventHandler(this.importWalletPrivateKeyToolStripMenuItem_Click);
+
+            // 
             // ClassWalletMainInterfaceForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1301,6 +1306,7 @@ namespace SeguraChain_Desktop_Wallet
         private ClassCustomPanel panelSendTransactionDetails;
         private System.Windows.Forms.Timer timerRefreshTransactionHistory;
         private System.Windows.Forms.Label labelWalletAddressReceiveTransaction;
+        private System.Windows.Forms.ToolStripMenuItem importWalletPrivateKeytoolStripMenuItem;
     }
 }
 

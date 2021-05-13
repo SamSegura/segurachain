@@ -550,7 +550,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                                 DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction = 0;
                                                 DictionaryWalletData[walletFileName].WalletTotalTransaction = 0;
                                                 DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = 0;
-                                                ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(DictionaryWalletData[walletFileName].WalletAddress, _cancellationTokenTaskWallet);
+                                                ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(DictionaryWalletData[walletFileName].WalletAddress);
                                                 DictionaryWalletData[walletFileName].WalletEnableRescan = false;
                                                 DictionaryWalletData[walletFileName].WalletBalanceCalculated = false;
 

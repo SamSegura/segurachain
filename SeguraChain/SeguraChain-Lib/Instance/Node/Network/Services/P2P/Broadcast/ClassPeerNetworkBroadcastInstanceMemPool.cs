@@ -1005,53 +1005,71 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                             List<ClassTransactionObject> listTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, _peerCancellationToken);
 
-
-                                            foreach (ClassTransactionObject transactionObject in listTransactionObject)
+                                            using (DisposableList<ClassTransactionObject> listTransactionObjectToSend = new DisposableList<ClassTransactionObject>())
                                             {
-                                                _peerCancellationToken.Token.ThrowIfCancellationRequested();
 
-                                                if (transactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
-                                                    transactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
+                                                foreach (ClassTransactionObject transactionObject in listTransactionObject)
                                                 {
-                                                    if (!_memPoolListBlockHeightTransactionSend[blockHeight].Contains(transactionObject.TransactionHash))
+                                                    _peerCancellationToken.Token.ThrowIfCancellationRequested();
+
+                                                    if (transactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
+                                                        transactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
                                                     {
-                                                        ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId,
-                                                            ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey,
-                                                            ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                                                        if (!_memPoolListBlockHeightTransactionSend[blockHeight].Contains(transactionObject.TransactionHash))
                                                         {
-                                                            PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_VOTE,
-                                                            PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskMemPoolTransactionVote()
-                                                            {
-                                                                TransactionObject = transactionObject,
-                                                                PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
-                                                            })
-                                                        };
-
-                                                        packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, true, _peerCancellationToken);
-
-                                                        if (!await TrySendPacketToPeer(packetSendObject.GetPacketData()))
-                                                        {
-                                                            IsAlive = false;
-                                                            break;
-                                                        }
-
-                                                        if (await TryReceiveMemPoolTransactionVotePacket())
-                                                        {
-                                                            _memPoolListBlockHeightTransactionSend[blockHeight].Add(transactionObject.TransactionHash);
-                                                        }
-                                                        else
-                                                        {
-                                                            _memPoolListBlockHeightTransactionSend[blockHeight].Clear();
-                                                            cancelSendingBroadcast = true;
-                                                            IsAlive = false;
-                                                            break;
+                                                            listTransactionObjectToSend.Add(transactionObject);
                                                         }
                                                     }
                                                 }
+
+                                                // Clean up.
+                                                listTransactionObject.Clear();
+
+                                                ClassPeerPacketSendObject packetSendObject = new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                                                {
+                                                    PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_VOTE,
+                                                    PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendAskMemPoolTransactionVote()
+                                                    {
+                                                        ListTransactionObject = listTransactionObjectToSend.GetList,
+                                                        PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
+                                                    })
+                                                };
+
+                                                packetSendObject = ClassPeerNetworkBroadcastFunction.BuildSignedPeerSendPacketObject(packetSendObject, _peerIpTarget, _peerUniqueIdTarget, true, _peerCancellationToken);
+
+                                                if (!await TrySendPacketToPeer(packetSendObject.GetPacketData()))
+                                                {
+                                                    IsAlive = false;
+                                                    break;
+                                                }
+
+                                                var listTransactionResult = await TryReceiveMemPoolTransactionVotePacket();
+
+                                                if (listTransactionResult.Count > 0)
+                                                {
+                                                    foreach (ClassTransactionObject transactionObject in listTransactionObjectToSend.GetList)
+                                                    {
+                                                        if (listTransactionResult.ContainsKey(transactionObject.TransactionHash))
+                                                        {
+                                                            if (listTransactionResult[transactionObject.TransactionHash] == ClassTransactionEnumStatus.VALID_TRANSACTION)
+                                                            {
+                                                                _memPoolListBlockHeightTransactionSend[blockHeight].Add(transactionObject.TransactionHash);
+                                                            }
+                                                        }
+                                                    }
+
+                                                    listTransactionResult.Clear();
+                                                }
+                                                else
+                                                {
+                                                    _memPoolListBlockHeightTransactionSend[blockHeight].Clear();
+                                                    cancelSendingBroadcast = true;
+                                                    IsAlive = false;
+                                                    break;
+                                                }
                                             }
 
-                                            // Clean up.
-                                            listTransactionObject.Clear();
+
 
                                         }
 
@@ -1578,12 +1596,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             /// Try to receive a transaction vote packet received from the peer target.
             /// </summary>
             /// <returns></returns>
-            private async Task<bool> TryReceiveMemPoolTransactionVotePacket()
+            private async Task<Dictionary<string, ClassTransactionEnumStatus>> TryReceiveMemPoolTransactionVotePacket()
             {
                 bool voteStatus = false;
                 bool taskDone = false;
                 long timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
-
+                Dictionary<string, ClassTransactionEnumStatus> listTransactionStatus = new Dictionary<string, ClassTransactionEnumStatus>();
 
                 using (CancellationTokenSource cancellationReceiveMemPoolTransactionVote = CancellationTokenSource.CreateLinkedTokenSource(_peerCancellationToken.Token))
                 {
@@ -1662,11 +1680,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                 {
                                                                     ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
 
-                                                                    if (packetTranslated.PacketTranslated.TransactionStatus == ClassTransactionEnumStatus.VALID_TRANSACTION ||
-                                                                        packetTranslated.PacketTranslated.TransactionStatus == ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH)
-                                                                    {
-                                                                        voteStatus = true;
-                                                                    }
+                                                                    listTransactionStatus = packetTranslated.PacketTranslated.ListTransactionHashResult;
+
+                                                                    voteStatus = true;
                                                                 }
                                                                 taskDone = true;
                                                                 break;
@@ -1731,7 +1747,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     cancellationReceiveMemPoolTransactionVote.Cancel();
                 }
 
-                return voteStatus;
+                return listTransactionStatus;
             }
 
             #endregion
