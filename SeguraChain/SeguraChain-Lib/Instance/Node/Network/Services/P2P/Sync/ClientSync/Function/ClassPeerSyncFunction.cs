@@ -14,6 +14,7 @@ using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Sovereign.Database;
 using SeguraChain_Lib.Blockchain.Sovereign.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Enum;
+using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Instance.Node.Network.Database;
 using SeguraChain_Lib.Instance.Node.Network.Database.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
@@ -1017,6 +1018,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             }
 
             if (packetSendBlockTransactionData.TransactionObject.BlockHeightTransaction != blockHeightTarget)
+            {
+                return false;
+            }
+
+            if (packetSendBlockTransactionData.TransactionObject.TransactionHash.IsNullOrEmpty(out var txHashTrimmed))
+            {
+                return false;
+            }
+
+            if (ClassTransactionUtility.GetBlockHeightFromTransactionHash(txHashTrimmed) != blockHeightTarget)
             {
                 return false;
             }

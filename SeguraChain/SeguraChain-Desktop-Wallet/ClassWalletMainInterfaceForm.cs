@@ -1320,7 +1320,7 @@ namespace SeguraChain_Desktop_Wallet
             StopTaskUpdateWalletInformations();
             string walletAddress = ClassDesktopWalletCommonData.WalletDatabase.GetWalletAddressFromWalletFileName(_currentWalletFilename);
             _walletTransactionHistorySystemInstance.RemoveTransactionHistoryFromWalletFileOpenedTarget(_currentWalletFilename);
-            ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(walletAddress);
+            ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(walletAddress, new CancellationTokenSource());
             using (ClassWalletRescanInternalForm walletRescanInternalForm = new ClassWalletRescanInternalForm(_currentWalletFilename, true))
             {
                 walletRescanInternalForm.ShowDialog(this);

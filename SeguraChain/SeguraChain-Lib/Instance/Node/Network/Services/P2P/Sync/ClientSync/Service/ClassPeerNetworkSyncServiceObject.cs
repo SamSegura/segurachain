@@ -832,6 +832,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                 var currentPacketNetworkInformation = _packetNetworkInformation;
 
                                                 long lastBlockHeight = ClassBlockchainStats.GetLastBlockHeight();
+                                                long lastBlockHeightUnlocked = ClassBlockchainStats.GetLastBlockHeightUnlocked(_cancellationTokenServiceSync);
 
                                                 if (lastBlockHeight <= currentPacketNetworkInformation.CurrentBlockHeight)
                                                 {
@@ -872,70 +873,63 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                                                                                     #region Resync the block data who is invalid according to peers.
 
-                                                                                    ClassBlockObject blockObjectToCheck = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockDataStrategy(blockHeightToCheck, false, _cancellationTokenServiceSync);
-
-                                                                                    blockObjectToCheck.BlockNetworkAmountConfirmations = 0;
-                                                                                    blockObjectToCheck.BlockUnlockValid = false;
-
-                                                                                    if (await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, false, _cancellationTokenServiceSync))
+                                                                                    using (DisposableList<long> blockListToCorrect = new DisposableList<long>())
                                                                                     {
-                                                                                        using (DisposableList<long> blockListToCorrect = new DisposableList<long>())
+                                                                                        blockListToCorrect.Add(blockHeightToCheck);
+                                                                                        var result = await StartAskBlockObjectFromListPeerTarget(peerTargetList, blockListToCorrect, true, lastBlockHeightUnlocked);
+
+                                                                                        if (result?.Item2 > 0)
                                                                                         {
 
-                                                                                            blockListToCorrect.Add(blockHeightToCheck);
-                                                                                            var result = await StartAskBlockObjectFromListPeerTarget(peerTargetList, blockListToCorrect, true, lastBlockHeight);
-                                                                                            if (result != null)
+                                                                                            if (result.Item1?.Count > 0)
                                                                                             {
-                                                                                                if (result.Item2 > 0)
+                                                                                                ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be retrieve from peers, sync transactions..", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
+
+                                                                                                ClassBlockObject blockObject = result.Item1[0];
+                                                                                                bool error = false;
+
+                                                                                                if (blockObject != null)
                                                                                                 {
-                                                                                                    if (result.Item1 != null)
+                                                                                                    if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                                                                                                     {
-                                                                                                        if (result.Item1.Count > 0)
+                                                                                                        using (DisposableDictionary<string, string> listWalletAndPublicKeys = new DisposableDictionary<string, string>())
                                                                                                         {
-                                                                                                            ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be retrieve from peers, sync transactions..", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-
-                                                                                                            ClassBlockObject blockObject = result.Item1[0];
-                                                                                                            bool error = false;
-
-                                                                                                            if (blockObject != null)
+                                                                                                            if (!await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
                                                                                                             {
-                                                                                                                if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                                                                                                                {
-                                                                                                                    using (DisposableDictionary<string, string> listWalletAndPublicKeys = new DisposableDictionary<string, string>())
-                                                                                                                    {
-                                                                                                                        if (!await SyncBlockDataTransaction(blockObject, peerTargetList, listWalletAndPublicKeys, _cancellationTokenServiceSync))
-                                                                                                                        {
-                                                                                                                            ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + " failed, the amount of tx's to sync from a unlocked block cannot be equal of 0. Cancel sync and retry again.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                                                                            break;
-                                                                                                                        }
-                                                                                                                    }
-
-                                                                                                                    ClassLog.WriteLine("The block height: " + blockHeightToCheck + " retrieved from peers, is fixed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-                                                                                                                }
-                                                                                                                else
-                                                                                                                {
-                                                                                                                    ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + " failed. The block is not unlocked. Cancel sync and retry again.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                                                                    error = true;
-                                                                                                                }
-                                                                                                            }
-                                                                                                            else
-                                                                                                            {
-                                                                                                                error = true;
-                                                                                                            }
-
-                                                                                                            if (error)
-                                                                                                            {
-                                                                                                                ClassLog.WriteLine("Can't sync again transactions for the block height: " + blockHeightToCheck + " cancel the task of checking blocks.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-                                                                                                                cancelCheck = true;
+                                                                                                                ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + " failed, the amount of tx's to sync from a unlocked block cannot be equal of 0. Cancel sync and retry again.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                                                                                                                break;
                                                                                                             }
                                                                                                         }
+
+                                                                                                        ClassLog.WriteLine("The block height: " + blockHeightToCheck + " retrieved from peers, is fixed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
                                                                                                     }
+                                                                                                    else
+                                                                                                    {
+                                                                                                        ClassLog.WriteLine("Sync of transaction(s) from the block height: " + blockObject.BlockHeight + " failed. The block is not unlocked. Cancel sync and retry again.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                                                                                                        error = true;
+                                                                                                    }
+                                                                                                }
+                                                                                                else
+                                                                                                {
+                                                                                                    error = true;
+                                                                                                }
+
+                                                                                                if (error)
+                                                                                                {
+                                                                                                    ClassLog.WriteLine("Can't sync again transactions for the block height: " + blockHeightToCheck + " cancel the task of checking blocks.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
+                                                                                                    cancelCheck = true;
                                                                                                 }
                                                                                             }
 
                                                                                         }
+                                                                                        else
+                                                                                        {
+#if DEBUG
+                                                                                            Debug.WriteLine("failed to resync block height: " + blockHeightToCheck);
+#endif
+                                                                                            cancelCheck = true;
+                                                                                        }
                                                                                     }
-
                                                                                     #endregion
                                                                                 }
                                                                                 break;
@@ -3328,7 +3322,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                     return ClassPeerNetworkSyncServiceEnumCheckBlockDataUnlockedResult.VALID_BLOCK;
                                 }
                             }
-                            Debug.WriteLine("Agree: " + percentNormAgree + "% | Denied: " + percentNormDenied + " | Norm result: " + normResult + " | Total agree: " + totalNormVoteAgree + " | Total denied: " + totalNormVoteDenied);
+                            Debug.WriteLine("Agree: " + percentNormAgree + "% | Denied: " + percentNormDenied + "% | Norm result: " + normResult + " | Total agree: " + totalNormVoteAgree + " | Total denied: " + totalNormVoteDenied);
                             return ClassPeerNetworkSyncServiceEnumCheckBlockDataUnlockedResult.INVALID_BLOCK;
                     }
 
@@ -4337,7 +4331,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                             TransactionBlockHeightInsert = transactionObjectByRange[transactionHash].BlockHeightTransaction,
                                             TransactionBlockHeightTarget = transactionObjectByRange[transactionHash].BlockHeightTransactionConfirmationTarget,
                                             TransactionStatus = true,
-                                            TransactionTotalConfirmation = 0
+                                            TransactionTotalConfirmation = 0,
+                                            Spent = false,
+                                            TotalSpend = 0
                                         });
                                         txInsertIndex++;
                                         totalSynced++;
@@ -4404,7 +4400,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                         TransactionBlockHeightInsert = transactionObjectByRange[transactionHash].BlockHeightTransaction,
                                         TransactionBlockHeightTarget = transactionObjectByRange[transactionHash].BlockHeightTransactionConfirmationTarget,
                                         TransactionStatus = true,
-                                        TransactionTotalConfirmation = 0
+                                        TransactionTotalConfirmation = 0,
+                                        Spent = false,
+                                        TotalSpend = 0
                                     });
                                     txInsertIndex++;
                                 }
@@ -4453,7 +4451,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                     TransactionBlockHeightInsert = transactionObject.BlockHeightTransaction,
                                     TransactionBlockHeightTarget = transactionObject.BlockHeightTransactionConfirmationTarget,
                                     TransactionStatus = true,
-                                    TransactionTotalConfirmation = 0
+                                    TransactionTotalConfirmation = 0,
+                                    Spent = false,
+                                    TotalSpend = 0
                                 });
                                 txInsertIndex++;
                             }

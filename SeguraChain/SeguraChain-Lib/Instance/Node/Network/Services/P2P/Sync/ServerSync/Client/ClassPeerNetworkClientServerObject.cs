@@ -617,38 +617,44 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                             if (ClassUtility.CheckPacketTimestamp(packetSendPeerAuthKeysObject.PacketTimestamp, _peerNetworkSettingObject.PeerMaxTimestampDelayPacket, _peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
                             {
                                 bool forceUpdate = !peerExist;
-                               
-                                await ClassPeerKeysManager.UpdatePeerKeysReceivedNetworkServer(_peerClientIp, _peerUniqueId, packetSendPeerAuthKeysObject, _cancellationTokenAccessData);
-
+                                bool exception = false;
                                 if (await ClassPeerKeysManager.UpdatePeerInternalKeys(_peerClientIp, packetSendPeerAuthKeysObject.PeerPort, _peerUniqueId, _cancellationTokenAccessData, _peerNetworkSettingObject, forceUpdate))
                                 {
-                                    if (!await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                                    if (await ClassPeerKeysManager.UpdatePeerKeysReceivedNetworkServer(_peerClientIp, _peerUniqueId, packetSendPeerAuthKeysObject, _cancellationTokenAccessData))
                                     {
-                                        PacketOrder = ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS,
-                                        PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendPeerAuthKeys()
+                                        if (!await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
                                         {
-                                            AesEncryptionIv = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPacketEncryptionKeyIv,
-                                            AesEncryptionKey = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPacketEncryptionKey,
-                                            PublicKey = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey,
-                                            NumericPublicKey = _peerNetworkSettingObject.PeerNumericPublicKey,
-                                            PeerPort = _peerNetworkSettingObject.ListenPort,
-                                            PeerApiPort = _peerNetworkSettingObject.ListenApiPort,
-                                            PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
-                                        })
-                                    }, false))
-                                    {
-                                        ClassLog.WriteLine("Packet response to send to peer: " + _peerClientIp + " failed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
+                                            PacketOrder = ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS,
+                                            PacketContent = ClassUtility.SerializeData(new ClassPeerPacketSendPeerAuthKeys()
+                                            {
+                                                AesEncryptionIv = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPacketEncryptionKeyIv,
+                                                AesEncryptionKey = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPacketEncryptionKey,
+                                                PublicKey = ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey,
+                                                NumericPublicKey = _peerNetworkSettingObject.PeerNumericPublicKey,
+                                                PeerPort = _peerNetworkSettingObject.ListenPort,
+                                                PeerApiPort = _peerNetworkSettingObject.ListenApiPort,
+                                                PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
+                                            })
+                                        }, false))
+                                        {
+                                            ClassLog.WriteLine("Packet response to send to peer: " + _peerClientIp + " failed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
 
-                                        return ClassPeerNetworkClientServerHandlePacketEnumStatus.SEND_EXCEPTION_PACKET;
+                                            return ClassPeerNetworkClientServerHandlePacketEnumStatus.SEND_EXCEPTION_PACKET;
+                                        }
                                     }
+                                    else exception = true;
                                 }
-                                else
+                                else exception = true;
+
+                                if (exception)
                                 {
                                     await SendPacketToPeer(new ClassPeerPacketRecvObject(_peerNetworkSettingObject.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[_peerClientIp][_peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist)
                                     {
                                         PacketOrder = ClassPeerEnumPacketResponse.INVALID_PEER_PACKET_SIGNATURE,
                                         PacketContent = string.Empty,
                                     }, false);
+
+                                    return ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_PACKET;
                                 }
                             }
                             else

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -87,12 +88,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             if (_disposed)
                 return;
 
-            if (disposing)
-            {
-                PeerTaskStatus = false;
-                CleanUpTask();
-                DisconnectFromTarget();
-            }
+
+            PeerTaskStatus = false;
+            CleanUpTask();
+            DisconnectFromTarget();
+
             _disposed = true;
         }
         #endregion
@@ -127,7 +127,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         public async Task<bool> TrySendPacketToPeerTarget(byte[] packet, CancellationTokenSource cancellation, ClassPeerEnumPacketResponse packetResponseExpected, bool keepAlive, bool broadcast)
         {
             bool result = false;
-
             try
             {
 
