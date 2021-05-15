@@ -92,7 +92,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             Key = key,
                             IV = iv,
                             Mode = CipherMode.CFB,
-                            Padding = PaddingMode.PKCS7
+                            Padding = PaddingMode.None
                         };
                         countInit++;
                     }
@@ -115,7 +115,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             Key = key,
                             IV = iv,
                             Mode = CipherMode.CFB,
-                            Padding = PaddingMode.PKCS7
+                            Padding = PaddingMode.None
                         };
 
                         countInit++;
@@ -207,7 +207,18 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                 {
                     if (content.Length > 0)
                     {
-                        result = _encryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                        int packetLength = content.Length;
+                        int paddingSizeRequired = 16 - packetLength % 16;
+                        byte[] paddedBytes = new byte[packetLength + paddingSizeRequired];
+
+                        Buffer.BlockCopy(content, 0, paddedBytes, 0, packetLength);
+
+                        for (int i = 0; i < paddingSizeRequired; i++)
+                        {
+                            paddedBytes[packetLength + i] = (byte)paddingSizeRequired;
+                        }
+
+                        result = _encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);
                     }
                 }
                 catch
@@ -238,7 +249,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                 {
                     if (content.Length > 0)
                     {
-                        result = _decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                        byte[] decryptedPaddedBytes = _decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                        result = new byte[decryptedPaddedBytes.Length - decryptedPaddedBytes[decryptedPaddedBytes.Length - 1]];
+                        Buffer.BlockCopy(decryptedPaddedBytes, 0, result, 0, result.Length);
 
                         if (result.Length > 0)
                         {
