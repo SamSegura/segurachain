@@ -994,7 +994,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                     {
                                         _peerCancellationToken.Token.ThrowIfCancellationRequested();
 
-                                        int countMemPoolTransaction = await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(blockHeight, _peerCancellationToken);
+                                        int countMemPoolTransaction = await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(blockHeight, true, _peerCancellationToken);
 
                                         if (countMemPoolTransaction > 0)
                                         {
@@ -1399,8 +1399,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                             if (peerPacketRecvObject.PacketOrder == ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE)
                                                                             {
 
-                                                                                bool sendReceiveConfirmation = false;
-
                                                                                 ClassTranslatePacket<ClassPeerPacketSendMemPoolTransaction> packetTranslated = TranslatePacketReceived<ClassPeerPacketSendMemPoolTransaction>(peerPacketRecvObject, ClassPeerEnumPacketResponse.SEND_MEM_POOL_TRANSACTION_BY_BLOCK_HEIGHT_BROADCAST_MODE);
 
                                                                                 if (packetTranslated.Status)
@@ -1442,27 +1440,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                                                             }
                                                                                                         }
 
-                                                                                                        if (!sendReceiveConfirmation)
-                                                                                                        {
-                                                                                                            // Send the confirmation of receive.
-                                                                                                            if (!await TrySendPacketToPeer(new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId,
-                                                                                                                ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey,
-                                                                                                                ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
-                                                                                                            {
-                                                                                                                PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_BROADCAST_CONFIRMATION_RECEIVED,
-                                                                                                                PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskMemPoolTransactionBroadcastConfirmationReceived()
-                                                                                                                {
-                                                                                                                    PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
-                                                                                                                })
-                                                                                                            }.GetPacketData()))
-                                                                                                            {
-                                                                                                                IsAlive = false;
-                                                                                                                endBroadcast = true;
-                                                                                                                break;
-                                                                                                            }
-
-                                                                                                            sendReceiveConfirmation = true;
-                                                                                                        }
 
                                                                                                         if (!listWalletAddressAndPublicKeyCache.ContainsKey(transactionObject.WalletAddressSender))
                                                                                                         {
@@ -1489,6 +1466,23 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                                                     timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
                                                                                                 }
                                                                                             }
+                                                                                        }
+
+                                                                                        // Send the confirmation of receive.
+                                                                                        if (!await TrySendPacketToPeer(new ClassPeerPacketSendObject(_peerNetworkSettingObject.PeerUniqueId,
+                                                                                            ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerInternPublicKey,
+                                                                                            ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                                                                                        {
+                                                                                            PacketOrder = ClassPeerEnumPacketSend.ASK_MEM_POOL_TRANSACTION_BROADCAST_CONFIRMATION_RECEIVED,
+                                                                                            PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskMemPoolTransactionBroadcastConfirmationReceived()
+                                                                                            {
+                                                                                                PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
+                                                                                            })
+                                                                                        }.GetPacketData()))
+                                                                                        {
+                                                                                            IsAlive = false;
+                                                                                            endBroadcast = true;
+                                                                                            break;
                                                                                         }
                                                                                     }
                                                                                 }
@@ -1569,7 +1563,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                 if (!_memPoolListBlockHeightTransactionReceived[blockHeight].Contains(transactionObject.TransactionHash))
                                 {
 
-                                    if (await ClassMemPoolDatabase.InsertTxToMemPoolAsync(transactionObject, _peerCancellationToken))
+                                    if (ClassMemPoolDatabase.InsertTxToMemPool(transactionObject, _peerCancellationToken))
                                     {
                                         ClassLog.WriteLine("[Client Broadcast] - TX Hash " + transactionObject.TransactionHash + " received from peer: " + _peerIpTarget, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                                     }

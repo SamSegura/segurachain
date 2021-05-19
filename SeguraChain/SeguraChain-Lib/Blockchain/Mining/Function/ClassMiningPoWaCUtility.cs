@@ -1076,7 +1076,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
                             for (int j = 0; j < paddingSizeRequired; j++)
                             {
-                                paddedBytes[packetLength + j] = (byte) paddingSizeRequired;
+                                paddedBytes[packetLength + j] = (byte)paddingSizeRequired;
                             }
 
                             pocShareData = encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);

@@ -1,4 +1,5 @@
 ﻿using SeguraChain_Lib.Blockchain.Block.Object.Structure;
+using SeguraChain_Lib.Other.Object.ThreadExtension;
 using SeguraChain_Lib.Utility;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// <summary>
         /// Handle multithreading access.
         /// </summary>
-        private SemaphoreSlim _semaphoreDictionaryAccess;
+        private SemaphoreSmooth _semaphoreDictionaryAccess;
 
         /// <summary>
         /// Store the cache.
@@ -50,7 +51,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         public ClassSyncCacheObject()
         {
             _syncCacheDatabase = new Dictionary<long, Dictionary<string, ClassSyncCacheBlockTransactionObject>>();
-            _semaphoreDictionaryAccess = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
+            _semaphoreDictionaryAccess = new SemaphoreSmooth(1, ClassUtility.GetMaxAvailableProcessorCount());
         }
 
         /// <summary>

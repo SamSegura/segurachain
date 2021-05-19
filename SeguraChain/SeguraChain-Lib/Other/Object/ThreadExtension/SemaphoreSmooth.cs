@@ -21,7 +21,7 @@ namespace SeguraChain_Lib.Other.Object.ThreadExtension
 
             while (!isLocked)
             {
-                isLocked = await _semaphore.WaitAsync(100, token);
+                isLocked = await _semaphore.WaitAsync(1, token);
                 if (!isLocked)
                     await Task.Delay(1, token);
             }
@@ -36,11 +36,11 @@ namespace SeguraChain_Lib.Other.Object.ThreadExtension
 
             while (!isLocked)
             {
-                isLocked = await _semaphore.WaitAsync(100, token);
+                isLocked = await _semaphore.WaitAsync(1, token);
                 if (!isLocked)
                     await Task.Delay(1, token);
-                timeStart += 100;
-                if (timeStart >= timeEnd)
+                timeStart += 1;
+                if (timeStart >= timeEnd || isLocked)
                 {
                     break;
                 }
@@ -55,7 +55,7 @@ namespace SeguraChain_Lib.Other.Object.ThreadExtension
 
             while (!isLocked)
             {
-                isLocked = await _semaphore.WaitAsync(100);
+                isLocked = await _semaphore.WaitAsync(1);
                 if (!isLocked)
                     await Task.Delay(1);
             }
@@ -74,6 +74,13 @@ namespace SeguraChain_Lib.Other.Object.ThreadExtension
         public void Release()
         {
             _semaphore.Release();
+        }
+
+        public int CurrentCount { get { return _semaphore.CurrentCount; } }
+
+        public void Dispose()
+        {
+            _semaphore.Dispose();
         }
     }
 }

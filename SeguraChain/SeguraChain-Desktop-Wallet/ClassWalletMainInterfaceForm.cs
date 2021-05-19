@@ -34,6 +34,7 @@ using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Blockchain.Wallet.Function;
 using SeguraChain_Lib.Utility;
 using SeguraChain_Desktop_Wallet.InternalForm.Import;
+using SeguraChain_Lib.Other.Object.ThreadExtension;
 
 namespace SeguraChain_Desktop_Wallet
 {
@@ -58,7 +59,7 @@ namespace SeguraChain_Desktop_Wallet
         /// <summary>
         /// Semaphore for graphic events access.
         /// </summary>
-        private readonly SemaphoreSlim _semaphoreCopyWalletAddressClickEvent;
+        private readonly SemaphoreSmooth _semaphoreCopyWalletAddressClickEvent;
 
         /// <summary>
         /// Graphics content to draw.
@@ -89,7 +90,7 @@ namespace SeguraChain_Desktop_Wallet
             _cancellationTokenTaskUpdateWalletListOpened = new CancellationTokenSource();
             _noWalletFile = noWalletFile;
             _startupInternalForm = startupInternalForm;
-            _semaphoreCopyWalletAddressClickEvent = new SemaphoreSlim(1, 1);
+            _semaphoreCopyWalletAddressClickEvent = new SemaphoreSmooth(1, 1);
             InitializeComponent();
             EnableDoubleBuffer();
 
@@ -1900,7 +1901,7 @@ namespace SeguraChain_Desktop_Wallet
         /// </summary>
         private string _sendTransactionAmountSelectedText = string.Empty;
         private bool _sendTransactionOnCalculationFeeCost;
-        private readonly SemaphoreSlim _semaphoreSendTransactionUpdateFeeCost = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSmooth _semaphoreSendTransactionUpdateFeeCost = new SemaphoreSmooth(1, 1);
 
         /// <summary>
         /// Check the wallet address target validity by changing the forecolor of the text.

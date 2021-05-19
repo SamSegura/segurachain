@@ -93,24 +93,11 @@ namespace SeguraChain_Lib.Algorithm
 
                             for (int i = 0; i < paddingSizeRequired; i++)
                             {
-                                paddedBytes[packetLength + i] = (byte) paddingSizeRequired;
+                                paddedBytes[packetLength + i] = (byte)paddingSizeRequired;
                             }
 
                             result = encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);
                             return true;
-
-                            /*
-                            using (MemoryStream memoryStreamEncrypt = new MemoryStream())
-                            {
-                                using (CryptoStream cryptoStreamEncrypt = new CryptoStream(memoryStreamEncrypt, encryptCryptoTransform, CryptoStreamMode.Write))
-                                {
-                                    cryptoStreamEncrypt.Write(content, 0, content.Length);
-                                    cryptoStreamEncrypt.FlushFinalBlock();
-
-                                    result = memoryStreamEncrypt.ToArray();
-                                    return true;
-                                }
-                            }*/
                         }
                     }
                 }
@@ -160,20 +147,7 @@ namespace SeguraChain_Lib.Algorithm
                             byte[] decryptedPaddedBytes = decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
                             result = new byte[decryptedPaddedBytes.Length - decryptedPaddedBytes[decryptedPaddedBytes.Length - 1]];
                             Buffer.BlockCopy(decryptedPaddedBytes, 0, result, 0, result.Length);
-
                             return true;
-                            /*
-                            using (MemoryStream memoryStreamDecrypt = new MemoryStream())
-                            {
-                                using (CryptoStream cryptoStreamDecrypt = new CryptoStream(memoryStreamDecrypt, decryptCryptoTransform, CryptoStreamMode.Write))
-                                {
-                                    cryptoStreamDecrypt.Write(content, 0, content.Length);
-                                    cryptoStreamDecrypt.FlushFinalBlock();
-
-                                    result = memoryStreamDecrypt.ToArray();
-                                    return true;
-                                }
-                            }*/
                         }
                     }
                 }

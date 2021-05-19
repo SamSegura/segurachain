@@ -80,8 +80,8 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public static string WalletAddressDevPublicKey(long timestampSovereignUpdate) => SovereignUpdateGetter.GetLastDevWalletPublicKey(timestampSovereignUpdate);
         public static string WalletAddressDev(long timestampSovereignUpdate) => SovereignUpdateGetter.GetLastDevWalletAddress(timestampSovereignUpdate);
 
-        public const string DefaultWalletAddressDevPublicKey = "YK8jgSUoBeRBbNZjfs7USuwpZXpuof4rffhk33bLzePd4YA4nGz1zXQeiwE4GAxigoiYrSZYMgBg82AXZmM8CDei6s1Uh3BReek8nLHYcandnzrdGEnpgcoZ3zfiKBFJX3RyDoYHbnN6nXJ3J2ZEKjA4xG3PM3nL5V3USCfqY9AaMNGWKzArivpVfCKZSNbhg27kyuGHUraNuHVe8yE5fKnwYVi";
-        public const string DefaultWalletAddressDev = "4bRvzzFRm7dmy3z4idu9CTZaLuGJtTZXbeMbPykvPXChitTZ14qTV3w4rBV7Vtjnnp1P83kMbn8cPSWqDAM6sRJdxRvb9oL1vrCAZUsNCkqSGp";
+        public const string DefaultWalletAddressDevPublicKey = "YAaNzZ97xDfTQSCBDr9fQiQAY3nrFisepSUXB5uqSVMGWpC4HJ1gcwmubsrKoLkLbcUB8tyxgQkbhqAW3cfi7g9R1vUBNtVBWKVdf56eMoZkKjK8PJwY66cNyfoxcfetp2NHZga5mPxT1E5rScfrCfTV7aHD9g6HZaq9WyNvLMFrn3tLq3g5ndZ3VeLTdKg8ZJQ1eZ8oAE1GUzRrr3WBnSaqn6T";
+        public const string DefaultWalletAddressDev = "3zhsyZk1CUGYCPP52vuoVpuRRqvxK3sRkxHtPd3zr9rX9r1FjFwuBkhexgJVRaDasnXgzEWmSp31JQb3KjZLLih8DgHLNysvpMTKSZbXoweNg5";
 
         #endregion
 
@@ -102,7 +102,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int BlockDifficultyPrecision = 100000; // The precision put on the difficulty factor calculated.
         public const int GenesisBlockHeight = 1; // The genesis block height.
         public static readonly BigInteger GenesisBlockAmount = 2973370 * CoinDecimal; // The genesis block amount reward has pre-mining.
-        public const string GenesisBlockFinalTransactionHash = "9A8A152DBE007FC5B442EA8E3033095E94670D27C29776AA23027FE56BE51EF22F536D16123B38B0F1D797B680A2EE3D4DD22929A13E410C868D04CC6DB97CF8"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
+        public const string GenesisBlockFinalTransactionHash = "ABEDD318562361CAE1B46302BEB6C9FA3844194532387DF4E1C52068ADC4A6692513521C157B92D5831667C9F84BC4B172A7F1A1D26C2F8C20E3A9DE29927410"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
         public const int GenesisBlockTransactionCount = 1; // The maximum of transaction inserted on the genesis block.
         public const int BlockAmountNetworkConfirmations = 2; // The minimum amount of network checks on blocks to do with peers, before to enable the task of confirmations on the block.
         public const int BlockAmountSlowNetworkConfirmations = 5; // This amount increment another amount of network checks, once this one is reach, the network counter increment and this one return back to 0.

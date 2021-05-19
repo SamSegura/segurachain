@@ -16,6 +16,7 @@ using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Utility;
 using SeguraChain_Desktop_Wallet.Sync.Object;
+using SeguraChain_Lib.Other.Object.ThreadExtension;
 
 namespace SeguraChain_Desktop_Wallet.Wallet.Database
 {
@@ -30,9 +31,9 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
         /// <summary>
         /// Internal data of the class.
         /// </summary>
-        private SemaphoreSlim _semaphoreLoadWalletFile;
-        private SemaphoreSlim _semaphoreSaveWalletFile;
-        private SemaphoreSlim _semaphoreGetWalletFileData;
+        private SemaphoreSmooth _semaphoreLoadWalletFile;
+        private SemaphoreSmooth _semaphoreSaveWalletFile;
+        private SemaphoreSmooth _semaphoreGetWalletFileData;
         private CancellationTokenSource _cancellationTokenTaskWallet;
 
         /// <summary>
@@ -40,9 +41,9 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
         /// </summary>
         public ClassWalletDatabase()
         {
-            _semaphoreLoadWalletFile = new SemaphoreSlim(1, 1);
-            _semaphoreSaveWalletFile = new SemaphoreSlim(1, 1);
-            _semaphoreGetWalletFileData = new SemaphoreSlim(1, 1);
+            _semaphoreLoadWalletFile = new SemaphoreSmooth(1, 1);
+            _semaphoreSaveWalletFile = new SemaphoreSmooth(1, 1);
+            _semaphoreGetWalletFileData = new SemaphoreSmooth(1, 1);
             _cancellationTokenTaskWallet = new CancellationTokenSource();
             if (!Directory.Exists(ClassDesktopWalletCommonData.WalletSettingObject.WalletDirectoryPath))
             {

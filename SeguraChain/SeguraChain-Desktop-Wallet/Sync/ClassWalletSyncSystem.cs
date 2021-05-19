@@ -952,103 +952,58 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                             if (blockHeight >= BlockchainSetting.GenesisBlockHeight && blockHeight <= lastBlockHeightUnlocked)
                             {
-                                ClassBlockObject blockObject = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, cancellation);
 
-                                lock (blockObject)
+                                ClassBlockObject blockObject = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(blockHeight, cancellation);
+
+                                if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED && 
+                                    blockObject.BlockUnlockValid && 
+                                    blockObject.BlockTransactionConfirmationCheckTaskDone && 
+                                    blockObject.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
                                 {
-                                    if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                                    if (blockObject.TotalTransaction > 0)
                                     {
-                                        if (blockObject?.BlockTransactions != null)
+                                       var listTransaction = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetTransactionListFromBlockHeightTarget(blockHeight, true, cancellation);
+
+                                        if (listTransaction.Count > 0)
                                         {
-                                            lock (blockObject.BlockTransactions)
+                                            foreach (var transactionPair in listTransaction)
                                             {
-                                                if (blockObject.BlockTransactions.Count > 0)
+                                                cancellation.Token.ThrowIfCancellationRequested();
+
+                                                if (transactionPair.Value.TransactionObject.WalletAddressReceiver == walletAddress || transactionPair.Value.TransactionObject.WalletAddressSender == walletAddress)
                                                 {
-                                                    foreach (var transactionPair in blockObject.BlockTransactions)
+                                                    if (!ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList.ContainsKey(blockHeight))
                                                     {
-                                                        cancellation.Token.ThrowIfCancellationRequested();
-
-                                                        if (transactionPair.Value.TransactionObject.WalletAddressReceiver == walletAddress || transactionPair.Value.TransactionObject.WalletAddressSender == walletAddress)
-                                                        {
-                                                            if (!ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList.ContainsKey(blockHeight))
-                                                            {
-                                                                ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList.Add(blockHeight, new HashSet<string>());
-                                                            }
-
-                                                            if (!ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight].Contains(transactionPair.Key))
-                                                            {
-                                                                if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight].Add(transactionPair.Key))
-                                                                {
-                                                                    changeDone = true;
-                                                                    ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTotalTransaction++;
-                                                                    InsertOrUpdateBlockTransactionToSyncCache(walletAddress, transactionPair.Value, false, cancellation);
-                                                                }
-                                                                else
-                                                                {
-                                                                    cancelled = true;
-#if DEBUG
-                                                                    Debug.WriteLine("Transaction hash: " + transactionPair.Key + " from the block height: " + blockHeight + "can't be inserted into the wallet file data: " + walletFileName);
-#endif
-                                                                    ClassLog.WriteLine("Transaction hash: " + transactionPair.Key + " from the block height: " + blockHeight + "can't be inserted into the wallet file data: " + walletFileName, ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                                                                    break;
-                                                                }
-                                                            }
-
-                                                            if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Contains(transactionPair.Key))
-                                                            {
-                                                                ClassLog.WriteLine(transactionPair.Key + " tx hash of block height: " + blockHeight + " seems to has been accepted by the network to be proceed, remove it from the mempool.", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-
-                                                                if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Remove(transactionPair.Key))
-                                                                {
-                                                                    ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction--;
-                                                                    changeDone = true;
-                                                                }
-                                                                else
-                                                                {
-                                                                    cancelled = true;
-                                                                    break;
-                                                                }
-                                                            }
-                                                        }
-
+                                                        ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList.Add(blockHeight, new HashSet<string>());
                                                     }
 
-                                                    ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = blockObject.BlockHeight;
-                                                }
-                                                else
-                                                {
-                                                    cancelled = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            cancelled = true;
-#if DEBUG
-                                            Debug.WriteLine("The block height " + blockHeight + " is empty for the wallet file data: " + walletFileName);
-#endif
-                                            ClassLog.WriteLine("The block height " + blockHeight + " is empty for the wallet file data: " + walletFileName, ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                                            break;
-                                        }
-
-                                        if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList.ContainsKey(blockHeight))
-                                        {
-                                            if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight].Count > 0)
-                                            {
-                                                foreach (string txHash in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight])
-                                                {
-                                                    cancellation.Token.ThrowIfCancellationRequested();
-
-
-                                                    if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Contains(txHash))
+                                                    if (!ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight].Contains(transactionPair.Key))
                                                     {
-                                                        ClassLog.WriteLine(txHash + " tx hash of block height: " + blockHeight + " seems to has been accepted by the network to be proceed, remove it from the mempool.", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-
-                                                        if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Remove(txHash))
+                                                        if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight].Add(transactionPair.Key))
                                                         {
                                                             changeDone = true;
+                                                            ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTotalTransaction++;
+                                                            InsertOrUpdateBlockTransactionToSyncCache(walletAddress, transactionPair.Value, false, cancellation);
+                                                        }
+                                                        else
+                                                        {
+                                                            cancelled = true;
+#if DEBUG
+                                                            Debug.WriteLine("Transaction hash: " + transactionPair.Key + " from the block height: " + blockHeight + "can't be inserted into the wallet file data: " + walletFileName);
+#endif
+                                                            ClassLog.WriteLine("Transaction hash: " + transactionPair.Key + " from the block height: " + blockHeight + "can't be inserted into the wallet file data: " + walletFileName, ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Contains(transactionPair.Key))
+                                                    {
+                                                        ClassLog.WriteLine(transactionPair.Key + " tx hash of block height: " + blockHeight + " seems to has been accepted by the network to be proceed, remove it from the mempool.", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+
+                                                        if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Remove(transactionPair.Key))
+                                                        {
                                                             ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction--;
+                                                            changeDone = true;
                                                         }
                                                         else
                                                         {
@@ -1059,10 +1014,57 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                                 }
 
                                             }
+
+                                            ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = blockObject.BlockHeight;
+                                        }
+                                        else
+                                        {
+                                            cancelled = true;
+                                            break;
+                                        }
+                                        
+                                    }
+                                    else
+                                    {
+                                        cancelled = true;
+#if DEBUG
+                                        Debug.WriteLine("The block height " + blockHeight + " is don't store transaction(s). Cancel sync of wallet file: "+walletFileName+" until sync or fixes are done.");
+#endif
+                                        ClassLog.WriteLine("The block height " + blockHeight + " is don't store transaction(s). Cancel sync of wallet file: " + walletFileName + " until sync or fixes are done.", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                                        break;
+                                    }
+
+                                    if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList.ContainsKey(blockHeight))
+                                    {
+                                        if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight].Count > 0)
+                                        {
+                                            foreach (string txHash in ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTransactionList[blockHeight])
+                                            {
+                                                cancellation.Token.ThrowIfCancellationRequested();
+
+
+                                                if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Contains(txHash))
+                                                {
+                                                    ClassLog.WriteLine(txHash + " tx hash of block height: " + blockHeight + " seems to has been accepted by the network to be proceed, remove it from the mempool.", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+
+                                                    if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Remove(txHash))
+                                                    {
+                                                        changeDone = true;
+                                                        ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction--;
+                                                    }
+                                                    else
+                                                    {
+                                                        cancelled = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
                                         }
                                     }
                                 }
                             }
+                            
                         }
 
                         if (changeDone && !cancelled && !cancellation.IsCancellationRequested)
@@ -1212,7 +1214,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                                     DatabaseSyncCache[walletAddressSender].AvailableBalance -= (transactionObject.Amount + transactionObject.Fee);
 
-                                    insertedInMemPool = await ClassMemPoolDatabase.InsertTxToMemPoolAsync(transactionObject, cancellation);
+                                    insertedInMemPool = ClassMemPoolDatabase.InsertTxToMemPool(transactionObject, cancellation);
                                 }
                             }
                             break;
@@ -1340,16 +1342,11 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                                 {
                                                     if (!listUnspend.ContainsKey(transactionPair.Key))
                                                     {
-                                                        BigInteger rest = DatabaseSyncCache[walletAddress].GetSyncBlockTransactionCached(blockHeight, transactionPair.Key).BlockTransaction.TransactionObject.Amount - transactionPair.Value.BlockTransaction.TotalSpend;
-
-                                                        if (rest > 0)
+                                                        listUnspend.Add(transactionPair.Key, new ClassWalletSyncAmountSpendObject()
                                                         {
-                                                            listUnspend.Add(transactionPair.Key, new ClassWalletSyncAmountSpendObject()
-                                                            {
-                                                                TxAmount = rest,
-                                                                AmountSpend = 0
-                                                            });
-                                                        }
+                                                            TxAmount = DatabaseSyncCache[walletAddress].GetSyncBlockTransactionCached(blockHeight, transactionPair.Key).BlockTransaction.TransactionObject.Amount,
+                                                            AmountSpend = transactionPair.Value.BlockTransaction.TotalSpend,
+                                                        });
                                                     }
                                                 }
                                             }

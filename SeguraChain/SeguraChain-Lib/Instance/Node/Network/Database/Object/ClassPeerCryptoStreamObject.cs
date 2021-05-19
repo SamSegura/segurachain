@@ -10,6 +10,7 @@ using Org.BouncyCastle.Security;
 using SeguraChain_Lib.Algorithm;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Wallet.Function;
+
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
@@ -243,8 +244,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
 
             if (_initialized)
             {
-
-
                 try
                 {
                     if (content.Length > 0)

@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 
 namespace SeguraChain_Lib.Other.Object.List
 {
     public class DisposableDictionary<V, T> : IDisposable
     {
-        public DisposableDictionary(int capacity = 0)
+        public DisposableDictionary(int capacity = 0, Dictionary<V, T> sourceDictionary = null)
         {
-            GetList = capacity > 0 ? new Dictionary<V, T>(capacity) : new Dictionary<V, T>();
+            if (sourceDictionary == null)
+                GetList = capacity > 0 ? new Dictionary<V, T>(capacity) : new Dictionary<V, T>();
+            else
+                GetList = new Dictionary<V, T>(sourceDictionary);
         }
 
         #region Dispose functions

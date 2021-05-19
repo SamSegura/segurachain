@@ -12,6 +12,7 @@ using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain;
 using SeguraChain_Lib.Other.Object.List;
 
+
 namespace SeguraChain_Lib.Blockchain.Stats.Function
 {
     public class ClassBlockchainStats

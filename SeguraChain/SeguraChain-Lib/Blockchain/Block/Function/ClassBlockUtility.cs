@@ -79,10 +79,10 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
         /// <param name="blockHash"></param>
         /// <param name="blockHeight"></param>
         /// <param name="blockDifficulty"></param>
-        /// <param name="blockTransactionCount"></param>
+        /// <param name="previousBlockTransactionCount"></param>
         /// <param name="blockTransactionHash"></param>
         /// <returns></returns>
-        public static ClassBlockEnumCheckStatus CheckBlockHash(string blockHash, long blockHeight, BigInteger blockDifficulty, int blockTransactionCount, string blockTransactionHash)
+        public static ClassBlockEnumCheckStatus CheckBlockHash(string blockHash, long blockHeight, BigInteger blockDifficulty, int previousBlockTransactionCount, string blockTransactionHash)
         {
             if (blockHash.Length != BlockchainSetting.BlockHashHexSize)
             {
@@ -135,7 +135,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     {
                         int blockTransactionCountFromHash = BitConverter.ToInt32(blockCountTransactionBytes, 0);
 
-                        if (blockTransactionCountFromHash != blockTransactionCount)
+                        if (blockTransactionCountFromHash != previousBlockTransactionCount)
                         {
                             result = ClassBlockEnumCheckStatus.INVALID_BLOCK_TRANSACTION_COUNT;
                         }

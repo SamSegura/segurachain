@@ -118,23 +118,26 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
 
                                     if (clientPeerTcp != null)
                                     {
-                                        string clientIp = ((IPEndPoint)(clientPeerTcp.Client.RemoteEndPoint)).Address.ToString();
-
-                                        switch (await HandleIncomingConnection(clientIp, clientPeerTcp, PeerIpOpenNatServer))
+                                        await Task.Factory.StartNew(async () =>
                                         {
-                                            case ClassPeerNetworkServerHandleConnectionEnum.TOO_MUCH_ACTIVE_CONNECTION_CLIENT:
-                                            case ClassPeerNetworkServerHandleConnectionEnum.BAD_CLIENT_STATUS:
-                                                if (_firewallSettingObject.PeerEnableFirewallLink)
-                                                {
-                                                    ClassPeerFirewallManager.InsertInvalidPacket(clientIp);
-                                                }
-                                                CloseTcpClient(clientPeerTcp);
-                                                break;
-                                            case ClassPeerNetworkServerHandleConnectionEnum.HANDLE_CLIENT_EXCEPTION:
-                                            case ClassPeerNetworkServerHandleConnectionEnum.INSERT_CLIENT_IP_EXCEPTION:
-                                                CloseTcpClient(clientPeerTcp);
-                                                break;
-                                        }
+                                            string clientIp = ((IPEndPoint)(clientPeerTcp.Client.RemoteEndPoint)).Address.ToString();
+
+                                            switch (await HandleIncomingConnection(clientIp, clientPeerTcp, PeerIpOpenNatServer))
+                                            {
+                                                case ClassPeerNetworkServerHandleConnectionEnum.TOO_MUCH_ACTIVE_CONNECTION_CLIENT:
+                                                case ClassPeerNetworkServerHandleConnectionEnum.BAD_CLIENT_STATUS:
+                                                    if (_firewallSettingObject.PeerEnableFirewallLink)
+                                                    {
+                                                        ClassPeerFirewallManager.InsertInvalidPacket(clientIp);
+                                                    }
+                                                    CloseTcpClient(clientPeerTcp);
+                                                    break;
+                                                case ClassPeerNetworkServerHandleConnectionEnum.HANDLE_CLIENT_EXCEPTION:
+                                                case ClassPeerNetworkServerHandleConnectionEnum.INSERT_CLIENT_IP_EXCEPTION:
+                                                    CloseTcpClient(clientPeerTcp);
+                                                    break;
+                                            }
+                                        }, _cancellationTokenSourcePeerServer.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
                                     }
                                 }
                                 catch
@@ -302,55 +305,55 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
                         #endregion
 
 
-                        await Task.Factory.StartNew(async () =>
+                        bool useSemaphore = false;
+                        bool failed = true;
+
+                        try
                         {
-                            bool useSemaphore = false;
-                            bool failed = true;
+                            long timestampStartAwait = ClassUtility.GetCurrentTimestampInMillisecond();
 
-                            try
+                            #region Wait the semaphore access availability.
+
+                            while (timestampStartAwait + _peerNetworkSettingObject.PeerMaxSemaphoreConnectAwaitDelay >= ClassUtility.GetCurrentTimestampInMillisecond())
                             {
-                                long timestampStartAwait = ClassUtility.GetCurrentTimestampInMillisecond();
-
-                                #region Wait the semaphore access availability.
-
-                                while (timestampStartAwait + _peerNetworkSettingObject.PeerMaxSemaphoreConnectAwaitDelay >= ClassUtility.GetCurrentTimestampInMillisecond())
+                                if (await _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.WaitAsync(10, _cancellationTokenSourcePeerServer.Token))
                                 {
-                                    if (await _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.WaitAsync(1000, _cancellationTokenSourcePeerServer.Token))
-                                    {
-                                        useSemaphore = true;
-                                        break;
-                                    }
+                                    useSemaphore = true;
+                                    break;
                                 }
+                            }
 
+                            #endregion
+
+                            if (useSemaphore)
+                            {
+                                _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
+                                useSemaphore = false;
+
+                                failed = false;
+
+                                #region Handle the incoming connection to the P2P server.
+                                await _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].HandlePeerClient();
+                                _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
                                 #endregion
-
-                                if (useSemaphore)
-                                {
-                                    _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
-                                    useSemaphore = false;
-
-                                    failed = false;
-
-                                    #region Handle the incoming connection to the P2P server.
-                                    await _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].HandlePeerClient();
-                                    #endregion
-                                }
                             }
-                            finally
+                            else CloseTcpClient(clientPeerTcp);
+                        }
+                        finally
+                        {
+                            if (useSemaphore)
                             {
-                                if (failed)
-                                {
-                                    CloseTcpClient(clientPeerTcp);
-                                    _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
-                                }
-
-                                if (useSemaphore)
-                                {
-                                    _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
-                                }
+                                _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
+                            }
+                            if (failed)
+                            {
+                                CloseTcpClient(clientPeerTcp);
+                                _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
                             }
 
-                        }, _cancellationTokenSourcePeerServer.Token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Current).ConfigureAwait(false);
+
+                        }
+
                     }
                     else
                     {

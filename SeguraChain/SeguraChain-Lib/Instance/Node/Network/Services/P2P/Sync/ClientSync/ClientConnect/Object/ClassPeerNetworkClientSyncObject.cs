@@ -258,7 +258,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             CancelTaskDoConnection();
             _peerCancellationTokenDoConnection = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token);
             _peerSocketClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
+            long timestampConnect = ClassUtility.GetCurrentTimestampInMillisecond();
+            long timestampEnd = ClassUtility.GetCurrentTimestampInMillisecond() + (_peerNetworkSetting.PeerMaxDelayToConnectToTarget * 1000); 
 
             try
             {
@@ -286,7 +287,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
 
             while (!successConnect)
             {
-                if (_peerCancellationTokenDoConnection.IsCancellationRequested || PeerConnectStatus)
+                if (_peerCancellationTokenDoConnection.IsCancellationRequested ||
+                    PeerConnectStatus )
                 {
                     break;
                 }
@@ -294,8 +296,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                 try
                 {
                     await Task.Delay(100, _peerCancellationTokenDoConnection.Token);
+                    timestampConnect += 100;
                 }
                 catch
+                {
+                    break;
+                }
+
+                if (timestampConnect >= timestampEnd)
                 {
                     break;
                 }
@@ -768,17 +776,46 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             CancelTaskPeerPacketKeepAlive();
             CancelTaskListenPeerPacketResponse();
 
+
             try
             {
                 if (_peerSocketClient != null)
                 {
-                    _peerSocketClient.Close();
+                    if (_peerSocketClient.Connected)
+                    {
+                        try
+                        {
+                            _peerSocketClient.Shutdown(SocketShutdown.Both);
+                        }
+                        finally
+                        {
+                            if (_peerSocketClient != null)
+                            {
+                                if (_peerSocketClient.Connected)
+                                {
+                                    _peerSocketClient.Close();
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch
             {
-                // Ignored.
+                try
+                {
+                    if (_peerSocketClient != null)
+                    {
+                        _peerSocketClient.Close();
+                    }
+                }
+                catch
+                {
+                    // Ignored.
+                }
             }
+
+
         }
         
 

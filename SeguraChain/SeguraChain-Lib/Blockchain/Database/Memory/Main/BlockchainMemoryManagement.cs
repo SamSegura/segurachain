@@ -27,7 +27,7 @@ using SeguraChain_Lib.Blockchain.Wallet.Function;
 using SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.List;
-using SeguraChain_Lib.Other.Object.ThreadExtension;
+
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
@@ -59,10 +59,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         /// <summary>
         /// Management of multithreading access.
         /// </summary>
-        private SemaphoreSmooth _semaphoreSlimUpdateTransactionConfirmations;
-        private SemaphoreSmooth _semaphoreSlimMemoryAccess;
-        private SemaphoreSmooth _semaphoreSlimGetWalletBalance;
-        private SemaphoreSmooth _semaphoreSlimCacheBlockTransactionAccess;
+        private SemaphoreSlim _semaphoreSlimUpdateTransactionConfirmations;
+        private SemaphoreSlim _semaphoreSlimMemoryAccess;
+        private SemaphoreSlim _semaphoreSlimGetWalletBalance;
+        private SemaphoreSlim _semaphoreSlimCacheBlockTransactionAccess;
 
         /// <summary>
         /// Management of memory.
@@ -97,10 +97,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             BlockchainWalletIndexMemoryCacheObject = new BlockchainWalletIndexMemoryManagement(blockchainDatabaseSetting);
 
             // Protect against multithreading access.
-            _semaphoreSlimMemoryAccess = new SemaphoreSmooth(1, 1);
-            _semaphoreSlimGetWalletBalance = new SemaphoreSmooth(1, 1);
-            _semaphoreSlimUpdateTransactionConfirmations = new SemaphoreSmooth(1, 1);
-            _semaphoreSlimCacheBlockTransactionAccess = new SemaphoreSmooth(1, ClassUtility.GetMaxAvailableProcessorCount());
+            _semaphoreSlimMemoryAccess = new SemaphoreSlim(1, 1);
+            _semaphoreSlimGetWalletBalance = new SemaphoreSlim(1, 1);
+            _semaphoreSlimUpdateTransactionConfirmations = new SemaphoreSlim(1, 1);
+            _semaphoreSlimCacheBlockTransactionAccess = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
 
             // Cancellation token of memory management.
             _cancellationTokenMemoryManagement = new CancellationTokenSource();
@@ -3861,24 +3861,27 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         #endregion
                     }
 
-                    // Take in count mem pool transaction indexed only sending.
-                    if (ClassMemPoolDatabase.GetCountMemPoolTx > 0)
+                    if (!buildCheckpoint)
                     {
-                        foreach (var memPoolTransactionIndexed in ClassMemPoolDatabase.GetMemPoolTxFromWalletAddressTarget(walletAddress, maxBlockHeightTarget, cancellation))
+                        // Take in count mem pool transaction indexed only sending.
+                        if (ClassMemPoolDatabase.GetCountMemPoolTx > 0)
                         {
-                            if (memPoolTransactionIndexed != null)
+                            foreach (var memPoolTransactionIndexed in ClassMemPoolDatabase.GetMemPoolTxFromWalletAddressTarget(walletAddress, maxBlockHeightTarget, cancellation))
                             {
-                                if (memPoolTransactionIndexed.WalletAddressSender == walletAddress)
+                                if (memPoolTransactionIndexed != null)
                                 {
-                                    blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Amount;
-                                    if (memPoolTransactionIndexed.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                                    if (memPoolTransactionIndexed.WalletAddressSender == walletAddress)
                                     {
-                                        blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Fee;
+                                        blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Amount;
+                                        if (memPoolTransactionIndexed.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                                        {
+                                            blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Fee;
+                                        }
                                     }
-                                }
-                                else if (memPoolTransactionIndexed.WalletAddressReceiver == walletAddress)
-                                {
-                                    blockchainWalletBalance.WalletPendingBalance += memPoolTransactionIndexed.Amount;
+                                    else if (memPoolTransactionIndexed.WalletAddressReceiver == walletAddress)
+                                    {
+                                        blockchainWalletBalance.WalletPendingBalance += memPoolTransactionIndexed.Amount;
+                                    }
                                 }
                             }
                         }

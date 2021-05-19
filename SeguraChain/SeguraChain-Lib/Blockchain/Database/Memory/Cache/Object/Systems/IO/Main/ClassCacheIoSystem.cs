@@ -12,7 +12,7 @@ using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.List;
-using SeguraChain_Lib.Other.Object.ThreadExtension;
+
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Main
@@ -36,7 +36,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
         /// <summary>
         /// Multithreading settings.
         /// </summary>
-        private SemaphoreSmooth _semaphoreIoCacheIndexAccess;
+        private SemaphoreSlim _semaphoreIoCacheIndexAccess;
 
         /// <summary>
         /// Save the last memory usage of the io cache system.
@@ -52,7 +52,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
         {
             _blockchainDatabaseSetting = blockchainDatabaseSetting;
             _cacheIoDirectoryPath = _blockchainDatabaseSetting.GetBlockchainCacheDirectoryPath;
-            _semaphoreIoCacheIndexAccess = new SemaphoreSmooth(1, ClassUtility.GetMaxAvailableProcessorCount());
+            _semaphoreIoCacheIndexAccess = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
             _dictionaryCacheIoIndexObject = new Dictionary<string, ClassCacheIoIndexObject>();
         }
 

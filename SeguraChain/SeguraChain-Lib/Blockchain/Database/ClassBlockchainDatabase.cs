@@ -33,6 +33,7 @@ using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast;
 using SeguraChain_Lib.Instance.Node.Setting.Object;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.GCExtension;
+
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Database
@@ -1627,13 +1628,13 @@ namespace SeguraChain_Lib.Blockchain.Database
                         return ClassBlockTransactionInsertEnumStatus.BLOCK_HEIGHT_NOT_EXIST;
                     }
                 }
-                if (await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(transactionObject.BlockHeightTransaction, cancellation) + 1 >= BlockchainSetting.MaxTransactionPerBlock)
+                if (await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(transactionObject.BlockHeightTransaction, false, cancellation) + 1 >= BlockchainSetting.MaxTransactionPerBlock)
                 {
                     return ClassBlockTransactionInsertEnumStatus.MAX_BLOCK_TRANSACTION_PER_BLOCK_HEIGHT_TARGET_REACH;
                 }
             }
  
-            if (await ClassMemPoolDatabase.InsertTxToMemPoolAsync(transactionObject, cancellation))
+            if (ClassMemPoolDatabase.InsertTxToMemPool(transactionObject, cancellation))
             {
                 ClassLog.WriteLine("Transaction hash: " + transactionObject.TransactionHash + " of type: " + transactionObject.TransactionType + " who target the block height: " + transactionObject.BlockHeightTransaction + " has been inserted to the mempool.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
 
@@ -1654,7 +1655,7 @@ namespace SeguraChain_Lib.Blockchain.Database
         {
             try
             {
-                if (await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(blockHeight, cancellation) > 0)
+                if (await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(blockHeight, false, cancellation) > 0)
                 {
                     foreach (var txTransactionObject in await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, cancellation))
                     {
@@ -1794,8 +1795,20 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                         if (blockCheckStatus != ClassBlockEnumCheckStatus.VALID_BLOCK_HASH)
                         {
-                            ClassLog.WriteLine("[Warning] The block hash from the block height: " + blockObject.BlockHeight + " is not valid. Result: " + blockCheckStatus + ". A resync from the scratch is necessary.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                            return false;
+                            bool blockDead = true;
+
+                            if (blockCheckStatus == ClassBlockEnumCheckStatus.INVALID_BLOCK_TRANSACTION_COUNT)
+                            {
+                                if (!previousBlockObject.BlockUnlockValid && !previousBlockObject.BlockTransactionConfirmationCheckTaskDone)
+                                {
+                                    blockDead = false;
+                                }
+                            }
+                            if (blockDead)
+                            {
+                                ClassLog.WriteLine("[Warning] The block hash from the block height: " + blockObject.BlockHeight + " is not valid. Result: " + blockCheckStatus + ". A resync from the scratch is necessary.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                                return false;
+                            }
                         }
 
                         if (!CheckBlockObjectTransactionConfirmationsProgressDone(blockObject, lastBlockHeightUnlockedChecked))

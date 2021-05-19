@@ -39,6 +39,7 @@ using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet.SubPacket.R
 using SeguraChain_Lib.Instance.Node.Setting.Object;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.List;
+
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Service
@@ -1547,7 +1548,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
         private async Task<int> StartAskSovereignUpdateListFromListPeerTarget(Dictionary<int, ClassPeerTargetObject> peerListTarget)
         {
 
-            SemaphoreSlim semaphoreSlimInsertObject = new SemaphoreSlim(1, 1);
+            SemaphoreSlim SemaphoreSlimInsertObject = new SemaphoreSlim(1, 1);
             HashSet<string> hashSetSovereignUpdateHash = new HashSet<string>();
             long timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
 
@@ -1580,7 +1581,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                         {
                                             if (result.Item2.Count > 0)
                                             {
-                                                await semaphoreSlimInsertObject.WaitAsync(cancellationTokenSourceTaskSyncSovereignUpdate.Token);
+                                                await SemaphoreSlimInsertObject.WaitAsync(cancellationTokenSourceTaskSyncSovereignUpdate.Token);
 
                                                 foreach (string sovereignHash in result.Item2)
                                                 {
@@ -1593,7 +1594,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                     }
                                                 }
 
-                                                semaphoreSlimInsertObject.Release();
+                                                SemaphoreSlimInsertObject.Release();
                                             }
 
                                         }
@@ -1644,9 +1645,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     {
                         cancellationTokenSourceTaskSyncSovereignUpdate.Cancel();
                     }
-                    if (semaphoreSlimInsertObject.CurrentCount == 0)
+                    if (SemaphoreSlimInsertObject.CurrentCount == 0)
                     {
-                        semaphoreSlimInsertObject.Release();
+                        SemaphoreSlimInsertObject.Release();
                     }
                 }
                 catch
@@ -1688,14 +1689,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                         {
                                                             if (!ClassSovereignUpdateDatabase.CheckIfSovereignUpdateHashExist(result.Item2.ObjectReturned.SovereignUpdateHash))
                                                             {
-                                                                await semaphoreSlimInsertObject.WaitAsync(cancellationTokenSourceTaskSyncSovereignUpdate.Token);
+                                                                await SemaphoreSlimInsertObject.WaitAsync(cancellationTokenSourceTaskSyncSovereignUpdate.Token);
 
                                                                 if (ClassSovereignUpdateDatabase.RegisterSovereignUpdateObject(result.Item2.ObjectReturned))
                                                                 {
                                                                     totalSovereignUpdatedReceived++;
                                                                 }
 
-                                                                semaphoreSlimInsertObject.Release();
+                                                                SemaphoreSlimInsertObject.Release();
                                                             }
                                                         }
                                                     }
@@ -1748,9 +1749,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         {
                             cancellationTokenSourceTaskSyncSovereignUpdate.Cancel();
                         }
-                        if (semaphoreSlimInsertObject.CurrentCount == 0)
+                        if (SemaphoreSlimInsertObject.CurrentCount == 0)
                         {
-                            semaphoreSlimInsertObject.Release();
+                            SemaphoreSlimInsertObject.Release();
                         }
                     }
                     catch
@@ -1762,7 +1763,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             // Final clean up.
             hashSetSovereignUpdateHash.Clear();
-            semaphoreSlimInsertObject.Dispose();
+            SemaphoreSlimInsertObject.Dispose();
 
             return totalSovereignUpdatedReceived;
         }
@@ -4580,10 +4581,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     {
                         semaphoreUsed = await _semaphoreUpdateAuthKeysFromError.WaitAsync(_peerNetworkSettingObject.PeerTaskSyncDelay, cancellation.Token);
                     }
-                    else
-                    {
-                        semaphoreUsed = await _semaphoreUpdateAuthKeysFromError.WaitAsync(_peerNetworkSettingObject.PeerTaskSyncDelay);
-                    }
+
 
                     if (semaphoreUsed)
                     {

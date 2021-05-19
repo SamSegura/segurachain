@@ -12,10 +12,12 @@ using SeguraChain_Lib.Algorithm;
 using SeguraChain_Lib.Blockchain.Database.DatabaseSetting;
 using SeguraChain_Lib.Blockchain.MemPool.Object;
 using SeguraChain_Lib.Blockchain.Setting;
+using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.List;
+
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.MemPool.Database
@@ -629,19 +631,15 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
         /// <param name="transactionObject"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        public static async Task<bool> InsertTxToMemPoolAsync(ClassTransactionObject transactionObject, CancellationTokenSource cancellation)
+        public static bool InsertTxToMemPool(ClassTransactionObject transactionObject, CancellationTokenSource cancellation)
         {
             bool result = false;
             long blockHeightTransaction = ClassTransactionUtility.GetBlockHeightFromTransactionHash(transactionObject.TransactionHash);
 
             if (blockHeightTransaction > BlockchainSetting.GenesisBlockHeight)
             {
-                bool semaphoreUsed = false;
                 try
                 {
-                    await _semaphoreMemPoolAccess.WaitAsync(cancellation.Token);
-
-                    semaphoreUsed = true;
                     bool existList = true;
 
                     if (!_dictionaryMemPoolTransactionObjects.ContainsKey(blockHeightTransaction))
@@ -666,12 +664,9 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
                         }
                     }
                 }
-                finally
+                catch
                 {
-                    if (semaphoreUsed)
-                    {
-                        _semaphoreMemPoolAccess.Release();
-                    }
+                    // Ignored.
                 }
             }
 
@@ -714,7 +709,7 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
         /// <param name="blockHeight"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        public static async Task<int> GetCountMemPoolTxFromBlockHeight(long blockHeight, CancellationTokenSource cancellation)
+        public static async Task<int> GetCountMemPoolTxFromBlockHeight(long blockHeight, bool exceptBlockReward, CancellationTokenSource cancellation)
         {
             int result = 0;
             bool semaphoreUsed = false;
@@ -727,7 +722,10 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
                 {
                     if (_dictionaryMemPoolTransactionObjects.ContainsKey(blockHeight))
                     {
-                        result = _dictionaryMemPoolTransactionObjects[blockHeight].Count;
+                        if (exceptBlockReward)
+                            result = _dictionaryMemPoolTransactionObjects[blockHeight].Count(x => x.Value.TransactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION && x.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION);
+                        else
+                            result = _dictionaryMemPoolTransactionObjects[blockHeight].Count;
                     }
                 }
             }
