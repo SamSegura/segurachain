@@ -1063,12 +1063,23 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                     aesObject.Key = previousFinalBlockTransactionHashKey;
                     aesObject.IV = pocShareIv;
                     aesObject.Mode = CipherMode.CFB;
-                    aesObject.Padding = PaddingMode.PKCS7;
+                    aesObject.Padding = PaddingMode.None;
                     using (ICryptoTransform encryptCryptoTransform = aesObject.CreateEncryptor(previousFinalBlockTransactionHashKey, pocShareIv))
                     {
                         for (int i = 0; i < currentMiningSetting.PowRoundAesShare; i++)
                         {
-                            pocShareData = encryptCryptoTransform.TransformFinalBlock(pocShareData, 0, pocShareData.Length);
+                            int packetLength = pocShareData.Length;
+                            int paddingSizeRequired = 16 - packetLength % 16;
+                            byte[] paddedBytes = new byte[packetLength + paddingSizeRequired];
+
+                            Buffer.BlockCopy(pocShareData, 0, paddedBytes, 0, packetLength);
+
+                            for (int j = 0; j < paddingSizeRequired; j++)
+                            {
+                                paddedBytes[packetLength + j] = (byte) paddingSizeRequired;
+                            }
+
+                            pocShareData = encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);
                         }
                     }
                 }
@@ -1102,12 +1113,15 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                     aesObject.Key = previousFinalBlockTransactionHashKey;
                     aesObject.IV = pocShareIv;
                     aesObject.Mode = CipherMode.CFB;
-                    aesObject.Padding = PaddingMode.PKCS7;
+                    aesObject.Padding = PaddingMode.None;
                     using (ICryptoTransform decryptCryptoTransform = aesObject.CreateDecryptor(previousFinalBlockTransactionHashKey, pocShareIv))
                     {
                         for (int i = 0; i < currentMiningSetting.PowRoundAesShare; i++)
                         {
                             pocShareData = decryptCryptoTransform.TransformFinalBlock(pocShareData, 0, pocShareData.Length);
+                            byte[] a = new byte[pocShareData.Length - pocShareData[pocShareData.Length - 1]];
+                            Buffer.BlockCopy(pocShareData, 0, a, 0, a.Length);
+                            pocShareData = a;
                         }
                     }
                 }

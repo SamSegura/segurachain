@@ -82,10 +82,21 @@ namespace SeguraChain_Lib.Algorithm
                         aesObject.Key = key;
                         aesObject.IV = iv;
                         aesObject.Mode = CipherMode.CFB;
-                        aesObject.Padding = PaddingMode.PKCS7;
+                        aesObject.Padding = PaddingMode.None;
                         using (ICryptoTransform encryptCryptoTransform = aesObject.CreateEncryptor(key, iv))
                         {
-                            result = encryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                            int packetLength = content.Length;
+                            int paddingSizeRequired = 16 - packetLength % 16;
+                            byte[] paddedBytes = new byte[packetLength + paddingSizeRequired];
+
+                            Buffer.BlockCopy(content, 0, paddedBytes, 0, packetLength);
+
+                            for (int i = 0; i < paddingSizeRequired; i++)
+                            {
+                                paddedBytes[packetLength + i] = (byte) paddingSizeRequired;
+                            }
+
+                            result = encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);
                             return true;
 
                             /*
@@ -143,10 +154,13 @@ namespace SeguraChain_Lib.Algorithm
                         aesObject.Key = key;
                         aesObject.IV = iv;
                         aesObject.Mode = CipherMode.CFB;
-                        aesObject.Padding = PaddingMode.PKCS7;
+                        aesObject.Padding = PaddingMode.None;
                         using (ICryptoTransform decryptCryptoTransform = aesObject.CreateDecryptor(key, iv))
                         {
-                            result = decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                            byte[] decryptedPaddedBytes = decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                            result = new byte[decryptedPaddedBytes.Length - decryptedPaddedBytes[decryptedPaddedBytes.Length - 1]];
+                            Buffer.BlockCopy(decryptedPaddedBytes, 0, result, 0, result.Length);
+
                             return true;
                             /*
                             using (MemoryStream memoryStreamDecrypt = new MemoryStream())
