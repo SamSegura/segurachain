@@ -60,13 +60,12 @@ Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
 <h3>To do list:</h3>
 
--> Improve MemPool broadcast instances. 95% done)
 
 -> Complete some parts of the whitepaper and translate it in english. (80% done)
 
 -> Complete wallets balance checkpoint disk cache process. (40% done)
 
--> Complete Desktop Wallet features and options. (67% done)
+-> Complete Desktop Wallet features and options. (80% done)
 
 -> Develop the IO Cache Network mode. (0% done)
 
@@ -74,7 +73,7 @@ Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
 -> Develop an example of Mining Pool. (0% done)
 
--> Finish optimizations. (56% done)
+-> Finish optimizations. (80% done)
 
 <h3>Project of development:</h3>
 
