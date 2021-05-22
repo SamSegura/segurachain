@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
@@ -48,33 +49,34 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
             {
                 foreach (var languageFilePath in languageFileList)
                 {
-                    if (File.Exists(languageFilePath))
+
+                    using (StreamReader reader = new StreamReader(languageFilePath))
                     {
-                        using (StreamReader reader = new StreamReader(languageFilePath))
+                        bool readStatus = false;
+                        if (ClassUtility.TryDeserialize(reader.ReadToEnd(), out ClassLanguageObject languageObject, ObjectCreationHandling.Reuse))
                         {
-                            bool readStatus = false;
-                            if (ClassUtility.TryDeserialize(reader.ReadToEnd(), out ClassLanguageObject languageObject, ObjectCreationHandling.Reuse))
+                            if (languageObject != null)
                             {
-                                if (languageObject != null)
+                                if (!languageObject.LanguageName.IsNullOrEmpty(out _) && !languageObject.LanguageMinName.IsNullOrEmpty(out _))
                                 {
-                                    if (!languageObject.LanguageName.IsNullOrEmpty(out _) && !languageObject.LanguageMinName.IsNullOrEmpty(out _))
+                                    readStatus = true;
+                                    if (!_dictionaryLanguageObjects.ContainsKey(languageObject.LanguageMinName))
                                     {
-                                        readStatus = true;
-                                        if (!_dictionaryLanguageObjects.ContainsKey(languageObject.LanguageName))
-                                        {
-                                            ClassLog.WriteLine("Language file: " + languageFilePath + " read sucessfully done. Language Name: " + languageObject.LanguageName, ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                                        }
+                                        _dictionaryLanguageObjects.Add(languageObject.LanguageMinName, languageObject);
+
+                                        ClassLog.WriteLine("Language file: " + languageFilePath + " read sucessfully done. Language Name: " + languageObject.LanguageMinName, ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
                                     }
                                 }
                             }
-
-                            if (!readStatus)
-                            {
-                                ClassLog.WriteLine("Language file: " + languageFilePath + " reading failed", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                            }
-
                         }
+
+                        if (!readStatus)
+                        {
+                            ClassLog.WriteLine("Language file: " + languageFilePath + " reading failed", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                        }
+
                     }
+
                 }
 
                 if (_dictionaryLanguageObjects.Count == 0)
@@ -104,11 +106,14 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
         {
             ClassLanguageObject defaultLanguageObject = new ClassLanguageObject();
             _currentLanguage = defaultLanguageObject.LanguageMinName;
-            _dictionaryLanguageObjects.Add(defaultLanguageObject.LanguageMinName, defaultLanguageObject);
-
-            using (StreamWriter writer = new StreamWriter(languageDirectoryPath + defaultLanguageObject.LanguageName + ClassWalletDefaultSetting.LanguageFileFormat.Replace("*", "")))
+            if (!_dictionaryLanguageObjects.ContainsKey(_currentLanguage))
             {
-                writer.Write(ClassUtility.SerializeData(defaultLanguageObject, Formatting.Indented));
+                _dictionaryLanguageObjects.Add(defaultLanguageObject.LanguageMinName, defaultLanguageObject);
+
+                using (StreamWriter writer = new StreamWriter(languageDirectoryPath + defaultLanguageObject.LanguageName + ClassWalletDefaultSetting.LanguageFileFormat.Replace("*", "")))
+                {
+                    writer.Write(ClassUtility.SerializeData(defaultLanguageObject, Formatting.Indented));
+                }
             }
         }
 
@@ -166,18 +171,35 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
         /// <summary>
         /// Get the language list names.
         /// </summary>
-        public List<string> GetLanguageList => _dictionaryLanguageObjects.Keys.ToList();
+        public Dictionary<string, string> GetLanguageList
+        {
+            get
+            {
+                Dictionary<string, string> languageList = new Dictionary<string, string>();
+
+                foreach (var languageObject in _dictionaryLanguageObjects)
+                    if (!languageList.ContainsKey(languageObject.Key))
+                        languageList.Add(languageObject.Key, languageObject.Value.LanguageName);
+
+                return languageList;
+            }
+        }
+
+
 
         /// <summary>
         /// Change the new language name.
         /// </summary>
-        /// <param name="languageName"></param>
-        public void SetCurrentLanguageName(string languageName)
+        /// <param name="languageMinName"></param>
+        public bool SetCurrentLanguageName(string languageMinName)
         {
-            if (_dictionaryLanguageObjects.ContainsKey(languageName))
+            if (_dictionaryLanguageObjects.ContainsKey(languageMinName))
             {
-                _currentLanguage = languageName;
+                _currentLanguage = languageMinName;
+                ClassDesktopWalletCommonData.WalletSettingObject.WalletLanguageNameSelected = languageMinName;
+                return true;
             }
+            return false;
         }
     }
 }

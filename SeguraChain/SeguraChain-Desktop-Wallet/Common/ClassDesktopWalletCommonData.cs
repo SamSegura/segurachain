@@ -30,6 +30,12 @@ namespace SeguraChain_Desktop_Wallet.Common
         /// <returns></returns>
         public static bool InitializeLanguageDatabaseForStartupForm()
         {
+            if (!ReadWalletSetting())
+            {
+                MessageBox.Show("Error on loading wallet setting file, please reinstall or remove the wallet-setting.json.", "Wallet setting", MessageBoxButtons.OK);
+                Process.GetCurrentProcess().Kill();
+            }
+
             if (!InitializeLanguageDatabase())
             {
                 MessageBox.Show("Error on loading language file(s), please reinstall the desktop wallet.", "Language system", MessageBoxButtons.OK);
@@ -45,10 +51,7 @@ namespace SeguraChain_Desktop_Wallet.Common
         public static bool InitializeDesktopWalletCommonData()
         {
 
-            if (!ReadWalletSetting())
-            {
-                Process.GetCurrentProcess().Kill();
-            }
+    
            
             if (!InitializeWalletSyncSystem().Result)
             {

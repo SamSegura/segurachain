@@ -33,14 +33,15 @@ namespace SeguraChain_Desktop_Wallet
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClassWalletMainInterfaceForm));
             this.menuStripGeneralWallet = new System.Windows.Forms.MenuStrip();
-            this.fichierToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openWalletToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeWalletToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.createWalletToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.importWalletPrivateKeytoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rescanToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.importWalletPrivateKeytoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.languageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.comboBoxListWalletFile = new System.Windows.Forms.ComboBox();
             this.labelWalletOpened = new System.Windows.Forms.Label();
             this.labelMainInterfaceSyncProgress = new System.Windows.Forms.Label();
@@ -133,9 +134,10 @@ namespace SeguraChain_Desktop_Wallet
             this.menuStripGeneralWallet.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(67)))), ((int)(((byte)(83)))), ((int)(((byte)(105)))));
             this.menuStripGeneralWallet.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.menuStripGeneralWallet.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fichierToolStripMenuItem,
+            this.fileToolStripMenuItem,
             this.settingsToolStripMenuItem,
-            this.rescanToolStripMenuItem});
+            this.rescanToolStripMenuItem,
+            this.languageToolStripMenuItem});
             this.menuStripGeneralWallet.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
             this.menuStripGeneralWallet.Location = new System.Drawing.Point(0, 0);
             this.menuStripGeneralWallet.MinimumSize = new System.Drawing.Size(1376, 0);
@@ -147,45 +149,52 @@ namespace SeguraChain_Desktop_Wallet
             this.menuStripGeneralWallet.TabIndex = 0;
             this.menuStripGeneralWallet.Text = "menuStripControl";
             // 
-            // fichierToolStripMenuItem
+            // fileToolStripMenuItem
             // 
-            this.fichierToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openWalletToolStripMenuItem,
             this.closeWalletToolStripMenuItem,
             this.createWalletToolStripMenuItem,
             this.importWalletPrivateKeytoolStripMenuItem,
             this.exitToolStripMenuItem});
-            this.fichierToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.fichierToolStripMenuItem.ForeColor = System.Drawing.Color.Ivory;
-            this.fichierToolStripMenuItem.Name = "fichierToolStripMenuItem";
-            this.fichierToolStripMenuItem.Size = new System.Drawing.Size(38, 20);
-            this.fichierToolStripMenuItem.Text = "File";
+            this.fileToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.fileToolStripMenuItem.ForeColor = System.Drawing.Color.Ivory;
+            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(74, 20);
+            this.fileToolStripMenuItem.Text = "FILE_TEXT";
             // 
             // openWalletToolStripMenuItem
             // 
             this.openWalletToolStripMenuItem.Name = "openWalletToolStripMenuItem";
-            this.openWalletToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.openWalletToolStripMenuItem.Text = "Open Wallet";
+            this.openWalletToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.openWalletToolStripMenuItem.Text = "OPEN_WALLET_TEXT";
             // 
             // closeWalletToolStripMenuItem
             // 
             this.closeWalletToolStripMenuItem.Name = "closeWalletToolStripMenuItem";
-            this.closeWalletToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.closeWalletToolStripMenuItem.Text = "Close Wallet";
+            this.closeWalletToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.closeWalletToolStripMenuItem.Text = "CLOSE_WALLET_TEXT";
             this.closeWalletToolStripMenuItem.Click += new System.EventHandler(this.closeWalletToolStripMenuItem_Click);
             // 
             // createWalletToolStripMenuItem
             // 
             this.createWalletToolStripMenuItem.Name = "createWalletToolStripMenuItem";
-            this.createWalletToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.createWalletToolStripMenuItem.Text = "Create Wallet";
+            this.createWalletToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.createWalletToolStripMenuItem.Text = "CREATE_WALLET_TEXT";
             this.createWalletToolStripMenuItem.Click += new System.EventHandler(this.createWalletToolStripMenuItem_Click);
+            // 
+            // importWalletPrivateKeytoolStripMenuItem
+            // 
+            this.importWalletPrivateKeytoolStripMenuItem.Name = "importWalletPrivateKeytoolStripMenuItem";
+            this.importWalletPrivateKeytoolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.importWalletPrivateKeytoolStripMenuItem.Text = "IMPORT_PRIVATE_KEY_TEXT";
+            this.importWalletPrivateKeytoolStripMenuItem.Click += new System.EventHandler(this.importWalletPrivateKeyToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.exitToolStripMenuItem.Text = "Exit";
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.exitToolStripMenuItem.Text = "EXIT_TEXT";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
             // settingsToolStripMenuItem
@@ -193,16 +202,23 @@ namespace SeguraChain_Desktop_Wallet
             this.settingsToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.settingsToolStripMenuItem.ForeColor = System.Drawing.Color.Ivory;
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(65, 20);
-            this.settingsToolStripMenuItem.Text = "Settings";
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
+            this.settingsToolStripMenuItem.Text = "SETTING_TEXT";
             // 
             // rescanToolStripMenuItem
             // 
             this.rescanToolStripMenuItem.ForeColor = System.Drawing.Color.Ivory;
             this.rescanToolStripMenuItem.Name = "rescanToolStripMenuItem";
-            this.rescanToolStripMenuItem.Size = new System.Drawing.Size(58, 20);
-            this.rescanToolStripMenuItem.Text = "Rescan";
+            this.rescanToolStripMenuItem.Size = new System.Drawing.Size(97, 20);
+            this.rescanToolStripMenuItem.Text = "RESCAN_TEXT";
             this.rescanToolStripMenuItem.Click += new System.EventHandler(this.rescanToolStripMenuItem_Click);
+            // 
+            // languageToolStripMenuItem
+            // 
+            this.languageToolStripMenuItem.ForeColor = System.Drawing.Color.GhostWhite;
+            this.languageToolStripMenuItem.Name = "languageToolStripMenuItem";
+            this.languageToolStripMenuItem.Size = new System.Drawing.Size(116, 20);
+            this.languageToolStripMenuItem.Text = "LANGUAGE_TEXT";
             // 
             // comboBoxListWalletFile
             // 
@@ -1161,14 +1177,6 @@ namespace SeguraChain_Desktop_Wallet
             this.progressBarMainInterfaceSyncProgress.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
             this.progressBarMainInterfaceSyncProgress.TabIndex = 5;
             // 
-            // importWalletPrivateKeytoolStripMenuItem
-            // 
-            this.importWalletPrivateKeytoolStripMenuItem.Name = "importWalletPrivateKeytoolStripMenuItem";
-            this.importWalletPrivateKeytoolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.importWalletPrivateKeytoolStripMenuItem.Text = "Import Private Key";
-            this.importWalletPrivateKeytoolStripMenuItem.Click += new System.EventHandler(this.importWalletPrivateKeyToolStripMenuItem_Click);
-
-            // 
             // ClassWalletMainInterfaceForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1225,7 +1233,7 @@ namespace SeguraChain_Desktop_Wallet
 #endregion
 
         private System.Windows.Forms.MenuStrip menuStripGeneralWallet;
-        private System.Windows.Forms.ToolStripMenuItem fichierToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.TabControl tabControlWallet;
         private System.Windows.Forms.TabPage tabPageOverview;
         private System.Windows.Forms.TabPage tabPageSendTransaction;
@@ -1307,6 +1315,7 @@ namespace SeguraChain_Desktop_Wallet
         private System.Windows.Forms.Timer timerRefreshTransactionHistory;
         private System.Windows.Forms.Label labelWalletAddressReceiveTransaction;
         private System.Windows.Forms.ToolStripMenuItem importWalletPrivateKeytoolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem languageToolStripMenuItem;
     }
 }
 

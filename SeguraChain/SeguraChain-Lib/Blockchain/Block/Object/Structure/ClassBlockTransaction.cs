@@ -34,5 +34,12 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public bool Spent;
         public BigInteger TotalSpend;
         public long TransactionSize;
+
+        public ClassBlockTransaction Clone()
+        {
+            ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(this), out ClassBlockTransaction blockTransaction);
+
+            return blockTransaction;
+        }
     }
 }

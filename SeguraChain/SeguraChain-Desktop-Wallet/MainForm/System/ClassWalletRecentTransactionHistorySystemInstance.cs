@@ -17,7 +17,7 @@ using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Other.Object.List;
-using SeguraChain_Lib.Other.Object.ThreadExtension;
+
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Desktop_Wallet.MainForm.System
@@ -28,7 +28,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         /// Contains recent transactions.
         /// </summary>
         public Dictionary<string, ClassRecentTransactionHistoryObject> DictionaryRecentTransactionHistoryObjects;
-        private readonly SemaphoreSmooth _semaphoreRecentTransactionHistoryAccess;
+        private readonly SemaphoreSlim _semaphoreRecentTransactionHistoryAccess;
 
         /// <summary>
         /// Sync scan progress.
@@ -58,7 +58,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             _widthRecentTransactionHistory = widthRecentTransactionHistory;
             _heightRecentTransactionHistory = heightRecentTransactionHistory;
             DictionaryRecentTransactionHistoryObjects = new Dictionary<string, ClassRecentTransactionHistoryObject>();
-            _semaphoreRecentTransactionHistoryAccess = new SemaphoreSmooth(1, 1);
+            _semaphoreRecentTransactionHistoryAccess = new SemaphoreSlim(1, 1);
         }
 
         /// <summary>

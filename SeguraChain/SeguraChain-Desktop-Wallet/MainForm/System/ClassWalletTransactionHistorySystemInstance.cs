@@ -25,7 +25,6 @@ using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
-using SeguraChain_Lib.Other.Object.ThreadExtension;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Desktop_Wallet.MainForm.System
@@ -41,7 +40,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         /// <summary>
         /// Handle multithreading access.
         /// </summary>
-        private readonly SemaphoreSmooth _semaphoreTransactionHistoryAccess;
+        private readonly SemaphoreSlim _semaphoreTransactionHistoryAccess;
 
         /// <summary>
         /// Constructor.
@@ -50,7 +49,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         {
             _dictionaryTransactionHistory = new ConcurrentDictionary<string, ClassTransactionHistoryObject>();
             _dictionaryTransactionHistoryOrderType = new ConcurrentDictionary<ClassEnumTransactionHistoryColumnType, ClassTransactionHistoryOrderObject>();
-            _semaphoreTransactionHistoryAccess = new SemaphoreSmooth(1, 1);
+            _semaphoreTransactionHistoryAccess = new SemaphoreSlim(1, 1);
         }
 
         /// <summary>
@@ -199,7 +198,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                 {
                                                     long lastBlockHeightTravel = 0;
 
-                                                    foreach (long blockHeight in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].BlockHeightKeys(cancellation).OrderBy(x => x))
+                                                    foreach (long blockHeight in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].BlockHeightKeys().OrderBy(x => x))
                                                     {
                                                         cancellation.Token.ThrowIfCancellationRequested();
 
@@ -209,7 +208,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                         {
 
                                                             // Travel every block transaction hash synced and listed on the wallet file opened.
-                                                            foreach (var blockTransactionCached in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].GetBlockTransactionFromBlockHeight(blockHeight, cancellation))
+                                                            foreach (var blockTransactionCached in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].GetBlockTransactionFromBlockHeight(blockHeight))
                                                             {
                                                                 cancellation.Token.ThrowIfCancellationRequested();
 
@@ -294,7 +293,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                         _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction = tupleBlockTransaction.Item2;
                                                     }
                                                 }
-                                                catch(Exception error)
+                                                catch (Exception error)
                                                 {
 #if DEBUG
                                                     Debug.WriteLine("Error on checking transactions showed. | Exception: " + error.Message);

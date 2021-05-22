@@ -1678,14 +1678,15 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                             }
                                                             if (blockHeight >= BlockchainSetting.GenesisBlockHeight && blockHeight <= lastBlockHeightUnlockedChecked)
                                                             {
-                                                                ClassBlockObject blockObject = blockRetrieve.Item1;
 
-                                                                if (blockObject != null)
+                                                                if (blockRetrieve.Item1 != null)
                                                                 {
-                                                                    if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                                                                    if (blockRetrieve.Item1.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                                                                     {
                                                                         if (previousBlockedConfirmed)
                                                                         {
+                                                                            ClassBlockObject blockObject = blockRetrieve.Item1.DirectCloneBlockObject();
+
                                                                             if (!blockObject.BlockUnlockValid)
                                                                             {
                                                                                 if (blockObject.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
@@ -2000,9 +2001,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                         else
                                                                         {
 #if DEBUG
-                                                                            Debug.WriteLine("Failed to update block transaction(s) confirmation(s) on the block height: " + blockObject.BlockHeight + ", the previous block is not confirmed.");
+                                                                            Debug.WriteLine("Failed to update block transaction(s) confirmation(s) on the block height: " + blockRetrieve.Item1.BlockHeight + ", the previous block is not confirmed.");
 #endif
-                                                                            ClassLog.WriteLine("Failed to update block transaction(s) confirmation(s) on the block height: " + blockObject.BlockHeight + ", the previous block is not confirmed..", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                                                                            ClassLog.WriteLine("Failed to update block transaction(s) confirmation(s) on the block height: " + blockRetrieve.Item1.BlockHeight + ", the previous block is not confirmed..", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 
                                                                             canceled = true;
                                                                             break;
@@ -2159,7 +2160,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         blockObjectInformations.BlockTotalTaskTransactionConfirmationDone >= lastBlockHeightTransactionConfirmationDone - blockHeight)
                         continue;
 
-                    ClassBlockObject blockObjectUpdated = await GetBlockDataStrategy(blockHeight, false, cancellation);
+                    ClassBlockObject blockObjectUpdated = (await GetBlockDataStrategy(blockHeight, false, cancellation)).DirectCloneBlockObject();
 
                     blockObjectUpdated.BlockTransactionConfirmationCheckTaskDone = true;
                     blockObjectUpdated.BlockTotalTaskTransactionConfirmationDone = lastBlockHeightTransactionConfirmationDone - blockHeight;
@@ -2489,23 +2490,18 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 ClassBlockTransaction blockTransaction = null;
 
                                 if (listBlockObjectUpdated.ContainsKey(blockHeightSource))
-                                {
                                     if (listBlockObjectUpdated[blockHeightSource].BlockTransactions.ContainsKey(transactionHash))
-                                    {
-                                        blockTransaction = listBlockObjectUpdated[blockHeightSource].BlockTransactions[transactionHash];
-                                    }
-                                }
+                                        blockTransaction = listBlockObjectUpdated[blockHeightSource].BlockTransactions[transactionHash].Clone();
+
                                 if (blockTransaction == null)
-                                {
-                                    blockTransaction = await GetBlockTransactionFromSpecificTransactionHashAndHeight(transactionHash, blockHeightSource, false, cancellation);
-                                }
+                                    blockTransaction = (await GetBlockTransactionFromSpecificTransactionHashAndHeight(transactionHash, blockHeightSource, false, cancellation)).Clone();
+
                                 if (blockTransaction?.TransactionObject != null)
                                 {
                                     if (!listBlockTransactionSpendOriginal.ContainsKey(blockHeightSource))
-                                    {
                                         listBlockTransactionSpendOriginal.Add(blockHeightSource, new List<ClassBlockTransaction>());
-                                    }
-                                    listBlockTransactionSpendOriginal[blockHeightSource].Add(blockTransaction);
+
+                                    listBlockTransactionSpendOriginal[blockHeightSource].Add(blockTransaction.Clone());
 
                                     if (blockTransaction.TransactionStatus && !blockTransaction.Spent)
                                     {
@@ -2516,14 +2512,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                             if (blockTransaction.TotalSpend ==
                                                 blockTransaction.TransactionObject.Amount)
-                                            {
                                                 blockTransaction.Spent = true;
-                                            }
 
                                             if (!listBlockTransactionSpendUpdated.ContainsKey(blockHeightSource))
-                                            {
                                                 listBlockTransactionSpendUpdated.Add(blockHeightSource, new List<ClassBlockTransaction>());
-                                            }
+
                                             listBlockTransactionSpendUpdated[blockHeightSource].Add(blockTransaction);
                                         }
                                         else
@@ -2552,61 +2545,38 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         }
                     }
                     else
-                    {
-                        return false;
-                    }
+                        updateStatus = false;
                 }
                 else
-                {
-                    return false;
-                }
+                    updateStatus = false;
             }
             else
-            {
-                return false;
-            }
+                updateStatus = false;
 
             if (updateStatus)
             {
                 if (!await InsertListBlockTransactionToMemoryDataCache(listBlockTransactionSpendUpdated.SelectMany(x => x.Value).ToList(), false, cancellation))
-                {
                     updateStatus = false;
-                }
-
-                if (updateStatus)
+                // Push updated block transactions from the source list of a block transaction spend.
+                else
                 {
-                    // Push updated block transactions from the source list of a block transaction spend.
                     foreach (long blockHeightSource in listBlockTransactionSpendUpdated.Keys)
-                    {
                         if (listBlockObjectUpdated.ContainsKey(blockHeightSource))
-                        {
                             foreach (ClassBlockTransaction blockTransaction in listBlockTransactionSpendUpdated[blockHeightSource])
-                            {
-                                listBlockObjectUpdated[blockHeightSource].BlockTransactions[blockTransaction.TransactionObject.TransactionHash] = blockTransaction;
-                            }
-                        }
-                    }
+                                listBlockObjectUpdated[blockHeightSource].BlockTransactions[blockTransaction.TransactionObject.TransactionHash] = blockTransaction.Clone();
                 }
+            }
 
-                // Push back original block transactions if an update failed.
-                if (!updateStatus)
-                {
-                    if (!await InsertListBlockTransactionToMemoryDataCache(listBlockTransactionSpendOriginal.SelectMany(x => x.Value).ToList(), false, cancellation))
-                    {
-                        updateStatus = false;
-                    }
+            // Push back original block transactions if an update failed.
+            if (!updateStatus)
+            {
+                if (!await InsertListBlockTransactionToMemoryDataCache(listBlockTransactionSpendOriginal.SelectMany(x => x.Value).ToList(), false, cancellation))
+                    updateStatus = false;
 
-                    foreach (long blockHeightSource in listBlockTransactionSpendOriginal.Keys)
-                    {
-                        if (listBlockObjectUpdated.ContainsKey(blockHeightSource))
-                        {
-                            foreach (ClassBlockTransaction blockTransaction in listBlockTransactionSpendOriginal[blockHeightSource])
-                            {
-                                listBlockObjectUpdated[blockHeightSource].BlockTransactions[blockTransaction.TransactionObject.TransactionHash] = blockTransaction;
-                            }
-                        }
-                    }
-                }
+                foreach (long blockHeightSource in listBlockTransactionSpendOriginal.Keys)
+                    if (listBlockObjectUpdated.ContainsKey(blockHeightSource))
+                        foreach (ClassBlockTransaction blockTransaction in listBlockTransactionSpendOriginal[blockHeightSource])
+                            listBlockObjectUpdated[blockHeightSource].BlockTransactions[blockTransaction.TransactionObject.TransactionHash] = blockTransaction.Clone();
             }
 
             // Clean up.
@@ -3608,126 +3578,128 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         bool allTxConfirmed = true;
 
                         // Retrieve back all block transaction from the list of tx hash of the wallet address target.
-                        Dictionary<long, List<ClassBlockTransaction>> listTxFromCacheOrMemory = new Dictionary<long, List<ClassBlockTransaction>>();
-
-                        // Generate a list of block heights if each list retrieved have a tx linked to the wallet address.
-                        for (long i = lastBlockHeightFromTransaction; i < maxBlockHeightTarget; i++)
+                        using (DisposableDictionary<long, List<ClassBlockTransaction>> listTxFromCacheOrMemory = new DisposableDictionary<long, List<ClassBlockTransaction>>())
                         {
-                            long blockHeight = i;
 
-                            if (blockHeight >= BlockchainSetting.GenesisBlockHeight)
+                            // Generate a list of block heights if each list retrieved have a tx linked to the wallet address.
+                            for (long i = lastBlockHeightFromTransaction; i < maxBlockHeightTarget; i++)
                             {
-                                bool containsBlockHeight = false;
+                                long blockHeight = i;
 
-                                ClassBlockObject blockObject = await GetBlockDataStrategy(blockHeight, true, cancellation);
-
-                                if (blockObject != null)
+                                if (blockHeight >= BlockchainSetting.GenesisBlockHeight)
                                 {
-                                    if (blockObject.BlockTransactions?.Count > 0)
-                                    {
-                                        foreach (var transactionPair in blockObject.BlockTransactions)
-                                        {
-                                            if (transactionPair.Value.TransactionStatus)
-                                            {
-                                                if (transactionPair.Value.TransactionObject.WalletAddressSender == walletAddress
-                                                    || transactionPair.Value.TransactionObject.WalletAddressReceiver == walletAddress)
-                                                {
-                                                    if (!containsBlockHeight)
-                                                    {
-                                                        listTxFromCacheOrMemory.Add(blockHeight, new List<ClassBlockTransaction>());
-                                                        containsBlockHeight = true;
-                                                    }
+                                    bool containsBlockHeight = false;
 
-                                                    listTxFromCacheOrMemory[blockHeight].Add(transactionPair.Value);
+                                    ClassBlockObject blockObject = await GetBlockDataStrategy(blockHeight, false, cancellation);
+
+                                    if (blockObject != null)
+                                    {
+                                        if (blockObject.BlockTransactions?.Count > 0)
+                                        {
+                                            foreach (var transactionPair in blockObject.BlockTransactions.ToArray())
+                                            {
+                                                if (transactionPair.Value.TransactionStatus)
+                                                {
+                                                    if (transactionPair.Value.TransactionObject.WalletAddressSender == walletAddress
+                                                        || transactionPair.Value.TransactionObject.WalletAddressReceiver == walletAddress)
+                                                    {
+                                                        if (!containsBlockHeight)
+                                                        {
+                                                            listTxFromCacheOrMemory.Add(blockHeight, new List<ClassBlockTransaction>());
+                                                            containsBlockHeight = true;
+                                                        }
+
+                                                        listTxFromCacheOrMemory[blockHeight].Add(transactionPair.Value);
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        if (listTxFromCacheOrMemory.Count > 0)
-                        {
-                            // Travel all block height and transactions hash indexed to the wallet address.
-                            foreach (var blockHeight in listTxFromCacheOrMemory.Keys.OrderBy(x => x))
+                            if (listTxFromCacheOrMemory.Count > 0)
                             {
-                                if (blockHeight > lastBlockHeightWalletCheckpoint && blockHeight <= maxBlockHeightTarget)
+                                // Travel all block height and transactions hash indexed to the wallet address.
+                                foreach (var blockHeight in listTxFromCacheOrMemory.GetList.Keys.OrderBy(x => x))
                                 {
-                                    if (listTxFromCacheOrMemory[blockHeight].Count > 0)
+                                    if (blockHeight > lastBlockHeightWalletCheckpoint && blockHeight <= maxBlockHeightTarget)
                                     {
-                                        foreach (ClassBlockTransaction blockTransaction in listTxFromCacheOrMemory[blockHeight].OrderBy(x => x.TransactionObject.TimestampSend))
+                                        if (listTxFromCacheOrMemory[blockHeight].Count > 0)
                                         {
-                                            if (blockTransaction != null)
+                                            foreach (ClassBlockTransaction blockTransaction in listTxFromCacheOrMemory[blockHeight].OrderBy(x => x.TransactionObject.TimestampSend))
                                             {
-                                                if (blockTransaction.TransactionStatus)
+                                                if (blockTransaction != null)
                                                 {
-                                                    if (blockTransaction.TransactionBlockHeightInsert <= maxBlockHeightTarget)
+                                                    if (blockTransaction.TransactionStatus)
                                                     {
-                                                        bool txConfirmed = false;
-
-                                                        if (blockTransaction.TransactionTotalConfirmation >= BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations)
+                                                        if (blockTransaction.TransactionBlockHeightInsert <= maxBlockHeightTarget)
                                                         {
-                                                            long totalConfirmationToReach = blockTransaction.TransactionBlockHeightTarget - blockTransaction.TransactionBlockHeightInsert;
+                                                            bool txConfirmed = false;
 
-                                                            if (blockTransaction.TransactionTotalConfirmation >= totalConfirmationToReach)
+                                                            if (blockTransaction.TransactionTotalConfirmation >= BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations)
                                                             {
-                                                                txConfirmed = true;
-                                                                totalTx++;
-                                                            }
-                                                        }
+                                                                long totalConfirmationToReach = blockTransaction.TransactionBlockHeightTarget - blockTransaction.TransactionBlockHeightInsert;
 
-                                                        if (txConfirmed)
-                                                        {
-                                                            int typeTx = 0;
-
-                                                            if (blockTransaction.TransactionObject.WalletAddressReceiver == walletAddress)
-                                                            {
-                                                                typeTx = 1;
-                                                            }
-                                                            else if (blockTransaction.TransactionObject.WalletAddressSender == walletAddress)
-                                                            {
-                                                                typeTx = 2;
+                                                                if (blockTransaction.TransactionTotalConfirmation >= totalConfirmationToReach)
+                                                                {
+                                                                    txConfirmed = true;
+                                                                    totalTx++;
+                                                                }
                                                             }
 
-                                                            switch (typeTx)
+                                                            if (txConfirmed)
                                                             {
-                                                                // Received.
-                                                                case 1:
-                                                                    blockchainWalletBalance.WalletBalance += blockTransaction.TransactionObject.Amount;
-                                                                    break;
-                                                                // Sent.
-                                                                case 2:
+                                                                int typeTx = 0;
+
+                                                                if (blockTransaction.TransactionObject.WalletAddressReceiver == walletAddress)
+                                                                {
+                                                                    typeTx = 1;
+                                                                }
+                                                                else if (blockTransaction.TransactionObject.WalletAddressSender == walletAddress)
+                                                                {
+                                                                    typeTx = 2;
+                                                                }
+
+                                                                switch (typeTx)
+                                                                {
+                                                                    // Received.
+                                                                    case 1:
+                                                                        blockchainWalletBalance.WalletBalance += blockTransaction.TransactionObject.Amount;
+                                                                        break;
+                                                                    // Sent.
+                                                                    case 2:
+                                                                        blockchainWalletBalance.WalletBalance -= blockTransaction.TransactionObject.Amount;
+                                                                        if (blockTransaction.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                                                                        {
+                                                                            blockchainWalletBalance.WalletBalance -= blockTransaction.TransactionObject.Fee;
+                                                                        }
+                                                                        break;
+                                                                }
+                                                            }
+                                                            //  Take in count only sent transactions. Received tx not confirmed not increment the balance.
+                                                            else
+                                                            {
+                                                                //allTxConfirmed = false;
+                                                                if (blockTransaction.TransactionObject.WalletAddressSender == walletAddress)
+                                                                {
                                                                     blockchainWalletBalance.WalletBalance -= blockTransaction.TransactionObject.Amount;
                                                                     if (blockTransaction.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
                                                                     {
                                                                         blockchainWalletBalance.WalletBalance -= blockTransaction.TransactionObject.Fee;
                                                                     }
-                                                                    break;
-                                                            }
-                                                        }
-                                                        //  Take in count only sent transactions. Received tx not confirmed not increment the balance.
-                                                        else
-                                                        {
-                                                            //allTxConfirmed = false;
-                                                            if (blockTransaction.TransactionObject.WalletAddressSender == walletAddress)
-                                                            {
-                                                                blockchainWalletBalance.WalletBalance -= blockTransaction.TransactionObject.Amount;
-                                                                if (blockTransaction.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                                                                }
+                                                                if (blockTransaction.TransactionObject.WalletAddressReceiver == walletAddress)
                                                                 {
-                                                                    blockchainWalletBalance.WalletBalance -= blockTransaction.TransactionObject.Fee;
+                                                                    blockchainWalletBalance.WalletPendingBalance += blockTransaction.TransactionObject.Amount;
                                                                 }
                                                             }
-                                                            if (blockTransaction.TransactionObject.WalletAddressReceiver == walletAddress)
+
+
+                                                            if (blockHeight > lastBlockHeightFromTransaction)
                                                             {
-                                                                blockchainWalletBalance.WalletPendingBalance += blockTransaction.TransactionObject.Amount;
+                                                                lastBlockHeightFromTransaction = blockHeight;
                                                             }
-                                                        }
-
-
-                                                        if (blockHeight > lastBlockHeightFromTransaction)
-                                                        {
-                                                            lastBlockHeightFromTransaction = blockHeight;
                                                         }
                                                     }
                                                 }
@@ -3736,9 +3708,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                     }
                                 }
                             }
-
-                            // Clean up.
-                            listTxFromCacheOrMemory.Clear();
                         }
 
                         // Do a wallet balance checkpoint only if all blocks transactions travelled are confirmed.
@@ -5915,7 +5884,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             long currentTimestamp = ClassUtility.GetCurrentTimestampInSecond();
                             if (_dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[transactionHash].LastUpdateTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxDelayKeepAliveBlockTransactionCached >= currentTimestamp)
                             {
-                                blockTransaction = _dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[transactionHash].BlockTransaction;
+                                blockTransaction = _dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[transactionHash].BlockTransaction.Clone();
                             }
                             else
                             {
@@ -5988,7 +5957,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             {
                                 if (_dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[transactionHash].LastUpdateTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxDelayKeepAliveBlockTransactionCached >= currentTimestamp)
                                 {
-                                    listBlockTransactions.Add(_dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[transactionHash].BlockTransaction);
+                                    listBlockTransactions.Add(_dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[transactionHash].BlockTransaction.Clone());
                                 }
                                 else
                                 {

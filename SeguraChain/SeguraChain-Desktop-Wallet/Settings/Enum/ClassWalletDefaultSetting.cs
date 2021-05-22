@@ -12,7 +12,7 @@ namespace SeguraChain_Desktop_Wallet.Settings.Enum
         public const string WalletDefaultSyncCacheFilename = "sync-cache.dat";
         public const string LanguageFileFormat = "*.json";
         public const string DefaultLanguageDirectoryFilePath = "\\Language\\";
-        public const string DefaultLanguageName = "English";
+        public const string DefaultLanguageName = "EN";
         public const int DefaultWalletIterationCount = 10000;
         public const int DefaultQrCodeLengthWidthSize = 250;
         public const int DefaultWalletSendTransactionConfirmationDelayAutoCancel = 60;
@@ -22,7 +22,7 @@ namespace SeguraChain_Desktop_Wallet.Settings.Enum
         /// Interval of update used of the sync of wallets files opened.
         /// </summary>
         public const int DefaultWalletUpdateSyncInterval = 1000;
-        public const int DefaultWalletUpdateSyncCacheInterval = 5 * 1000;
+        public const int DefaultWalletUpdateSyncCacheInterval =  1000;
 
         /// <summary>
         /// Interval of update to show latest blockchain network stats.

@@ -183,54 +183,68 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 {
                     if (Monitor.IsEntered(_blockObject))
                     {
-                        if (_blockObject.Disposed)
+                        try
                         {
-                            return true;
-                        }
+                            if (_blockObject.Disposed)
+                            {
+                                return true;
+                            }
 
-                        if (_blockObject.BlockTransactions == null)
-                        {
-                            return true;
-                        }
+                            if (_blockObject.BlockTransactions == null)
+                            {
+                                return true;
+                            }
 
-                        if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
-                        {
-                            return true;
-                        }
+                            if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
+                            {
+                                return true;
+                            }
 
-                        if (IsDeleted)
+                            if (IsDeleted)
+                            {
+                                return true;
+                            }
+                        }
+                        catch
                         {
                             return true;
                         }
                     }
                     else
                     {
-                        bool isLocked = false;
 
+                        bool isLocked = false;
+                        bool exception = false;
                         try
                         {
                             if (Monitor.TryEnter(_blockObject))
                             {
                                 isLocked = true;
-
-                                if (_blockObject.Disposed)
+                                try
                                 {
-                                    return true;
+                                    if (_blockObject.Disposed)
+                                    {
+                                        return true;
+                                    }
+
+                                    if (_blockObject.BlockTransactions == null)
+                                    {
+                                        return true;
+                                    }
+
+                                    if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
+                                    {
+                                        return true;
+                                    }
+
+                                    if (IsDeleted)
+                                    {
+                                        return true;
+                                    }
                                 }
-
-                                if (_blockObject.BlockTransactions == null)
+                                catch
                                 {
-                                    return true;
-                                }
-
-                                if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
-                                {
-                                    return true;
-                                }
-
-                                if (IsDeleted)
-                                {
-                                    return true;
+                                    exception = true;
                                 }
                             }
                         }
@@ -241,6 +255,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 Monitor.Exit(_blockObject);
                             }
                         }
+
+                        if (exception) return true;
+
                     }
                 }
                 catch

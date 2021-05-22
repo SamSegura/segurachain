@@ -18,7 +18,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
-using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet;
 using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Other.Object.SHA3;
 
@@ -36,7 +35,6 @@ namespace SeguraChain_Lib.Utility
         {
             "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
             "v", "w", "x", "y", "z"
-
         };
 
         private static readonly List<string> ListOfOtherCharacters = new List<string>

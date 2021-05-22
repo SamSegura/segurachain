@@ -60,6 +60,20 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
 
         public string LABEL_MAIN_INTERFACE_SYNC_PROGRESS = "Your sync progress:";
 
+        #region Menustrip
+
+        public string MENUSTRIP_FILE_TEXT = "File";
+        public string MENUSTRIP_SETTING_TEXT = "Settings";
+        public string MENUSTRIP_RESCAN_TEXT = "Rescan";
+        public string MENUSTRIP_LANGUAGE_TEXT = "Language";
+        public string MENUSTRIP_FILE_OPEN_WALLET_TEXT = "Open a wallet";
+        public string MENUSTRIP_FILE_CLOSE_WALLET_TEXT = "Close wallet";
+        public string MENUSTRIP_FILE_CREATE_WALLET_TEXT = "Create a wallet";
+        public string MENUSTRIP_FILE_IMPORT_PRIVATE_KEY_TEXT = "Import a private key";
+        public string MENUSTRIP_FILE_EXIT_TEXT = "Exit";
+
+        #endregion
+
         #region Tabpages.
 
         public string TABPAGE_OVERVIEW_TEXT = "Overview";

@@ -34,7 +34,7 @@ using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Blockchain.Wallet.Function;
 using SeguraChain_Lib.Utility;
 using SeguraChain_Desktop_Wallet.InternalForm.Import;
-using SeguraChain_Lib.Other.Object.ThreadExtension;
+
 
 namespace SeguraChain_Desktop_Wallet
 {
@@ -59,7 +59,7 @@ namespace SeguraChain_Desktop_Wallet
         /// <summary>
         /// Semaphore for graphic events access.
         /// </summary>
-        private readonly SemaphoreSmooth _semaphoreCopyWalletAddressClickEvent;
+        private readonly SemaphoreSlim _semaphoreCopyWalletAddressClickEvent;
 
         /// <summary>
         /// Graphics content to draw.
@@ -90,7 +90,7 @@ namespace SeguraChain_Desktop_Wallet
             _cancellationTokenTaskUpdateWalletListOpened = new CancellationTokenSource();
             _noWalletFile = noWalletFile;
             _startupInternalForm = startupInternalForm;
-            _semaphoreCopyWalletAddressClickEvent = new SemaphoreSmooth(1, 1);
+            _semaphoreCopyWalletAddressClickEvent = new SemaphoreSlim(1, 1);
             InitializeComponent();
             EnableDoubleBuffer();
 
@@ -152,6 +152,9 @@ namespace SeguraChain_Desktop_Wallet
         /// <param name="e"></param>
         private void ClassWalletMainInterfaceForm_Load(object sender, EventArgs e)
         {
+            // Insert language list items.
+            InsertLanguageToolstripList();
+
             // Initialize default transaction confirmations count target.
             textBoxSendTransactionConfirmationsCountTarget.Text = BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations.ToString();
 
@@ -162,7 +165,7 @@ namespace SeguraChain_Desktop_Wallet
             _walletRecentTransactionHistorySystemInstance = new ClassWalletRecentTransactionHistorySystemInstance(panelInternalRecentTransactions.Width, panelInternalRecentTransactions.Height);
 
             // Update language texts.
-            UpdateWalletMainInterfaceLanguageText(ClassEnumTransactionHistoryColumnType.TRANSACTION_HISTORY_COLUMN_TRANSACTION_DATE, true);
+            UpdateWalletMainInterfaceLanguageText(ClassEnumTransactionHistoryColumnType.TRANSACTION_HISTORY_COLUMN_TRANSACTION_DATE);
 
             // Hide startup internal form.
             _startupInternalForm.Hide();
@@ -215,7 +218,7 @@ namespace SeguraChain_Desktop_Wallet
         /// <summary>
         /// Function who update every languages.
         /// </summary>
-        private void UpdateWalletMainInterfaceLanguageText(ClassEnumTransactionHistoryColumnType columnOrderType, bool orderDescending)
+        private void UpdateWalletMainInterfaceLanguageText(ClassEnumTransactionHistoryColumnType columnOrderType)
         {
             _walletMainFormLanguageObject = ClassDesktopWalletCommonData.LanguageDatabase.GetLanguageContentObject<ClassWalletMainFormLanguage>(ClassLanguageEnumType.LANGUAGE_TYPE_MAIN_FORM);
 
@@ -225,6 +228,21 @@ namespace SeguraChain_Desktop_Wallet
             progressBarMainInterfaceSyncProgress = ClassGraphicsUtility.AutoSetLocationAndResizeControl<ClassCustomProgressBar>(progressBarMainInterfaceSyncProgress, this, 50, false);
             labelMainInterfaceSyncProgress.Text = _walletMainFormLanguageObject.LABEL_MAIN_INTERFACE_SYNC_PROGRESS;
             labelMainInterfaceSyncProgress = ClassGraphicsUtility.AutoSetLocationAndResizeControl<Label>(labelMainInterfaceSyncProgress, this, 50, false);
+
+            #region MenuStrip
+
+            fileToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_FILE_TEXT;
+            settingsToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_SETTING_TEXT;
+            rescanToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_RESCAN_TEXT;
+            languageToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_LANGUAGE_TEXT;
+
+            openWalletToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_FILE_OPEN_WALLET_TEXT;
+            closeWalletToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_FILE_CLOSE_WALLET_TEXT;
+            createWalletToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_FILE_CREATE_WALLET_TEXT;
+            importWalletPrivateKeytoolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_FILE_IMPORT_PRIVATE_KEY_TEXT;
+            exitToolStripMenuItem.Text = _walletMainFormLanguageObject.MENUSTRIP_FILE_EXIT_TEXT;
+
+            #endregion
 
             #region Tabpages.
 
@@ -984,8 +1002,8 @@ namespace SeguraChain_Desktop_Wallet
 
                         try
                         {
-                            var currentWalletBalanceObjectOpened = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
-                            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
+                            var currentWalletBalanceObjectOpened = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(_currentWalletFilename);
+                            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename);
 
                             bool complete = false;
 
@@ -1389,6 +1407,27 @@ namespace SeguraChain_Desktop_Wallet
                     ToolStripMenuItem walletFileItem = new ToolStripMenuItem { Name = walletFilename, Text = walletFilename };
                     walletFileItem.Click += openWalletFileToolStripMenuItem_Click;
                     openWalletToolStripMenuItem.DropDownItems.Add(walletFileItem);
+                }
+            }
+        }
+
+        private void InsertLanguageToolstripList()
+        {
+            foreach(KeyValuePair<string, string> languageName in ClassDesktopWalletCommonData.LanguageDatabase.GetLanguageList)
+            {
+                ToolStripMenuItem languageItem = new ToolStripMenuItem { Name = languageName.Key, Text = languageName.Value };
+                languageItem.Click += switchLanguageToolStripItem;
+                languageToolStripMenuItem.DropDownItems.Add(languageItem);
+            }
+        }
+
+        private void switchLanguageToolStripItem(object sender, EventArgs e)
+        {
+            if (sender is ToolStripMenuItem menuItem)
+            {
+                if (ClassDesktopWalletCommonData.LanguageDatabase.SetCurrentLanguageName(menuItem.Name))
+                {
+                    UpdateWalletMainInterfaceLanguageText(ClassEnumTransactionHistoryColumnType.TRANSACTION_HISTORY_COLUMN_TRANSACTION_DATE);
                 }
             }
         }
@@ -1901,7 +1940,7 @@ namespace SeguraChain_Desktop_Wallet
         /// </summary>
         private string _sendTransactionAmountSelectedText = string.Empty;
         private bool _sendTransactionOnCalculationFeeCost;
-        private readonly SemaphoreSmooth _semaphoreSendTransactionUpdateFeeCost = new SemaphoreSmooth(1, 1);
+        private readonly SemaphoreSlim _semaphoreSendTransactionUpdateFeeCost = new SemaphoreSlim(1, 1);
 
         /// <summary>
         /// Check the wallet address target validity by changing the forecolor of the text.
@@ -2038,7 +2077,7 @@ namespace SeguraChain_Desktop_Wallet
                 if (decimal.TryParse(textBoxSendTransactionAmountSelected.Text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal amountSelected))
                 {
 
-                    BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
+                    BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename);
 
                     decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 
@@ -2275,7 +2314,7 @@ namespace SeguraChain_Desktop_Wallet
 
             decimal feeToPay = (decimal)sendTransactionFeeCostCalculationResult.TotalFeeCost / BlockchainSetting.CoinDecimal;
 
-            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
+            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename);
 
             decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 

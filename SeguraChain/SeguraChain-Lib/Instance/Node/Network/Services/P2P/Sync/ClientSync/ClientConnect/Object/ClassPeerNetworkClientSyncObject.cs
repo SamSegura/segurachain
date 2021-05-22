@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using SeguraChain_Lib.Instance.Node.Network.Database;
 using SeguraChain_Lib.Instance.Node.Network.Database.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
@@ -256,72 +251,79 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         {
             bool successConnect = false;
             CancelTaskDoConnection();
-            _peerCancellationTokenDoConnection = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token);
-            _peerSocketClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            long timestampConnect = ClassUtility.GetCurrentTimestampInMillisecond();
-            long timestampEnd = ClassUtility.GetCurrentTimestampInMillisecond() + (_peerNetworkSetting.PeerMaxDelayToConnectToTarget * 1000); 
-
-            try
+            using (_peerCancellationTokenDoConnection = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _peerCancellationTokenMain.Token))
             {
-                await Task.Factory.StartNew(async () =>
-                {
-                    while (!_peerCancellationTokenDoConnection.IsCancellationRequested && !PeerConnectStatus)
-                    {
-                        try
-                        {
-                            await _peerSocketClient.ConnectAsync(PeerIpTarget, PeerPortTarget);
-                            successConnect = true;
-                            break;
-                        }
-                        catch
-                        {
-                            // Ignored.
-                        }
-                    }
-                }, _peerCancellationTokenDoConnection.Token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Current).ConfigureAwait(false);
-            }
-            catch
-            {
-                // Ignored, catch the exception once the task is cancelled.
-            }
-
-            while (!successConnect)
-            {
-                if (_peerCancellationTokenDoConnection.IsCancellationRequested ||
-                    PeerConnectStatus )
-                {
-                    break;
-                }
+                _peerSocketClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                long timestampConnect = ClassUtility.GetCurrentTimestampInMillisecond();
+                long timestampEnd = ClassUtility.GetCurrentTimestampInMillisecond() + (_peerNetworkSetting.PeerMaxDelayToConnectToTarget * 1000);
 
                 try
                 {
-                    await Task.Delay(100, _peerCancellationTokenDoConnection.Token);
-                    timestampConnect += 100;
+                    await Task.Factory.StartNew(async () =>
+                    {
+                        while (!_peerCancellationTokenDoConnection.IsCancellationRequested && !PeerConnectStatus)
+                        {
+                            try
+                            {
+                                await _peerSocketClient.ConnectAsync(PeerIpTarget, PeerPortTarget);
+                                successConnect = true;
+                                break;
+                            }
+                            catch
+                            {
+                            // Ignored.
+                        }
+                            try
+                            {
+                                await Task.Delay(100, _peerCancellationTokenDoConnection.Token);
+                            }
+                            catch
+                            {
+                                break;
+                            }
+                        }
+                    }, _peerCancellationTokenDoConnection.Token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Current).ConfigureAwait(false);
                 }
                 catch
                 {
-                    break;
+                    // Ignored, catch the exception once the task is cancelled.
                 }
 
-                if (timestampConnect >= timestampEnd)
+                while (!successConnect)
                 {
-                    break;
+                    if (_peerCancellationTokenDoConnection.IsCancellationRequested ||
+                        PeerConnectStatus)
+                        break;
+
+                    try
+                    {
+                        await Task.Delay(100, _peerCancellationTokenDoConnection.Token);
+                        timestampConnect += 100;
+                    }
+                    catch
+                    {
+                        break;
+                    }
+
+                    if (timestampConnect >= timestampEnd)
+                        break;
                 }
-            }
-        
 
-            if (successConnect)
-            {
-                PeerConnectStatus = true;
-                return true;
-            }
+                _peerCancellationTokenDoConnection.Cancel();
 
-            DisconnectFromTarget();
-            CancelTaskWaitPeerPacketResponse();
-            PeerConnectStatus = false;
-            ClassLog.WriteLine("Failed to connect to peer " + PeerIpTarget, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY);
-            ClassPeerCheckManager.InputPeerClientAttemptConnect(PeerIpTarget, PeerUniqueIdTarget, _peerNetworkSetting, _peerFirewallSettingObject);
-            return false;
+                if (successConnect)
+                {
+                    PeerConnectStatus = true;
+                    return true;
+                }
+
+                DisconnectFromTarget();
+                CancelTaskWaitPeerPacketResponse();
+                PeerConnectStatus = false;
+                ClassLog.WriteLine("Failed to connect to peer " + PeerIpTarget, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY);
+                ClassPeerCheckManager.InputPeerClientAttemptConnect(PeerIpTarget, PeerUniqueIdTarget, _peerNetworkSetting, _peerFirewallSettingObject);
+                return false;
+            }
         }
 
 
@@ -343,14 +345,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
             while (_lastPacketReceivedTimestamp + (_peerNetworkSetting.PeerMaxDelayAwaitResponse * 1000) >= ClassUtility.GetCurrentTimestampInMillisecond())
             {
                 if (cancellation.IsCancellationRequested)
-                {
                     break;
-                }
 
                 if (!PeerTaskStatus || !PeerConnectStatus)
-                {
                     break;
-                }
 
                 if (PeerPacketReceived != null)
                 {
@@ -743,17 +741,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         {
             try
             {
-                if (_peerSocketClient.Connected)
+                using (NetworkStream networkStream = new NetworkStream(_peerSocketClient))
                 {
-                    using (NetworkStream networkStream = new NetworkStream(_peerSocketClient))
-                    {
-                        byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(packet) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
+                    byte[] packetBytesToSend = ClassUtility.GetByteArrayFromStringAscii(Convert.ToBase64String(packet) + ClassPeerPacketSetting.PacketPeerSplitSeperator);
 
-                        if (!await networkStream.TrySendSplittedPacket(packetBytesToSend, cancellation, _peerNetworkSetting.PeerMaxPacketSplitedSendSize))
-                        {
-                            PeerConnectStatus = false;
-                            return false;
-                        }
+                    if (!await networkStream.TrySendSplittedPacket(packetBytesToSend, cancellation, _peerNetworkSetting.PeerMaxPacketSplitedSendSize))
+                    {
+                        PeerConnectStatus = false;
+                        return false;
                     }
                 }
             }

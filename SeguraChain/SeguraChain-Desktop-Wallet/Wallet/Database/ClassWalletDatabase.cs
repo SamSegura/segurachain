@@ -16,7 +16,7 @@ using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Utility;
 using SeguraChain_Desktop_Wallet.Sync.Object;
-using SeguraChain_Lib.Other.Object.ThreadExtension;
+
 
 namespace SeguraChain_Desktop_Wallet.Wallet.Database
 {
@@ -31,9 +31,9 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
         /// <summary>
         /// Internal data of the class.
         /// </summary>
-        private SemaphoreSmooth _semaphoreLoadWalletFile;
-        private SemaphoreSmooth _semaphoreSaveWalletFile;
-        private SemaphoreSmooth _semaphoreGetWalletFileData;
+        private SemaphoreSlim _semaphoreLoadWalletFile;
+        private SemaphoreSlim _semaphoreSaveWalletFile;
+        private SemaphoreSlim _semaphoreGetWalletFileData;
         private CancellationTokenSource _cancellationTokenTaskWallet;
 
         /// <summary>
@@ -41,9 +41,9 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
         /// </summary>
         public ClassWalletDatabase()
         {
-            _semaphoreLoadWalletFile = new SemaphoreSmooth(1, 1);
-            _semaphoreSaveWalletFile = new SemaphoreSmooth(1, 1);
-            _semaphoreGetWalletFileData = new SemaphoreSmooth(1, 1);
+            _semaphoreLoadWalletFile = new SemaphoreSlim(1, 1);
+            _semaphoreSaveWalletFile = new SemaphoreSlim(1, 1);
+            _semaphoreGetWalletFileData = new SemaphoreSlim(1, 1);
             _cancellationTokenTaskWallet = new CancellationTokenSource();
             if (!Directory.Exists(ClassDesktopWalletCommonData.WalletSettingObject.WalletDirectoryPath))
             {
@@ -532,113 +532,117 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
 
                                 int countWalletTaskToDo = walletFileOpened.Length;
                                 int countWalletTaskDone = 0;
-                                CancellationTokenSource cancellation = new CancellationTokenSource();
-                                CancellationTokenSource cancellationLinked = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _cancellationTokenTaskWallet.Token);
-
-                                foreach (var walletFileName in walletFileOpened)
+                                using (CancellationTokenSource cancellation = new CancellationTokenSource())
                                 {
-                                    try
+                                    using (CancellationTokenSource cancellationLinked = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _cancellationTokenTaskWallet.Token))
                                     {
-                                        await Task.Factory.StartNew(async () =>
+
+                                        foreach (var walletFileName in walletFileOpened)
                                         {
-
-                                            bool requireSave;
-
-                                            if (DictionaryWalletData[walletFileName].WalletEnableRescan)
+                                            try
                                             {
-                                                DictionaryWalletData[walletFileName].WalletTransactionList.Clear();
-                                                DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Clear();
-                                                DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction = 0;
-                                                DictionaryWalletData[walletFileName].WalletTotalTransaction = 0;
-                                                DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = 0;
-                                                ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(DictionaryWalletData[walletFileName].WalletAddress, cancellation);
-                                                DictionaryWalletData[walletFileName].WalletEnableRescan = false;
-                                                DictionaryWalletData[walletFileName].WalletBalanceCalculated = false;
-
-                                                if (DictionaryWalletData[walletFileName].WalletBalanceObject != null)
+                                                await Task.Factory.StartNew(async () =>
                                                 {
-                                                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletAvailableBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
-                                                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletPendingBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
-                                                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletTotalBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
-                                                }
-                                                requireSave = true;
-                                            }
-                                            else
-                                            {
-                                                // If changes are done.
-                                                requireSave = await ClassDesktopWalletCommonData.WalletSyncSystem.UpdateWalletSync(walletFileName, _cancellationTokenTaskWallet);
 
-                                                if (requireSave || !DictionaryWalletData[walletFileName].WalletBalanceCalculated)
-                                                {
-                                                    long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
-                                                    ClassWalletBalanceObject walletBalanceObject = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(walletFileName, _cancellationTokenTaskWallet);
+                                                    bool requireSave;
 
-                                                    if (DictionaryWalletData[walletFileName].WalletBalanceObject == null)
+                                                    if (DictionaryWalletData[walletFileName].WalletEnableRescan)
                                                     {
+                                                        DictionaryWalletData[walletFileName].WalletTransactionList.Clear();
+                                                        DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Clear();
+                                                        DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction = 0;
+                                                        DictionaryWalletData[walletFileName].WalletTotalTransaction = 0;
+                                                        DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = 0;
+                                                        ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(DictionaryWalletData[walletFileName].WalletAddress, cancellation);
+                                                        DictionaryWalletData[walletFileName].WalletEnableRescan = false;
+                                                        DictionaryWalletData[walletFileName].WalletBalanceCalculated = false;
+
+                                                        if (DictionaryWalletData[walletFileName].WalletBalanceObject != null)
+                                                        {
+                                                            DictionaryWalletData[walletFileName].WalletBalanceObject.WalletAvailableBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
+                                                            DictionaryWalletData[walletFileName].WalletBalanceObject.WalletPendingBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
+                                                            DictionaryWalletData[walletFileName].WalletBalanceObject.WalletTotalBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
+                                                        }
                                                         requireSave = true;
-                                                        DictionaryWalletData[walletFileName].WalletBalanceObject = walletBalanceObject;
                                                     }
                                                     else
                                                     {
-                                                        if (DictionaryWalletData[walletFileName].WalletBalanceObject.WalletAvailableBalance != walletBalanceObject.WalletAvailableBalance ||
-                                                            DictionaryWalletData[walletFileName].WalletBalanceObject.WalletPendingBalance != walletBalanceObject.WalletPendingBalance ||
-                                                            DictionaryWalletData[walletFileName].WalletBalanceObject.WalletTotalBalance != walletBalanceObject.WalletTotalBalance)
+                                                    // If changes are done.
+                                                    requireSave = await ClassDesktopWalletCommonData.WalletSyncSystem.UpdateWalletSync(walletFileName, _cancellationTokenTaskWallet);
+
+                                                        if (requireSave || !DictionaryWalletData[walletFileName].WalletBalanceCalculated)
                                                         {
-                                                            DictionaryWalletData[walletFileName].WalletBalanceObject = walletBalanceObject;
-                                                            requireSave = true;
+                                                            long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
+                                                            ClassWalletBalanceObject walletBalanceObject = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(walletFileName);
+
+                                                            if (DictionaryWalletData[walletFileName].WalletBalanceObject == null)
+                                                            {
+                                                                requireSave = true;
+                                                                DictionaryWalletData[walletFileName].WalletBalanceObject = walletBalanceObject;
+                                                            }
+                                                            else
+                                                            {
+                                                                if (DictionaryWalletData[walletFileName].WalletBalanceObject.WalletAvailableBalance != walletBalanceObject.WalletAvailableBalance ||
+                                                                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletPendingBalance != walletBalanceObject.WalletPendingBalance ||
+                                                                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletTotalBalance != walletBalanceObject.WalletTotalBalance)
+                                                                {
+                                                                    DictionaryWalletData[walletFileName].WalletBalanceObject = walletBalanceObject;
+                                                                    requireSave = true;
+                                                                }
+                                                            }
+
+                                                            DictionaryWalletData[walletFileName].WalletBalanceCalculated = true;
                                                         }
                                                     }
 
-                                                    DictionaryWalletData[walletFileName].WalletBalanceCalculated = true;
-                                                }
-                                            }
+                                                // If changes are done.
+                                                if (requireSave)
+                                                    {
+                                                        if (await SaveWalletFileAsync(walletFileName))
+                                                        {
+                                                            ClassLog.WriteLine(walletFileName + " wallet file updated from sync.", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                                                        }
+                                                    }
 
-                                            // If changes are done.
-                                            if (requireSave)
+                                                    countWalletTaskDone++;
+                                                }, cancellationLinked.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
+                                            }
+                                            catch
                                             {
-                                                if (await SaveWalletFileAsync(walletFileName))
-                                                {
-                                                    ClassLog.WriteLine(walletFileName + " wallet file updated from sync.", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                                                }
+                                                // Catch the exception once the task is cancelled.
+                                            }
+                                        }
+
+                                        while (countWalletTaskDone < countWalletTaskToDo)
+                                        {
+                                            if (walletFileOpened.Length != DictionaryWalletData.Count)
+                                            {
+                                                break;
                                             }
 
-                                            countWalletTaskDone++;
-                                        }, cancellationLinked.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
-                                    }
-                                    catch
-                                    {
-                                        // Catch the exception once the task is cancelled.
-                                    }
-                                }
+                                            if (_cancellationTokenTaskWallet.IsCancellationRequested)
+                                            {
+                                                break;
+                                            }
+                                            try
+                                            {
+                                                await Task.Delay(100, _cancellationTokenTaskWallet.Token);
+                                            }
+                                            catch
+                                            {
+                                                break;
+                                            }
+                                        }
 
-                                while (countWalletTaskDone < countWalletTaskToDo)
-                                {
-                                    if (walletFileOpened.Length != DictionaryWalletData.Count)
-                                    {
-                                        break;
+                                        if (!cancellation.IsCancellationRequested)
+                                        {
+                                            cancellation.Cancel();
+                                        }
+                                        if (!cancellationLinked.IsCancellationRequested)
+                                        {
+                                            cancellationLinked.Cancel();
+                                        }
                                     }
-
-                                    if (_cancellationTokenTaskWallet.IsCancellationRequested)
-                                    {
-                                        break;
-                                    }
-                                    try
-                                    {
-                                        await Task.Delay(100, _cancellationTokenTaskWallet.Token);
-                                    }
-                                    catch
-                                    {
-                                        break;
-                                    }
-                                }
-
-                                if (!cancellation.IsCancellationRequested)
-                                {
-                                    cancellation.Cancel();
-                                }
-                                if (!cancellationLinked.IsCancellationRequested)
-                                {
-                                    cancellationLinked.Cancel();
                                 }
                                 // Clean up.
                                 Array.Clear(walletFileOpened, 0, walletFileOpened.Length);
