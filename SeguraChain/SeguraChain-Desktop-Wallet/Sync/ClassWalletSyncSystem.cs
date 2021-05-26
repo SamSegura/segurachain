@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -162,8 +162,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
         public void EnableTaskUpdateSyncCache()
         {
 
-            _cancellationSyncCache = new CancellationTokenSource();
+            StopTaskUpdateSyncCache(); // Ensure to stop the task.
 
+            _cancellationSyncCache = new CancellationTokenSource();
+            
             try
             {
                 Task.Factory.StartNew(async () =>
@@ -173,7 +175,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                         if (DatabaseSyncCache.Count > 0)
                         {
 
-                            foreach (string walletAddress in DatabaseSyncCache.Keys)
+                            foreach (string walletAddress in DatabaseSyncCache.Keys.ToArray())
                             {
                                 _cancellationSyncCache.Token.ThrowIfCancellationRequested();
 
@@ -208,10 +210,16 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                                 #endregion
                             }
-
-
                         }
-                        await Task.Delay(ClassWalletDefaultSetting.DefaultWalletUpdateSyncCacheInterval);
+
+                        try
+                        {
+                            await Task.Delay(ClassWalletDefaultSetting.DefaultWalletUpdateSyncCacheInterval, _cancellationSyncCache.Token);
+                        }
+                        catch
+                        {
+                            break;
+                        }
                     }
                 }, _cancellationSyncCache.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
             }
@@ -250,6 +258,8 @@ namespace SeguraChain_Desktop_Wallet.Sync
                 DatabaseSyncCache[walletAddress].Clear(cancellation);
                 DatabaseSyncCache.TryRemove(walletAddress, out _);
             }
+
+            EnableTaskUpdateSyncCache();
         }
 
         /// <summary>
