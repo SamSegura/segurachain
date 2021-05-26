@@ -25,6 +25,7 @@ using SeguraChain_Lib.Blockchain.Setting;
 using System.Diagnostics;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet.Model;
 using SeguraChain_Lib.Other.Object.List;
+using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 {
@@ -890,9 +891,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                             if (peerPacketMemPoolBlockHeightListTranslated.PacketTranslated.MemPoolBlockHeightListAndCount[blockHeight] > 0)
                                             {
                                                 long lastBlockHeightUnlockedConfirmed = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeightTransactionConfirmationDone(_peerCancellationToken);
-
-                                                if (ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight + BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation >= (blockHeight - 1))
+                                                long lastBlockHeight = ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight;
                                                 {
+                                                    if (lastBlockHeightUnlockedConfirmed == blockHeight)
+                                                        continue;
+
                                                     int countAlreadySynced = 0;
 
                                                     if (_memPoolListBlockHeightTransactionReceived.ContainsKey(blockHeight))
@@ -1431,13 +1434,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                                                                 invalid = false;
                                                                                                             }
 
+                                                                                                            /*
                                                                                                             if (invalid)
                                                                                                             {
                                                                                                                 Debug.WriteLine("Invalid tx's received from MemPool broadcast mode: " + checkTxResult);
                                                                                                                 IsAlive = false;
                                                                                                                 endBroadcast = true;
                                                                                                                 break;
-                                                                                                            }
+                                                                                                            }*/
                                                                                                         }
 
 

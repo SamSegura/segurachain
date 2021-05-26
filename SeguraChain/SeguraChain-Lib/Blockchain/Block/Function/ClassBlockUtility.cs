@@ -176,14 +176,12 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
         public static string GetFinalTransactionHashList(List<string> blockHashTransactionList, string previousBlockHash)
         {
             if (blockHashTransactionList != null)
-            {
                 if (blockHashTransactionList.Count > 0)
-                {
                     return ClassUtility.GenerateSha3512FromString(string.Join("", blockHashTransactionList));
-                }
-            }
+            else if (!previousBlockHash.IsNullOrEmpty(out _))
+                    return ClassUtility.GenerateSha3512FromString(previousBlockHash);
 
-            return ClassUtility.GenerateSha3512FromString(previousBlockHash);
+            return string.Empty;
         }
 
         /// <summary>

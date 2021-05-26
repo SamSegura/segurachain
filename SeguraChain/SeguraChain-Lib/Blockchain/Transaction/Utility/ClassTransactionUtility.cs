@@ -831,7 +831,6 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                         TransactionBigSignatureSender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BIG_SIGNATURE_SENDER],
                         TransactionBigSignatureReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BIG_SIGNATURE_RECEIVER],
                     }
-
                 };
 
                 ClassUtility.TryDeserialize(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_SOURCE_LIST], out blockTransactionObject.TransactionObject.AmountTransactionSource);

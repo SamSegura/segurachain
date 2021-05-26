@@ -314,9 +314,7 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
                 semaphoreUsed = true;
 
                 if (_dictionaryMemPoolTransactionObjects.Count > 0)
-                {
                     listBlockHeight = _dictionaryMemPoolTransactionObjects.Keys.ToList();
-                }
             }
             finally
             {

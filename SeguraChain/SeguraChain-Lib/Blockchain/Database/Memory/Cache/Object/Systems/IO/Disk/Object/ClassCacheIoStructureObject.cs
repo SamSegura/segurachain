@@ -262,7 +262,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 }
                 catch
                 {
-                    // Ignored.
+                    return true;
                 }
                 return false;
             }

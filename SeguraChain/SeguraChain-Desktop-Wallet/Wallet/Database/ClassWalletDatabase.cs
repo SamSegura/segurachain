@@ -132,7 +132,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                             {
                                                 if (!ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(DictionaryWalletData[walletFileName].WalletAddress))
                                                 {
-                                                    ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.Add(DictionaryWalletData[walletFileName].WalletAddress, new ClassSyncCacheObject());
+                                                    ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.TryAdd(DictionaryWalletData[walletFileName].WalletAddress, new ClassSyncCacheObject());
                                                     DictionaryWalletData[walletFileName].WalletEnableRescan = true;
                                                 }
 
@@ -573,7 +573,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                                         if (requireSave || !DictionaryWalletData[walletFileName].WalletBalanceCalculated)
                                                         {
                                                             long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
-                                                            ClassWalletBalanceObject walletBalanceObject = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(walletFileName);
+                                                            ClassWalletBalanceObject walletBalanceObject = await ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedDataAsync(walletFileName, cancellation);
 
                                                             if (DictionaryWalletData[walletFileName].WalletBalanceObject == null)
                                                             {

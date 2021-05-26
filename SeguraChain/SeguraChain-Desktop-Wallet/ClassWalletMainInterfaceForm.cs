@@ -1002,8 +1002,8 @@ namespace SeguraChain_Desktop_Wallet
 
                         try
                         {
-                            var currentWalletBalanceObjectOpened = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(_currentWalletFilename);
-                            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename);
+                            var currentWalletBalanceObjectOpened = await ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
+                            BigInteger walletAvailableBalanceBigInteger = await ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
 
                             bool complete = false;
 
@@ -1497,7 +1497,7 @@ namespace SeguraChain_Desktop_Wallet
 
                     if (!_walletTransactionHistorySystemInstance.GetLoadStatus(_currentWalletFilename, out double percentProgress))
                     {
-                        Bitmap bitmapTransactionHistory = _walletTransactionHistorySystemInstance[_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations];
+                        Bitmap bitmapTransactionHistory = _walletTransactionHistorySystemInstance[_currentWalletFilename];
                         if (bitmapTransactionHistory != null)
                         {
                             if (bitmapTransactionHistory.RawFormat != null)
@@ -2077,7 +2077,7 @@ namespace SeguraChain_Desktop_Wallet
                 if (decimal.TryParse(textBoxSendTransactionAmountSelected.Text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal amountSelected))
                 {
 
-                    BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename);
+                    BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations).Result;
 
                     decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 
@@ -2314,7 +2314,7 @@ namespace SeguraChain_Desktop_Wallet
 
             decimal feeToPay = (decimal)sendTransactionFeeCostCalculationResult.TotalFeeCost / BlockchainSetting.CoinDecimal;
 
-            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedData(_currentWalletFilename);
+            BigInteger walletAvailableBalanceBigInteger = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletAvailableBalanceFromSyncedDataAsync(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations).Result;
 
             decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 

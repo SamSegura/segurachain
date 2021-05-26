@@ -213,66 +213,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         #region Get IO Data functions.
 
         /// <summary>
-        /// Get every transactions hash indexed from every block height linked to a wallet address target.
-        /// </summary>
-        /// <param name="walletAddress"></param>
-        /// <param name="cancellationIoCache"></param>
-        /// <returns></returns>
-        public async Task<SortedDictionary<string, ClassBlockTransaction>> GetIoListTransactionHashFromWalletAddressTarget(string walletAddress, CancellationTokenSource cancellationIoCache)
-        {
-            SortedDictionary<string, ClassBlockTransaction> walletTransactionHashList = new SortedDictionary<string, ClassBlockTransaction>();
-            bool useSemaphore = false;
-            try
-            {
-                if (cancellationIoCache != null)
-                {
-                    await _ioSemaphoreAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _ioSemaphoreAccess.WaitAsync();
-                }
-                useSemaphore = true;
-
-
-                foreach (long ioBlockHeight in _ioStructureObjectsDictionary.Keys)
-                {
-
-                    ClassBlockObject blockObject = await CallGetRetrieveDataAccess(ioBlockHeight, false, false, cancellationIoCache);
-
-                    if (blockObject?.BlockTransactions != null)
-                    {
-                        if (blockObject.BlockTransactions.Count > 0)
-                        {
-                            foreach (var transactionPair in blockObject.BlockTransactions)
-                            {
-                                if (blockObject.BlockTransactions[transactionPair.Key].TransactionObject.WalletAddressSender == walletAddress ||
-                                    blockObject.BlockTransactions[transactionPair.Key].TransactionObject.WalletAddressReceiver == walletAddress)
-                                {
-                                    if (!walletTransactionHashList.ContainsKey(transactionPair.Key))
-                                    {
-                                        walletTransactionHashList.Add(transactionPair.Key, transactionPair.Value);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-
-            }
-            finally
-            {
-                if (useSemaphore)
-                {
-                    _ioSemaphoreAccess.Release();
-                }
-            }
-
-            return walletTransactionHashList;
-        }
-
-        /// <summary>
         /// Get a list of block data information by a list of block height from the io cache file or from the memory.
         /// </summary>
         /// <param name="listBlockHeight"></param>
@@ -614,7 +554,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         {
                             if (blockObject.BlockTransactions.ContainsKey(transactionHash))
                             {
-                                blockTransaction = blockObject.BlockTransactions[transactionHash];
+                                blockTransaction = blockObject.BlockTransactions[transactionHash].Clone();
                             }
                         }
 
@@ -622,9 +562,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     else
                     {
                         if (_ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions.ContainsKey(transactionHash))
-                        {
-                            blockTransaction = _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions[transactionHash];
-                        }
+                            blockTransaction = _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions[transactionHash].Clone();
                     }
                 }
             }
