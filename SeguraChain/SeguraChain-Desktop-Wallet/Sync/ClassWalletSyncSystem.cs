@@ -161,10 +161,8 @@ namespace SeguraChain_Desktop_Wallet.Sync
         /// </summary>
         public void EnableTaskUpdateSyncCache()
         {
-            if (_cancellationSyncCache.IsCancellationRequested)
-            {
-                _cancellationSyncCache = new CancellationTokenSource();
-            }
+
+            _cancellationSyncCache = new CancellationTokenSource();
 
             try
             {
