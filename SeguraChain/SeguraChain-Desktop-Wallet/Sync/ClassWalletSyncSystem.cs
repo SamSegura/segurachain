@@ -1317,7 +1317,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
         /// <returns></returns>
         private async Task<ClassBlockTransaction> GetWalletBlockTransactionFromTransactionHashFromInternalSyncMode(string transactionHash, long blockHeight, CancellationTokenSource cancellation)
         {
-            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockTransactionFromSpecificTransactionHashAndHeight(transactionHash, blockHeight, true, cancellation);
+            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockTransactionFromSpecificTransactionHashAndHeight(transactionHash, blockHeight, false, cancellation);
         }
 
         /// <summary>
