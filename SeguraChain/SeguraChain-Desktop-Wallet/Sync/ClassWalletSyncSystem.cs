@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -161,9 +161,9 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                         try
                                         {
 
-                                        #region Ensure to have propertly cached every synced transactions from the wallet file if this one is opened.
+                                            #region Ensure to have propertly cached every synced transactions from the wallet file if this one is opened.
 
-                                        BigInteger availableBalance = 0;
+                                            BigInteger availableBalance = 0;
                                             BigInteger pendingBalance = 0;
 
 
@@ -235,15 +235,15 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                             }
                                             catch
                                             {
-                                            // Ignored, catch the exception if the wallet file has been closed pending the scan.
-                                        }
+                                                // Ignored, catch the exception if the wallet file has been closed pending the scan.
+                                            }
 
-                                        #endregion
-                                    }
+                                            #endregion
+                                        }
                                         catch
                                         {
-                                        // Ignored.
-                                    }
+                                            // Ignored.
+                                        }
                                         totalTaskDone++;
                                     }, _cancellationSyncCache.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
                                 }
@@ -261,15 +261,16 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                 }
                             }
 
-                            try
-                            {
-                                await Task.Delay(ClassWalletDefaultSetting.DefaultWalletUpdateSyncCacheInterval, _cancellationSyncCache.Token);
-                            }
-                            catch
-                            {
-                                break;
-                            }
                         }
+                        try
+                        {
+                            await Task.Delay(ClassWalletDefaultSetting.DefaultWalletUpdateSyncCacheInterval, _cancellationSyncCache.Token);
+                        }
+                        catch
+                        {
+                            break;
+                        }
+
                     }
                 }, _cancellationSyncCache.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
             }

@@ -1122,9 +1122,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                 long lastBlockHeight = GetLastBlockHeight;
 
-                for (long i = 0; i < lastBlockHeight; i++)
+                for (long blockHeight = lastBlockHeight; blockHeight > 0; blockHeight--)
                 {
-                    long blockHeight = i + 1;
+                    if (blockHeight < BlockchainSetting.GenesisBlockHeight)
+                        break;
+
                     bool found = false;
 
                     if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
@@ -1136,7 +1138,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             if (_dictionaryBlockObjectMemory[blockHeight].Content.BlockLastHeightTransactionConfirmationDone > 0 &&
                                 _dictionaryBlockObjectMemory[blockHeight].Content.BlockUnlockValid &&
                                 _dictionaryBlockObjectMemory[blockHeight].Content.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
+                            {
                                 lastBlockHeightTransactionConfirmationDone = blockHeight;
+                                break;
+                            }
                         }
                     }
                     else
@@ -1152,7 +1157,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                     if (blockObject.BlockLastHeightTransactionConfirmationDone > 0 &&
                                         blockObject.BlockUnlockValid &&
                                         blockObject.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
+                                    {
                                         lastBlockHeightTransactionConfirmationDone = blockHeight;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -1167,13 +1175,15 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     {
                         if (blockObjectPair.Value != null)
                         {
-                            if (blockObjectPair.Value.BlockStatus == ClassBlockEnumStatus.LOCKED)
+                            if (blockObjectPair.Value.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                             {
                                 if (blockObjectPair.Value.BlockLastHeightTransactionConfirmationDone > 0 &&
                                     blockObjectPair.Value.BlockUnlockValid &&
                                     blockObjectPair.Value.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
+                                {
                                     lastBlockHeightTransactionConfirmationDone = blockObjectPair.Value.BlockHeight;
-                                break;
+                                    break;
+                                }
                             }
                         }
                     }

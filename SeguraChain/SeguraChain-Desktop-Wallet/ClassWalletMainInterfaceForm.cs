@@ -94,6 +94,12 @@ namespace SeguraChain_Desktop_Wallet
             InitializeComponent();
             EnableDoubleBuffer();
 
+#if NET5_0_OR_GREATER
+            this.AutoScaleDimensions = new SizeF(7F, 15F);
+#else
+            this.AutoScaleDimensions = new SizeF(1F, 1F);
+#endif
+
             #region Insert control panels target to draw shadows.
 
             _listMainInterfaceControlShadow = new List<Control>();
@@ -1350,7 +1356,7 @@ namespace SeguraChain_Desktop_Wallet
 
         private void importWalletPrivateKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using(ClassImportWalletPrivateKeyInternalForm importWalletPrivateKeyInternalForm = new ClassImportWalletPrivateKeyInternalForm())
+            using (ClassImportWalletPrivateKeyInternalForm importWalletPrivateKeyInternalForm = new ClassImportWalletPrivateKeyInternalForm())
             {
                 importWalletPrivateKeyInternalForm.ShowDialog(this);
             }
@@ -1413,7 +1419,7 @@ namespace SeguraChain_Desktop_Wallet
 
         private void InsertLanguageToolstripList()
         {
-            foreach(KeyValuePair<string, string> languageName in ClassDesktopWalletCommonData.LanguageDatabase.GetLanguageList)
+            foreach (KeyValuePair<string, string> languageName in ClassDesktopWalletCommonData.LanguageDatabase.GetLanguageList)
             {
                 ToolStripMenuItem languageItem = new ToolStripMenuItem { Name = languageName.Key, Text = languageName.Value };
                 languageItem.Click += switchLanguageToolStripItem;
