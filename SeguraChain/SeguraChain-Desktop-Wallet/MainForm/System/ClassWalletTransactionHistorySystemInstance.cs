@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -225,7 +225,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                                                     if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x?.TransactionHash == blockTransactionCached.Key))
                                                                     {
-                                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, blockTransactionCached.Value.BlockTransaction.TransactionObject, false));
+                                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, blockTransactionCached.Value.BlockTransaction.TransactionObject, blockTransactionCached.Value.IsMemPool));
                                                                         changeDone = true;
                                                                     }
                                                                 }
