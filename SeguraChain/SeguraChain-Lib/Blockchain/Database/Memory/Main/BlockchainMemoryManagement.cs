@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -1854,7 +1854,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                                                         _dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
                                                                                                     }
 
-                                                                                                    listBlockObjectUpdated.Add(blockObject.BlockHeight, blockObject);
+                                                                                                    listBlockObjectUpdated.Add(blockObject.BlockHeight, blockObject.DirectCloneBlockObject());
 
                                                                                                     changeDone = true;
 
