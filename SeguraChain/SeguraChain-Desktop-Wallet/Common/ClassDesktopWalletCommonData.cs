@@ -61,8 +61,6 @@ namespace SeguraChain_Desktop_Wallet.Common
         public static bool InitializeDesktopWalletCommonData()
         {
 
-    
-           
             if (!InitializeWalletSyncSystem().Result)
             {
                 MessageBox.Show("Error on start wallet sync system.", "Wallet sync system", MessageBoxButtons.OK);
@@ -126,9 +124,14 @@ namespace SeguraChain_Desktop_Wallet.Common
 
                 ClassDesktopWalletCommonData.LanguageDatabase.SetCurrentLanguageName(WalletSettingObject.WalletLanguageNameSelected);
 
-                using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
+                using (ClassWalletSetupForm walletSetupForm = new ClassWalletSetupForm())
                 {
-                    writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
+                    walletSetupForm.ShowDialog();
+
+                    using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
+                    {
+                        writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
+                    }
                 }
             }
             catch

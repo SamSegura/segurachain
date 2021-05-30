@@ -187,7 +187,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                 {
                     resultLoad = ClassWalletLoadFileEnumResult.WALLET_LOAD_BAD_FILE_FORMAT_ERROR;
                 }
-               
+
             }
             else
             {
@@ -330,7 +330,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
             }
             finally
             {
-                if(semaphoreUsed)
+                if (semaphoreUsed)
                 {
                     _semaphoreGetWalletFileData.Release();
                 }
@@ -353,7 +353,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
             get
             {
                 string[] walletFileList = Directory.GetFiles(ClassDesktopWalletCommonData.WalletSettingObject.WalletDirectoryPath, ClassWalletDefaultSetting.WalletFileFormat);
-                for(int i = 0; i < walletFileList.Length; i++)
+                for (int i = 0; i < walletFileList.Length; i++)
                 {
                     walletFileList[i] = Path.GetFileName(walletFileList[i]);
                 }
@@ -396,7 +396,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
         {
             if (DictionaryWalletData.Count > 0)
             {
-                foreach(string walletFileName in DictionaryWalletData.Keys.ToArray())
+                foreach (string walletFileName in DictionaryWalletData.Keys.ToArray())
                 {
                     try
                     {
@@ -567,8 +567,8 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                                     }
                                                     else
                                                     {
-                                                    // If changes are done.
-                                                    requireSave = await ClassDesktopWalletCommonData.WalletSyncSystem.UpdateWalletSync(walletFileName, _cancellationTokenTaskWallet);
+                                                        // If changes are done.
+                                                        requireSave = await ClassDesktopWalletCommonData.WalletSyncSystem.UpdateWalletSync(walletFileName, _cancellationTokenTaskWallet);
 
                                                         if (requireSave || !DictionaryWalletData[walletFileName].WalletBalanceCalculated)
                                                         {
@@ -595,8 +595,8 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                                         }
                                                     }
 
-                                                // If changes are done.
-                                                if (requireSave)
+                                                    // If changes are done.
+                                                    if (requireSave)
                                                     {
                                                         if (await SaveWalletFileAsync(walletFileName))
                                                         {

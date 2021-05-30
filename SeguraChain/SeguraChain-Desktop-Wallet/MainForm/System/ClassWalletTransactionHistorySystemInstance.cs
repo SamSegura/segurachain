@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -155,7 +155,33 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                         bool requireUpdate = false;
 
-                                        #region List all tx first.
+                                        // Travel transactions synced in waiting inside of the MemPool.
+                                        if (walletDataObject.WalletMemPoolTransactionList.Count > 0)
+                                        {
+                                            foreach (string memPoolTransactionHash in walletDataObject.WalletMemPoolTransactionList.ToArray())
+                                            {
+                                                cancellation.Token.ThrowIfCancellationRequested();
+
+                                                ClassTransactionObject transactionObject = await ClassDesktopWalletCommonData.WalletSyncSystem.GetMemPoolTransactionObjectFromSync(walletAddress, memPoolTransactionHash, false, cancellation);
+
+                                                if (transactionObject != null)
+                                                {
+                                                    if (transactionObject.BlockHeightTransaction > lastBlockHeightProgress)
+                                                    {
+                                                        if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed.ContainsKey(memPoolTransactionHash))
+                                                        {
+                                                            if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x.TransactionHash == memPoolTransactionHash))
+                                                            {
+                                                                _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, transactionObject, true));
+                                                                requireUpdate = true;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        #region List all tx synced from blocks.
 
                                         if (lastBlockHeightProgress <= walletLastBlockHeightSync)
                                         {
@@ -167,85 +193,56 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                             _dictionaryTransactionHistory[walletFileOpened].LastTransactionCountOnRead = walletTotalTransactionCount;
 
-                                            if (walletTotalTransactionCount != previousTransactionCount)
+       
+
+                                            long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
+
+                                            // Travel transactions synced push on blocks unlocked.
+                                            if (ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(walletAddress))
                                             {
-                                                // Travel transactions synced in waiting inside of the MemPool.
-                                                if (walletDataObject.WalletMemPoolTransactionList.Count > 0)
+                                                foreach (long blockHeight in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].BlockHeightKeys(cancellation).OrderBy(x => x))
                                                 {
-                                                    foreach (string memPoolTransactionHash in walletDataObject.WalletMemPoolTransactionList.ToArray())
+                                                    cancellation.Token.ThrowIfCancellationRequested();
+
+                                                    if (blockHeight < _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight)
+                                                        continue;
+
+                                                    // Travel every block transaction hash synced and listed on the wallet file opened.
+                                                    foreach (var blockTransactionCached in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].GetBlockTransactionFromBlockHeight(blockHeight, cancellation))
                                                     {
                                                         cancellation.Token.ThrowIfCancellationRequested();
 
-                                                        ClassTransactionObject transactionObject = await ClassDesktopWalletCommonData.WalletSyncSystem.GetMemPoolTransactionObjectFromSync(walletAddress, memPoolTransactionHash, false, cancellation);
 
-                                                        if (transactionObject != null)
+                                                        if (blockTransactionCached.Value != null)
                                                         {
-                                                            if (transactionObject.BlockHeightTransaction > lastBlockHeightProgress)
+                                                            // Remove mempool tx.
+                                                            if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true))
                                                             {
-                                                                if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x.TransactionHash == memPoolTransactionHash))
-                                                                {
-                                                                    _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, transactionObject, true));
-                                                                    changeDone = true;
-                                                                }
+                                                                _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true);
+                                                                changeDone = true;
+                                                            }
+
+
+                                                            if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x?.TransactionHash == blockTransactionCached.Key))
+                                                            {
+                                                                _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, blockTransactionCached.Value.BlockTransaction.TransactionObject, blockTransactionCached.Value.IsMemPool));
+                                                                changeDone = true;
                                                             }
                                                         }
                                                     }
+
+                                                    _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight = blockHeight;
                                                 }
-                                                long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
+                                            }
+                                            else
+                                                _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight = lastBlockHeight;
 
-                                                // Travel transactions synced push on blocks unlocked.
-                                                if (ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(walletAddress))
-                                                {
-                                                    long lastBlockHeightTravel = 0;
+                                            if (changeDone)
+                                            {
+                                                _dictionaryTransactionHistory[walletFileOpened].LastTransactionCount = walletTotalTransactionCount;
 
-                                                    foreach (long blockHeight in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].BlockHeightKeys(cancellation).OrderBy(x => x))
-                                                    {
-                                                        cancellation.Token.ThrowIfCancellationRequested();
-
-                                                        lastBlockHeightTravel = blockHeight;
-
-                                                        if (blockHeight >= _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight)
-                                                        {
-
-                                                            // Travel every block transaction hash synced and listed on the wallet file opened.
-                                                            foreach (var blockTransactionCached in ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].GetBlockTransactionFromBlockHeight(blockHeight, cancellation))
-                                                            {
-                                                                cancellation.Token.ThrowIfCancellationRequested();
-
-
-                                                                if (blockTransactionCached.Value != null)
-                                                                {
-                                                                    // Remove mempool tx.
-                                                                    if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true))
-                                                                    {
-                                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true);
-                                                                        changeDone = true;
-                                                                    }
-
-
-                                                                    if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x?.TransactionHash == blockTransactionCached.Key))
-                                                                    {
-                                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, blockTransactionCached.Value.BlockTransaction.TransactionObject, blockTransactionCached.Value.IsMemPool));
-                                                                        changeDone = true;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight = lastBlockHeightTravel;
-                                                }
-                                                else
-                                                {
-                                                    _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight = lastBlockHeight;
-                                                }
-
-                                                if (changeDone)
-                                                {
-                                                    _dictionaryTransactionHistory[walletFileOpened].LastTransactionCount = walletTotalTransactionCount;
-
-                                                    _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
-                                                    requireUpdate = true;
-                                                }
+                                                _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
+                                                requireUpdate = true;
                                             }
                                         }
 
@@ -261,7 +258,6 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                                 try
                                                 {
-                                                    bool updateCorrect = false;
 
                                                     long blockHeight = _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction.TransactionObject.BlockHeightTransaction;
 
@@ -270,24 +266,13 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                     if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].IsMemPool)
                                                     {
                                                         if (!tupleBlockTransaction.Item1)
-                                                        {
-                                                            int countRemoved = _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x?.TransactionHash == transactionShowed && x?.IsMemPool == true);
-                                                            if (countRemoved > 0)
-                                                            {
-                                                                requireUpdate = true;
-                                                                updateCorrect = false;
-                                                            }
-                                                        }
+                                                            requireUpdate = true;
                                                     }
                                                     if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction.TransactionStatus != tupleBlockTransaction.Item2.TransactionStatus)
-                                                    {
                                                         requireUpdate = true;
-                                                        updateCorrect = false;
-                                                    }
-                                                    if (updateCorrect)
-                                                    {
-                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction = tupleBlockTransaction.Item2;
-                                                    }
+
+                                                    _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction = tupleBlockTransaction.Item2;
+
                                                 }
                                                 catch (Exception error)
                                                 {
