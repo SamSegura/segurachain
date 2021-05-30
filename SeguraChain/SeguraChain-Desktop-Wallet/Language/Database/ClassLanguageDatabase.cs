@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json;
 using SeguraChain_Desktop_Wallet.Common;
 using SeguraChain_Desktop_Wallet.Language.Enum;
@@ -30,7 +28,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
         /// Load language files and push them into the database.
         /// </summary>
         /// <returns></returns>
-        public bool LoadLanguageDatabase()
+        public bool LoadLanguageDatabase(bool withoutWalletSetting)
         {
             string languageDirectoryPath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassWalletDefaultSetting.DefaultLanguageDirectoryFilePath);
 
@@ -79,19 +77,22 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
 
                 }
 
-                if (_dictionaryLanguageObjects.Count == 0)
+                if (!withoutWalletSetting)
                 {
-                    InitializeDefaultLanguage(languageDirectoryPath);
-                }
-                else
-                {
-                    if (_dictionaryLanguageObjects.ContainsKey(ClassDesktopWalletCommonData.WalletSettingObject.WalletLanguageNameSelected))
+                    if (_dictionaryLanguageObjects.Count == 0)
                     {
-                        _currentLanguage = ClassDesktopWalletCommonData.WalletSettingObject.WalletLanguageNameSelected;
+                        InitializeDefaultLanguage(languageDirectoryPath);
                     }
                     else
                     {
-                        InitializeDefaultLanguage(languageDirectoryPath);
+                        if (_dictionaryLanguageObjects.ContainsKey(ClassDesktopWalletCommonData.WalletSettingObject.WalletLanguageNameSelected))
+                        {
+                            _currentLanguage = ClassDesktopWalletCommonData.WalletSettingObject.WalletLanguageNameSelected;
+                        }
+                        else
+                        {
+                            InitializeDefaultLanguage(languageDirectoryPath);
+                        }
                     }
                 }
             }
@@ -162,6 +163,14 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
                 case ClassLanguageEnumType.LANGUAGE_TYPE_IMPORT_WALLET_PRIVATE_KEY_FORM:
                     {
                         return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletImportPrivateKeyFormLanguage, typeof(T));
+                    }
+                case ClassLanguageEnumType.LANGUAGE_TYPE_WALLET_SETUP_FORM:
+                    {
+                        return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSetupFormLanguage, typeof(T));
+                    }
+                case ClassLanguageEnumType.LANGUAGE_TYPE_WALLET_SETUP_STEP_ONE_FORM:
+                    {
+                        return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSetupStepOneFormLanguage, typeof(T));
                     }
             }
 

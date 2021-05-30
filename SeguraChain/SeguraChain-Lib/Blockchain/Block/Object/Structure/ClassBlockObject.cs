@@ -19,7 +19,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         ~ClassBlockObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()

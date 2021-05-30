@@ -59,16 +59,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// Specifications of the connection opened.
         /// </summary>
         private ClassPeerEnumPacketResponse _packetResponseExpected;
+        private DisposableList<ClassReadPacketSplitted> listPacketReceived;
         private bool _keepAlive;
 
         #region Dispose functions
 
-        private bool _disposed;
-
 
         ~ClassPeerNetworkClientSyncObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()
@@ -80,15 +79,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
-            if (_disposed)
-                return;
-
 
             PeerTaskStatus = false;
             CleanUpTask();
             DisconnectFromTarget();
-
-            _disposed = true;
         }
         #endregion
 
@@ -427,7 +421,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                 {
                     bool peerTargetExist = false;
 
-                    using (DisposableList<ClassReadPacketSplitted> listPacketReceived = new DisposableList<ClassReadPacketSplitted>())
+                    using (listPacketReceived = new DisposableList<ClassReadPacketSplitted>())
                     {
                         listPacketReceived.Clear();
                         listPacketReceived.Add(new ClassReadPacketSplitted());
@@ -651,18 +645,23 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
                     {
                         _peerTaskKeepAliveStatus = true;
 
+                        ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                        {
+                            PacketOrder = ClassPeerEnumPacketSend.ASK_KEEP_ALIVE,
+                            PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskKeepAlive()
+                            {
+                                PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
+                            }),
+                        };
+
                         while (PeerConnectStatus && _peerTaskKeepAliveStatus)
                         {
                             try
                             {
-                                ClassPeerPacketSendObject sendObject = new ClassPeerPacketSendObject(_peerNetworkSetting.PeerUniqueId, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[PeerIpTarget][PeerUniqueIdTarget].PeerClientLastTimestampPeerPacketSignatureWhitelist)
+                                sendObject.PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskKeepAlive()
                                 {
-                                    PacketOrder = ClassPeerEnumPacketSend.ASK_KEEP_ALIVE,
-                                    PacketContent = ClassUtility.SerializeData(new ClassPeerPacketAskKeepAlive()
-                                    {
-                                        PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
-                                    }),
-                                };
+                                    PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
+                                });
 
                                 if (!await SendPeerPacket(sendObject.GetPacketData(), _peerCancellationTokenTaskSendPeerPacketKeepAlive))
                                 {
@@ -765,12 +764,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
         /// </summary>
         public void DisconnectFromTarget()
         {
-
+            listPacketReceived?.Clear();
             PeerConnectStatus = false;
             CancelTaskDoConnection();
             CancelTaskPeerPacketKeepAlive();
             CancelTaskListenPeerPacketResponse();
-
+            
 
             try
             {

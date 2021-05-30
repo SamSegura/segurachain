@@ -62,6 +62,8 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         /// </summary>
         public const int DefaultGlobalCacheMaxBlockTransactionKeepAliveMemorySize = 128 * 1024 * 1024; // Max amount of memory allowed to the block transactions cache to keep alive from of io cache files. (Around 131MB of ram used by 100 000 transaction(s)).
         public const int DefaultGlobalMaxDelayKeepAliveBlockTransactionCached = 60; // Keep alive a transaction cached pending 60 seconds.
+        public const int DefaultGlobalPercentDeleteBlockTransactionCachedPurgeMemory = 30; // Call GC Collector if 30% of the block transaction cache are deleted.
+
 
         /// <summary>
         /// Global default memory wallet index cache settings.
@@ -166,6 +168,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
                 // Global block transaction cache memory setting.
                 GlobalCacheMaxBlockTransactionKeepAliveMemorySize = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalCacheMaxBlockTransactionKeepAliveMemorySize,
                 GlobalMaxDelayKeepAliveBlockTransactionCached = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxDelayKeepAliveBlockTransactionCached,
+                GlobalPercentDeleteBlockTransactionCachedPurgeMemory = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalPercentDeleteBlockTransactionCachedPurgeMemory,
 
                 // Global memory cache setting.
                 GlobalMaxActiveMemoryAllocationFromCache = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxActiveMemoryAllocationFromCache,
@@ -273,6 +276,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
             public long GlobalCacheMaxWalletIndexCheckpointsPerLine;
             public long GlobalCacheMaxBlockTransactionKeepAliveMemorySize;
             public int GlobalMaxDelayKeepAliveBlockTransactionCached;
+            public int GlobalPercentDeleteBlockTransactionCachedPurgeMemory;
             public long GlobalMaxActiveMemoryAllocationFromCache;
             public long GlobalMaxBlockCountToKeepInMemory;
             public long GlobalMaxRangeReadBlockDataFromCache;

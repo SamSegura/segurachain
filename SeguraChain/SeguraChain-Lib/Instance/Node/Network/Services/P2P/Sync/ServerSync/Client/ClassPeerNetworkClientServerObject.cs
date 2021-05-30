@@ -75,6 +75,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
         private bool _onSendingMemPoolTransaction;
         private bool _onWaitingMemPoolTransactionConfirmationReceived;
         private Dictionary<long, int> _listMemPoolBroadcastBlockHeight;
+        private DisposableList<ClassReadPacketSplitted> listPacketReceived;
 
         /// <summary>
         /// Constructor.
@@ -108,7 +109,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
 
         ~ClassPeerNetworkClientServerObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()
@@ -205,6 +206,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
 
             // Clean up.
             _listMemPoolBroadcastBlockHeight.Clear();
+            listPacketReceived?.Clear();
 
             if (!_clientPeerClosed)
             {
@@ -302,7 +304,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
             {
 
                 byte[] packetBufferOnReceive = new byte[_peerNetworkSettingObject.PeerMaxPacketBufferSize];
-                using (DisposableList<ClassReadPacketSplitted> listPacketReceived = new DisposableList<ClassReadPacketSplitted>())
+                using (listPacketReceived = new DisposableList<ClassReadPacketSplitted>())
                 {
                     listPacketReceived.Add(new ClassReadPacketSplitted());
                     try

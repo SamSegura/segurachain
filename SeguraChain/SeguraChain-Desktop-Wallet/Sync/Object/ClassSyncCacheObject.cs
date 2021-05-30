@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Linq;
 using SeguraChain_Lib.Utility;
+using System.Numerics;
 
 namespace SeguraChain_Desktop_Wallet.Sync.Object
 {
@@ -17,6 +18,9 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// Store the cache.
         /// </summary>
         private Dictionary<long, Dictionary<string, ClassSyncCacheBlockTransactionObject>> _syncCacheDatabase;
+
+        public BigInteger AvailableBalance;
+        public BigInteger PendingBalance;
 
         /// <summary>
         /// Get the total amount of transactions cached.
@@ -317,6 +321,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
                 {
                     foreach (var syncCacheBlockTransactionPair in _syncCacheDatabase[blockHeight])
                     {
+                        cancellation?.Token.ThrowIfCancellationRequested();
                         yield return syncCacheBlockTransactionPair;
                     }
                 }

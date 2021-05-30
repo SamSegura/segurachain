@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using SeguraChain_Desktop_Wallet.InternalForm.Setup;
 using SeguraChain_Desktop_Wallet.Language.Database;
 using SeguraChain_Desktop_Wallet.Settings.Enum;
 using SeguraChain_Desktop_Wallet.Settings.Object;
@@ -30,17 +31,26 @@ namespace SeguraChain_Desktop_Wallet.Common
         /// <returns></returns>
         public static bool InitializeLanguageDatabaseForStartupForm()
         {
+            // For setup.
+            if (!InitializeLanguageDatabase(true))
+            {
+                MessageBox.Show("Error on loading language file(s), please reinstall the desktop wallet.", "Language system", MessageBoxButtons.OK);
+                Process.GetCurrentProcess().Kill();
+            }
+
             if (!ReadWalletSetting())
             {
                 MessageBox.Show("Error on loading wallet setting file, please reinstall or remove the wallet-setting.json.", "Wallet setting", MessageBoxButtons.OK);
                 Process.GetCurrentProcess().Kill();
             }
 
-            if (!InitializeLanguageDatabase())
+            // Once the wallet setting exist.
+            if (!InitializeLanguageDatabase(false))
             {
                 MessageBox.Show("Error on loading language file(s), please reinstall the desktop wallet.", "Language system", MessageBoxButtons.OK);
                 Process.GetCurrentProcess().Kill();
             }
+
             return true;
         }
 
@@ -113,6 +123,9 @@ namespace SeguraChain_Desktop_Wallet.Common
             try
             {
                 WalletSettingObject = new ClassWalletSettingObject();
+
+                ClassDesktopWalletCommonData.LanguageDatabase.SetCurrentLanguageName(WalletSettingObject.WalletLanguageNameSelected);
+
                 using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
                 {
                     writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
@@ -133,10 +146,12 @@ namespace SeguraChain_Desktop_Wallet.Common
         /// Initialize the language database.
         /// </summary>
         /// <returns></returns>
-        private static bool InitializeLanguageDatabase()
+        private static bool InitializeLanguageDatabase(bool withoutWalletSetting)
         {
-            LanguageDatabase = new ClassLanguageDatabase();
-            if (!LanguageDatabase.LoadLanguageDatabase())
+            if (LanguageDatabase == null)
+                LanguageDatabase = new ClassLanguageDatabase();
+
+            if (!LanguageDatabase.LoadLanguageDatabase(withoutWalletSetting))
             {
                 return false;
             }

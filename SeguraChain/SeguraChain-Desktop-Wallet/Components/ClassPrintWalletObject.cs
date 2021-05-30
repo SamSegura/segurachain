@@ -17,7 +17,7 @@ namespace SeguraChain_Desktop_Wallet.Components
 
         ~ClassPrintWalletObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()

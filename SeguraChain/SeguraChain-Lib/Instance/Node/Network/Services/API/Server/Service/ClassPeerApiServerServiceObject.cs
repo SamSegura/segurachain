@@ -34,7 +34,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
 
         ~ClassPeerApiServerServiceObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()

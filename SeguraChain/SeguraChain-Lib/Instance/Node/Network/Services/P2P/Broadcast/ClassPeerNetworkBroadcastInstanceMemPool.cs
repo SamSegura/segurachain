@@ -418,7 +418,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
             ~ClassPeerNetworkClientBroadcastMemPool()
             {
-                Dispose(false);
+                Dispose(true);
             }
 
             public void Dispose()

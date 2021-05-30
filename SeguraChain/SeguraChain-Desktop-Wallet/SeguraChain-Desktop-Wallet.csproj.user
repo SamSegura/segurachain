@@ -34,6 +34,9 @@
     <Compile Update="InternalForm\Setup\ClassWalletSetupForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="InternalForm\Setup\StepForm\ClassWalletSetupStepOneForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="InternalForm\Startup\ClassWalletStartupInternalForm.cs">
       <SubType>Form</SubType>
     </Compile>

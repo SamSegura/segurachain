@@ -17,6 +17,8 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public ClassWalletSendTransactionConfirmationFormLanguage WalletSendTransactionConfirmationFormLanguage;
         public ClassWalletSendTransactionWaitRequestFormLanguage WalletSendTransactionWaitRequestFormLanguage;
         public ClassWalletImportPrivateKeyFormLanguage WalletImportPrivateKeyFormLanguage;
+        public ClassWalletSetupFormLanguage WalletSetupFormLanguage;
+        public ClassWalletSetupStepOneFormLanguage WalletSetupStepOneFormLanguage;
 
         /// <summary>
         /// Default initialization.
@@ -32,6 +34,8 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
             WalletSendTransactionConfirmationFormLanguage = new ClassWalletSendTransactionConfirmationFormLanguage();
             WalletSendTransactionWaitRequestFormLanguage = new ClassWalletSendTransactionWaitRequestFormLanguage();
             WalletImportPrivateKeyFormLanguage = new ClassWalletImportPrivateKeyFormLanguage();
+            WalletSetupFormLanguage = new ClassWalletSetupFormLanguage();
+            WalletSetupStepOneFormLanguage = new ClassWalletSetupStepOneFormLanguage();
         }
     }
 
@@ -336,6 +340,25 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string BUTTON_IMPORT_WALLET_PRIVATE_KEY_TEXT = "Import private key";
         public string MESSAGEBOX_IMPORT_WALLET_PRIVATE_KEY_ERROR_TITLE_TEXT = "Invalid private key format";
         public string MESSAGEBOX_IMPORT_WALLET_PRIVATE_KEY_ERROR_TEXT = "The input private key format is invalid, please input a valid private key";
+    }
 
+    public class ClassWalletSetupFormLanguage
+    {
+        public string FORM_WALLET_SETUP_TITLE_TEXT = " - Setup your desktop wallet";
+        public string LABEL_WALLET_SETUP_DESCRIPTION_TEXT = "Welcome, this menu help your to setup your desktop wallet, steps should be different depending of the sync mode selected.";
+        public string BUTTON_WALLET_SETUP_PREV_TEXT = "Back";
+        public string BUTTON_WALLET_SETUP_NEXT_TEXT = "Next";
+        public string BUTTON_WALLET_SETUP_SAVE_TEXT = "Save and continue";
+    }
+
+    public class ClassWalletSetupStepOneFormLanguage
+    {
+        public string LABEL_SELECT_LANGUAGE = "Select your language";
+        public string CHECKBOX_SYNC_INTERNAL_MODE_TEXT = "Use the sync internal mode:";
+        public string LABEL_SYNC_INTERNAL_MODE_DESCRIPTION = "This mode is the most secure one, but also the most slower one, this mode run internally a node and provide you synced data directly to your desktop wallet";
+        public string CHECKBOX_SYNC_EXTERNAL_MODE_TEXT = "Use the sync external mode:";
+        public string LABEL_SYNC_EXTERNAL_MODE_DESCRIPTION = "This mode is the faster one, secure if you use your own one hosted somewhere, this mode reach your node API for provide synced data to your desktop wallet";
+        public string LABEL_SYNC_EXTERNAL_MODE_HOST = "Node IP/Hostname:";
+        public string LABEL_SYNC_EXTERNAL_MODE_PORT = "Node API Port:";
     }
 }

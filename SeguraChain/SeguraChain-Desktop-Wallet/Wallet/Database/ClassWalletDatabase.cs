@@ -573,7 +573,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                                         if (requireSave || !DictionaryWalletData[walletFileName].WalletBalanceCalculated)
                                                         {
                                                             long lastBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
-                                                            ClassWalletBalanceObject walletBalanceObject = await ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedDataAsync(walletFileName, cancellation);
+                                                            ClassWalletBalanceObject walletBalanceObject = ClassDesktopWalletCommonData.WalletSyncSystem.GetWalletBalanceFromSyncedData(walletFileName);
 
                                                             if (DictionaryWalletData[walletFileName].WalletBalanceObject == null)
                                                             {

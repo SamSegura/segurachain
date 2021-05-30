@@ -444,35 +444,38 @@ namespace SeguraChain_Lib.Log
                 if (LogWriterInitialized)
                 {
                     bool enterList = false;
-                    try
+                    Task.Factory.StartNew(() =>
                     {
                         try
                         {
-                            if (Monitor.TryEnter(_logListOnCollect[logLevelType]))
+                            try
                             {
-                                enterList = true;
-
-                                _logListOnCollect[logLevelType].Add(new ClassLogObject()
+                                if (Monitor.TryEnter(_logListOnCollect[logLevelType]))
                                 {
-                                    LogContent = logLine,
-                                    Written = false,
-                                    Timestamp = ClassUtility.GetCurrentTimestampInSecond()
-                                });
-                                Monitor.PulseAll(_logListOnCollect[logLevelType]);
+                                    enterList = true;
+
+                                    _logListOnCollect[logLevelType].Add(new ClassLogObject()
+                                    {
+                                        LogContent = logLine,
+                                        Written = false,
+                                        Timestamp = ClassUtility.GetCurrentTimestampInSecond()
+                                    });
+                                    Monitor.PulseAll(_logListOnCollect[logLevelType]);
+                                }
+                            }
+                            catch
+                            {
+                                // Ignored.
                             }
                         }
-                        catch
+                        finally
                         {
-                            // Ignored.
+                            if (enterList)
+                            {
+                                Monitor.Exit(_logListOnCollect[logLevelType]);
+                            }
                         }
-                    }
-                    finally
-                    {
-                        if (enterList)
-                        {
-                            Monitor.Exit(_logListOnCollect[logLevelType]);
-                        }
-                    }
+                    }, CancellationToken.None, TaskCreationOptions.PreferFairness, TaskScheduler.Current).ConfigureAwait(false);
                 }
             }
         }

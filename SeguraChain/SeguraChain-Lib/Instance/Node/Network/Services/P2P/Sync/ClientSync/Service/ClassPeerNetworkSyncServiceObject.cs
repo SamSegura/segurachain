@@ -95,7 +95,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
         ~ClassPeerNetworkSyncServiceObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()

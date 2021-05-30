@@ -22,7 +22,7 @@ namespace SeguraChain_Lib.Other.Object.SHA3
 
         ~ClassSha3512DigestDisposable()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()

@@ -46,12 +46,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
 
 
         #region Dispose functions
-        private bool _disposed;
 
+        private bool _disposed;
 
         ~ClassPeerApiClientObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()

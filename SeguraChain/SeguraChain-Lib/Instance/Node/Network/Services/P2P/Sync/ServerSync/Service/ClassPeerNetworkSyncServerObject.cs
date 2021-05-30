@@ -29,12 +29,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
 
 
         #region Dispose functions
-        private bool _disposed;
 
+        private bool _disposed;
 
         ~ClassPeerNetworkSyncServerObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()
@@ -504,12 +504,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
                                 {
                                     if (!_listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[key].ClientPeerConnectionStatus && _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[key].ClientPeerLastPacketReceived + _peerNetworkSettingObject.PeerMaxDelayConnection < ClassUtility.GetCurrentTimestampInSecond())
                                     {
+                                        _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[key].ClosePeerClient(false);
                                         remove = true;
                                     }
                                 }
 
                                 if (remove)
                                 {
+
                                     if (_listPeerIncomingConnectionObject[clientIp].ListPeerClientObject.TryRemove(key, out _))
                                     {
                                         totalRemoved++;

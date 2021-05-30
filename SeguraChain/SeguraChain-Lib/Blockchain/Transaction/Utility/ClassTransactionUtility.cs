@@ -252,7 +252,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             {
                 if (transactionObject.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION || transactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
                 {
-                    ClassBlockObject blockObjectInformations = null;
+                    ClassBlockObject blockObjectInformations;
                     if (!fromBroadcastInstance)
                     {
                         long blockHeightSend = ClassBlockchainDatabase.BlockchainMemoryManagement.GetCloserBlockHeightFromTimestamp(transactionObject.TimestampBlockHeightCreateSend, cancellation);

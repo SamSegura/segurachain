@@ -20,7 +20,7 @@ namespace SeguraChain_Lib.Other.Object.List
 
         ~DisposableDictionary()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()
@@ -38,6 +38,7 @@ namespace SeguraChain_Lib.Other.Object.List
             if (disposing)
             {
                 Clear();
+                GetList = null;
             }
             Disposed = true;
         }
@@ -77,15 +78,16 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public void Clear()
         {
-            GetList.Clear();
+            GetList?.Clear();
+
 #if NET5_0_OR_GREATER
-            GetList.TrimExcess();
+            GetList?.TrimExcess();
 #endif
         }
 
         public ICollection<KeyValuePair<V,T>> GetAll => GetList;
 
-        public Dictionary<V, T> GetList { get; }
+        public Dictionary<V, T> GetList { get; set; }
 
     }
 

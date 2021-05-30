@@ -362,17 +362,25 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                                                 {
                                                     if (blockConfirmationResultObject.ListBlockHeightConfirmed.Count > 0)
                                                     {
-                                                        await ClassBlockchainDatabase.BlockchainMemoryManagement.IncrementBlockTransactionConfirmationOnBlockFullyConfirmed(blockConfirmationResultObject.ListBlockHeightConfirmed, lastBlockHeightUnlockedChecked, _cancellationTokenSourceUpdateTask);
-
+                                                        if (await ClassBlockchainDatabase.BlockchainMemoryManagement.IncrementBlockTransactionConfirmationOnBlockFullyConfirmed(blockConfirmationResultObject.ListBlockHeightConfirmed, lastBlockHeightUnlockedChecked, _cancellationTokenSourceUpdateTask))
+                                                        {
+                                                            ClassLog.WriteLine("New block height transaction confirmation reach: " + previousBlockHeightUnlockedChecked + " Total block fully confirmed: " + blockConfirmationResultObject.ListBlockHeightConfirmed.Count, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+#if DEBUG
+                                                            Debug.WriteLine("New block height transaction confirmation reach: " + previousBlockHeightUnlockedChecked + " Total block fully confirmed: " + blockConfirmationResultObject.ListBlockHeightConfirmed.Count);
+#endif
+                                                        }
+                                                        else
+                                                        {
+                                                            ClassLog.WriteLine("Failed to confirm back every block heights transactions fully confirmed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 
 #if DEBUG
-                                                        Debug.WriteLine("New block height transaction confirmation reach: " + previousBlockHeightUnlockedChecked + " Total block fully confirmed: " + blockConfirmationResultObject.ListBlockHeightConfirmed.Count);
+                                                            Debug.WriteLine("Failed to confirm back every block heights transactions fully confirmed.");
 #endif
+                                                        }
                                                         blockConfirmationResultObject.ListBlockHeightConfirmed.Clear();
                                                     }
 
                                                     previousBlockHeightUnlockedChecked = blockConfirmationResultObject.LastBlockHeightConfirmationDone;
-
                                                 }
                                             }
                                         }

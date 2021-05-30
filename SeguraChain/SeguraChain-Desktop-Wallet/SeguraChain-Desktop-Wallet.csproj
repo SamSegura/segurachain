@@ -30,6 +30,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.0.1" />
     <PackageReference Include="ZXing.Net" Version="0.16.6" />
   </ItemGroup>
 

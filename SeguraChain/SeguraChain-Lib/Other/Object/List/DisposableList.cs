@@ -43,7 +43,7 @@ namespace SeguraChain_Lib.Other.Object.List
 
         ~DisposableList()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public void Dispose()
@@ -61,9 +61,11 @@ namespace SeguraChain_Lib.Other.Object.List
             if (disposing)
             {
                 Clear();
+                GetList = null;
             }
             Disposed = true;
         }
+
 
         #endregion
 
@@ -104,13 +106,13 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public void Clear()
         {
-            GetList.Clear();
-            GetList.TrimExcess();
+            GetList?.Clear();
+            GetList?.TrimExcess();
         }
 
         public ICollection<V> GetAll => GetList;
 
-        public List<V> GetList { get; }
+        public List<V> GetList { get; set; }
 
         public void Sort()
         {
