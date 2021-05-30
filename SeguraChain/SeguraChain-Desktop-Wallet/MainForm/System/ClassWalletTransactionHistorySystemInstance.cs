@@ -215,17 +215,19 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                                                 if (blockTransactionCached.Value != null)
                                                                 {
-                                                                    // Remove mempool tx.
-                                                                    if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true))
+                                                                    if (!blockTransactionCached.Value.IsMemPool)
                                                                     {
-                                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true);
-                                                                        changeDone = true;
+                                                                        // Remove mempool tx.
+                                                                        if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true))
+                                                                        {
+                                                                            _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x != null && x?.TransactionHash == blockTransactionCached.Key && x?.IsMemPool == true);
+                                                                            changeDone = true;
+                                                                        }
                                                                     }
-
 
                                                                     if (!_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Exists(x => x?.TransactionHash == blockTransactionCached.Key))
                                                                     {
-                                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, blockTransactionCached.Value.BlockTransaction.TransactionObject, false));
+                                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Add(BuildTransactionInformationObject(walletAddress, blockTransactionCached.Value.BlockTransaction.TransactionObject, blockTransactionCached.Value.IsMemPool));
                                                                         changeDone = true;
                                                                     }
                                                                 }
@@ -261,7 +263,6 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                                 try
                                                 {
-                                                    bool updateCorrect = false;
 
                                                     long blockHeight = _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction.TransactionObject.BlockHeightTransaction;
 
@@ -273,21 +274,14 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                         {
                                                             int countRemoved = _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x?.TransactionHash == transactionShowed && x?.IsMemPool == true);
                                                             if (countRemoved > 0)
-                                                            {
                                                                 requireUpdate = true;
-                                                                updateCorrect = false;
-                                                            }
                                                         }
                                                     }
                                                     if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction.TransactionStatus != tupleBlockTransaction.Item2.TransactionStatus)
-                                                    {
                                                         requireUpdate = true;
-                                                        updateCorrect = false;
-                                                    }
-                                                    if (updateCorrect)
-                                                    {
-                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction = tupleBlockTransaction.Item2;
-                                                    }
+
+                                                    _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction = tupleBlockTransaction.Item2;
+
                                                 }
                                                 catch (Exception error)
                                                 {

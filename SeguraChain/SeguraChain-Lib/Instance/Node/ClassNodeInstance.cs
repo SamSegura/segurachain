@@ -243,40 +243,40 @@ namespace SeguraChain_Lib.Instance.Node
 
             #region Stop peer task client broadcast mempool.
 
-            PeerNetworkBroadcastInstanceMemPoolObject.StopNetworkBroadcastMemPoolInstance();
+            PeerNetworkBroadcastInstanceMemPoolObject?.StopNetworkBroadcastMemPoolInstance();
 
             #endregion
 
             #region Stop peer task sync.
             ClassLog.WriteLine("Stop Peer Sync Task Network..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-            PeerNetworkClientSyncObject.StopPeerSyncTask();
-            PeerNetworkClientSyncObject.Dispose();
+            PeerNetworkClientSyncObject?.StopPeerSyncTask();
+            PeerNetworkClientSyncObject?.Dispose();
             ClassLog.WriteLine("Peer Sync Task Network stopped.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             #endregion
 
             #region Stop peer network server.
             ClassLog.WriteLine("Stop Peer Network Server..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-            PeerNetworkServerObject.StopPeerServer();
-            PeerNetworkServerObject.Dispose();
+            PeerNetworkServerObject?.StopPeerServer();
+            PeerNetworkServerObject?.Dispose();
             ClassLog.WriteLine("Peer Network Server stoped.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             #endregion
 
             #region Stop api network server.
             ClassLog.WriteLine("Stop Peer API Server..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-            PeerApiServerObject.StopPeerApiServer();
-            PeerApiServerObject.Dispose();
+            PeerApiServerObject?.StopPeerApiServer();
+            PeerApiServerObject?.Dispose();
             ClassLog.WriteLine("Peer API Server stopped.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             #endregion
 
             #region Stop the task of blockchain transaction confirmation.
 
-            await _peerUpdateTask.StopAutomaticBlockTransactionConfirmation();
+            await _peerUpdateTask?.StopAutomaticBlockTransactionConfirmation();
 
             #endregion
 
             #region Stop automatic peer tasks.
 
-            _peerUpdateTask.StopAutomaticUpdateTask();
+            _peerUpdateTask?.StopAutomaticUpdateTask();
 
             #endregion
 
