@@ -797,7 +797,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             totalBlockLocked++;
                         else
                             if (startHeight < lastBlockHeight)
-                                break;
+                            break;
                     }
                     startHeight--;
                     if (startHeight < BlockchainSetting.GenesisBlockHeight)
@@ -1495,7 +1495,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                     long totalBlockTravel = 0;
                     bool canceled = false;
-                    bool previousBlockedConfirmed = true;
+                    bool previousBlockConfirmed = true;
                     bool changeDone = false;
 
                     long timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
@@ -1608,7 +1608,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                                             try
                                                             {
-                                                                
+
 
                                                                 long blockHeight = blockRetrieve.Item1.BlockHeight;
 
@@ -1616,7 +1616,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                 {
                                                                     blockFromCache++;
                                                                     locked = Monitor.TryEnter(blockRetrieve.Item1);
-                                                                    
+
                                                                 }
                                                                 if (blockHeight >= BlockchainSetting.GenesisBlockHeight && blockHeight <= lastBlockHeightUnlockedChecked)
                                                                 {
@@ -1624,9 +1624,15 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                     {
                                                                         if (blockRetrieve.Item1.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                                                                         {
-                                                                            if (previousBlockedConfirmed)
+                                                                            if (previousBlockConfirmed)
                                                                             {
-                                                                                ClassBlockObject blockObject = blockRetrieve.Item1;
+                                                                                ClassBlockObject blockObject = blockRetrieve.Item1.DirectCloneBlockObject();
+
+                                                                                if (locked)
+                                                                                {
+                                                                                    Monitor.Exit(blockRetrieve.Item1);
+                                                                                    locked = false;
+                                                                                }
 
                                                                                 if (!blockObject.BlockUnlockValid)
                                                                                 {
@@ -1769,16 +1775,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                                                 {
                                                                                                     blockObject.BlockTransactionConfirmationCheckTaskDone = true;
                                                                                                     changeDone = true;
-                                                                                                    if (locked)
-                                                                                                        Monitor.PulseAll(blockObject);
                                                                                                 }
                                                                                                 else
                                                                                                 {
                                                                                                     blockObject.BlockUnlockValid = false;
                                                                                                     blockObject.BlockNetworkAmountConfirmations = 0;
                                                                                                     blockObject.BlockSlowNetworkAmountConfirmations = 0;
-                                                                                                    if (locked)
-                                                                                                        Monitor.PulseAll(blockObject);
 #if DEBUG
                                                                                                     Debug.WriteLine("Failed to update block transaction(s) confirmation(s) on the block height: " + blockObject.BlockHeight + ", the confirmation check task failed.");
 #endif
@@ -1802,7 +1804,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                                                                                 if (!blockObject.BlockTransactionFullyConfirmed)
                                                                                                     blockObject = await TaskTravelBlockTransactionAsync(blockObject, lastBlockHeightUnlockedObject, listBlockObjectUpdated, cancellation);
-                                                                                      
+
 
                                                                                                 if (blockObject != null)
                                                                                                 {
@@ -1846,9 +1848,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                                                         }
                                                                                                     }
 
-                                                                                                    if (locked)
-                                                                                                        Monitor.PulseAll(blockObject);
-
                                                                                                     // Update the active memory if this one is available on the active memory.
                                                                                                     if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
                                                                                                     {
@@ -1861,7 +1860,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                                                         _dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
                                                                                                     }
 
-                                                                                                    listBlockObjectUpdated.Add(blockObject.BlockHeight, blockObject.DirectCloneBlockObject());
 
                                                                                                     changeDone = true;
 
@@ -1922,6 +1920,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                                             previousBlockObject = blockObject;
                                                                                             previousBlockHeight = blockHeight;
                                                                                             totalBlockTravel++;
+                                                                                            listBlockObjectUpdated.Add(blockObject.BlockHeight, blockObject);
                                                                                         }
                                                                                     }
                                                                                 }
@@ -2099,7 +2098,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     ClassBlockObject blockObjectInformations = await GetBlockInformationDataStrategy(blockHeight, cancellation);
 
                     if (blockObjectInformations.BlockTotalTaskTransactionConfirmationDone >= lastBlockHeightTransactionConfirmationDone ||
-                        blockObjectInformations.BlockTotalTaskTransactionConfirmationDone >= lastBlockHeightTransactionConfirmationDone - blockHeight || 
+                        blockObjectInformations.BlockTotalTaskTransactionConfirmationDone >= lastBlockHeightTransactionConfirmationDone - blockHeight ||
                         !blockObjectInformations.BlockTransactionFullyConfirmed)
                         continue;
 
@@ -2556,7 +2555,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             else
             {
                 Debug.WriteLine("Invalid transaction amount source list for: " + blockTransactionToCheck.TransactionObject.TransactionHash + " | Check result: " + transactionCheckStatus);
-                Debug.WriteLine("Transaction Data: "+JsonConvert.SerializeObject(blockTransactionToCheck.TransactionObject, Formatting.Indented));
+                Debug.WriteLine("Transaction Data: " + JsonConvert.SerializeObject(blockTransactionToCheck.TransactionObject, Formatting.Indented));
             }
 #endif
 
@@ -2633,7 +2632,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                             {
                                                                 if (!listWalletAndPublicKeysCache.ContainsKey(blockObject.BlockTransactions[transactionHash].TransactionObject.WalletAddressSender))
                                                                     listWalletAndPublicKeysCache.Add(blockObject.BlockTransactions[transactionHash].TransactionObject.WalletAddressSender, blockObject.BlockTransactions[transactionHash].TransactionObject.WalletPublicKeySender);
-                                                                
+
                                                                 if (blockObject.BlockTransactions[transactionHash].TransactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
                                                                     if (!listWalletAndPublicKeysCache.ContainsKey(blockObject.BlockTransactions[transactionHash].TransactionObject.WalletAddressReceiver))
                                                                         listWalletAndPublicKeysCache.Add(blockObject.BlockTransactions[transactionHash].TransactionObject.WalletAddressReceiver, blockObject.BlockTransactions[transactionHash].TransactionObject.WalletPublicKeyReceiver);
@@ -2927,7 +2926,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     else failed = true;
                 }
                 else failed = true;
- 
+
                 if (failed) break;
             }
 
@@ -4003,7 +4002,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                             _dictionaryBlockObjectMemory[block.BlockHeight].ObjectCacheType = CacheBlockMemoryEnumState.IN_CACHE;
                                                                         }
 #if DEBUG
-                                                                    Debug.WriteLine("Total block object(s) cached updated and keep in memory: " + blockObjectToCacheUpdate.Count);
+                                                                        Debug.WriteLine("Total block object(s) cached updated and keep in memory: " + blockObjectToCacheUpdate.Count);
 #endif
                                                                         ClassLog.WriteLine("Memory management - Total block object(s) cached updated and keep in memory: " + blockObjectToCacheUpdate.Count, ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
@@ -5338,7 +5337,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                                         // Remove previous size.
                                                         _totalBlockTransactionMemorySize -= _dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[blockTransaction.TransactionObject.TransactionHash].BlockTransactionMemorySize;
-                                                        
+
                                                         if (_totalBlockTransactionMemorySize < 0)
                                                             _totalBlockTransactionMemorySize = 0;
 
@@ -5430,7 +5429,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                                 // Remove previous size.
                                                 _totalBlockTransactionMemorySize -= _dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[blockTransaction.TransactionObject.TransactionHash].BlockTransactionMemorySize;
-                                               
+
                                                 if (_totalBlockTransactionMemorySize < 0)
                                                     _totalBlockTransactionMemorySize = 0;
 
@@ -5467,7 +5466,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                                     // Remove previous size.
                                                     _totalBlockTransactionMemorySize -= _dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[blockTransaction.TransactionObject.TransactionHash].BlockTransactionMemorySize;
-                                                    
+
                                                     if (_totalBlockTransactionMemorySize < 0)
                                                         _totalBlockTransactionMemorySize = 0;
 
@@ -5486,7 +5485,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                                     // Remove previous size.
                                                     _totalBlockTransactionMemorySize -= _dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[blockTransaction.TransactionObject.TransactionHash].BlockTransactionMemorySize;
-                                                   
+
                                                     if (_totalBlockTransactionMemorySize < 0)
                                                         _totalBlockTransactionMemorySize = 0;
 
@@ -5573,7 +5572,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                                                                 // Remove previous size.
                                                                 _totalBlockTransactionMemorySize -= _dictionaryBlockObjectMemory[blockHeight].BlockTransactionCache[blockTransaction.TransactionObject.TransactionHash].BlockTransactionMemorySize;
-                                                                
+
                                                                 if (_totalBlockTransactionMemorySize < 0)
                                                                     _totalBlockTransactionMemorySize = 0;
 
