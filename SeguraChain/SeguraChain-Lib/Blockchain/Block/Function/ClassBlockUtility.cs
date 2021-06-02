@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -874,7 +874,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
         public static IEnumerable<ClassBlockTransaction> BlockTransactionLineSplit(string blockTransactionLine, bool isJson)
         {
-            foreach (var transactionLine in blockTransactionLine.DisposableSplit(StringBlockDataCharacterSeperator).GetAll)
+            foreach (var transactionLine in blockTransactionLine.DisposableSplit(StringBlockDataCharacterSeperator).GetList.ToArray())
             {
                 if (isJson)
                 {
