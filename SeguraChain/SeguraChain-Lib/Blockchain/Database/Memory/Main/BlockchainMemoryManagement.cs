@@ -2311,7 +2311,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                 long totalConfirmationsDone = blockObject.BlockTransactions[blockTransactionHash].TransactionTotalConfirmation;
                                                                 bool updateTransactionAmountSourceList = true;
 
-                                                                if (totalConfirmationsDone == 0 &&
+                                                                if (totalConfirmationsDone == 1 &&
                                                                     !blockObject.BlockTransactions[blockTransactionHash].Spent &&
                                                                     (blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION ||
                                                                     blockObject.BlockTransactions[blockTransactionHash].TransactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION))
