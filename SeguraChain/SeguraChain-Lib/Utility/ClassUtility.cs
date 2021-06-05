@@ -858,14 +858,10 @@ namespace SeguraChain_Lib.Utility
                     Monitor.TryEnter(objectData, ref locked);
                 }
                 else
-                {
                     locked = true;
-                }
 
                 if (locked)
-                {
                     returnData = objectData;
-                }
 
             }
             finally
@@ -873,9 +869,7 @@ namespace SeguraChain_Lib.Utility
                 if (locked)
                 {
                     if (Monitor.IsEntered(objectData))
-                    {
                         Monitor.Exit(objectData);
-                    }
                 }
             }
 

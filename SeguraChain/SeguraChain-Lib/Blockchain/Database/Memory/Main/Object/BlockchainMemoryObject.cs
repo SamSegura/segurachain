@@ -37,15 +37,16 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
             get => _content;
             set
             {
-                _content = value;
-
                 if (value != null)
                 {
+                    value.BlockCloned = false;
+                    _content = value;
+
                     if (value.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                    {
                         ContentMirror = value;
-                    }
                 }
+                else
+                    _content = null;
             }
         }
 

@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
 using SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Client;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Object;
@@ -327,31 +326,27 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Ser
 
                             if (useSemaphore)
                             {
+                                #region Handle the incoming connection to the P2P server.
+                                await _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].HandlePeerClient();
+                                #endregion
+
                                 _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
                                 useSemaphore = false;
 
                                 failed = false;
-
-                                #region Handle the incoming connection to the P2P server.
-                                await _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].HandlePeerClient();
-                                _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
-                                #endregion
                             }
                             else CloseTcpClient(clientPeerTcp);
                         }
                         finally
                         {
                             if (useSemaphore)
-                            {
                                 _listPeerIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
-                            }
+
                             if (failed)
                             {
                                 CloseTcpClient(clientPeerTcp);
                                 _listPeerIncomingConnectionObject[clientIp].ListPeerClientObject[randomId].Dispose();
                             }
-
-
                         }
 
                     }

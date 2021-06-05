@@ -32,11 +32,12 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             if (Disposed)
                 return;
 
-            Disposed = true;
 
             if (disposing)
             {
+                BlockTransactions?.Clear();
                 GC.SuppressFinalize(this);
+                Disposed = true;
             }
         }
 
@@ -53,13 +54,11 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             get
             {
                 if (BlockHeight > BlockchainSetting.GenesisBlockHeight)
-                {
                     return BlockMiningPowShareUnlockObject?.WalletAddress;
-                }
+
                 if (BlockHeight == BlockchainSetting.GenesisBlockHeight)
-                {
                     return BlockchainSetting.WalletAddressDev(0);
-                }
+
                 return null;
             }
         }
@@ -69,6 +68,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public long BlockLastChangeTimestamp;
         public long BlockNetworkAmountConfirmations;
         public bool BlockIsUpdated;
+        public bool BlockCloned;
 
         /// <summary>
         /// Only used pending to sync a block.
@@ -98,17 +98,13 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
                             }
                         }
                         else
-                        {
                             blockTransaction = _blockTransactions;
-                        }
                     }
                 }
                 finally
                 {
                     if (isLocked)
-                    {
                         Monitor.Exit(_blockTransactions);
-                    }
                 }
 
                 return blockTransaction;
@@ -162,7 +158,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public void DeepCloneBlockObject(bool retrieveTx, out ClassBlockObject blockObjectCopy)
         {
             blockObjectCopy = null; // Default.
-
             try
             {
                 ClassBlockUtility.StringToBlockObject(ClassBlockUtility.SplitBlockObject(this), out blockObjectCopy);
@@ -178,23 +173,20 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
                         if (retrieveTx)
                         {
                             foreach (var tx in BlockTransactions)
-                            {
                                 if (ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(tx.Value), out ClassBlockTransaction blockTransaction))
-                                {
                                     blockObjectCopy.BlockTransactions.Add(tx.Key, blockTransaction);
-                                }
-                            }
                         }
                     }
                 }
+
+                blockObjectCopy.BlockCloned = true;
             }
             catch
             {
                 if (retrieveTx)
-                {
                     blockObjectCopy = null;
-                }
             }
+        
         }
 
         /// <summary>
@@ -203,7 +195,19 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         /// <returns></returns>
         public ClassBlockObject DirectCloneBlockObject()
         {
-            DeepCloneBlockObject(true, out ClassBlockObject blockObjectCopy);
+            ClassBlockObject blockObjectCopy = null;
+            bool locked = false;
+            try
+            {
+                locked = Monitor.TryEnter(this);
+                if (locked)
+                    DeepCloneBlockObject(true, out blockObjectCopy);
+            }
+            finally
+            {
+                if (locked)
+                    Monitor.Exit(this);
+            }
             return blockObjectCopy;
         }
     }

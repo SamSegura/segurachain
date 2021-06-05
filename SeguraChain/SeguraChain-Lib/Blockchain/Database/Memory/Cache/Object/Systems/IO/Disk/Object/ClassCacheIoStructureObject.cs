@@ -1,16 +1,14 @@
 ﻿using SeguraChain_Lib.Blockchain.Block.Function;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Utility;
-using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Disk.Object
 {
     public class ClassCacheIoStructureObject
     {
-        
+
         /// <summary>
         /// Get/Set the block data. Synchronization forced, the monitor help to lock access from multithreading changes and notify changes done.
         /// </summary>
@@ -27,7 +25,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     return ClassUtility.LockReturnObject(_blockObject);
                 }
 
-            
                 return null;
             }
             [MethodImpl(MethodImplOptions.Synchronized)]
@@ -35,19 +32,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             {
                 if (value != null)
                 {
-                    bool needPulse = false;
-                    bool isNull = true;
+                    value.BlockCloned = false;
                     if (!IsNull)
-                    {
-                        isNull = false;
-                        if (Monitor.IsEntered(_blockObject))
-                        {
-                            needPulse = true;
-                        }
-                    }
-
-
-                    if (!isNull)
                     {
                         lock (_blockObject)
                         {
@@ -57,11 +43,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                             _blockObject = value;
                             _blockObject.BlockIsUpdated = false;
                             _blockObject.Disposed = false;
-
-                            if (needPulse)
-                            {
-                                Monitor.PulseAll(_blockObject);
-                            }
                         }
                     }
                     else
@@ -70,7 +51,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         _blockObject.Disposed = false;
                         IsUpdated = true;
                     }
-                    
+
                     LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
                 }
@@ -78,21 +59,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 {
                     if (!IsNull)
                     {
-                        if (Monitor.IsEntered(_blockObject))
-                        {
-                            _blockObject.Dispose();
-                            _blockObject?.BlockTransactions.Clear();
-                            _blockObject = null;
-                            _ioDataSizeOnMemory = 0;
-                            IsUpdated = false;
-                        }
-                        else
-                        {
-                            _blockObject.Dispose();
-                            _blockObject = null;
-                            _ioDataSizeOnMemory = 0;
-                            IsUpdated = false;
-                        }
+                        _blockObject.Dispose();
+                        _blockObject = null;
+                        _ioDataSizeOnMemory = 0;
+                        IsUpdated = false;
                     }
                 }
             }
@@ -126,9 +96,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     if (!IsNull)
                     {
                         lock (_blockObject)
-                        {
                             _ioDataSizeOnMemory = ClassBlockUtility.GetIoBlockSizeOnMemory(_blockObject);
-                        }
                     }
                 }
                 return _ioDataSizeOnMemory;
@@ -186,24 +154,17 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         try
                         {
                             if (_blockObject.Disposed)
-                            {
                                 return true;
-                            }
+
 
                             if (_blockObject.BlockTransactions == null)
-                            {
                                 return true;
-                            }
 
                             if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
-                            {
                                 return true;
-                            }
 
                             if (IsDeleted)
-                            {
                                 return true;
-                            }
                         }
                         catch
                         {
@@ -223,24 +184,16 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 try
                                 {
                                     if (_blockObject.Disposed)
-                                    {
                                         return true;
-                                    }
 
                                     if (_blockObject.BlockTransactions == null)
-                                    {
                                         return true;
-                                    }
 
                                     if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
-                                    {
                                         return true;
-                                    }
 
                                     if (IsDeleted)
-                                    {
                                         return true;
-                                    }
                                 }
                                 catch
                                 {
@@ -251,9 +204,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         finally
                         {
                             if (isLocked)
-                            {
                                 Monitor.Exit(_blockObject);
-                            }
                         }
 
                         if (exception) return true;
@@ -267,7 +218,5 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 return false;
             }
         }
-
-
     }
 }

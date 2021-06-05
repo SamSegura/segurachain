@@ -19,9 +19,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 {
     public class ClassCacheIoSystem
     {
- 
 
-       /// <summary>
+
+        /// <summary>
         /// Objects and settings of the IO cache in disk mode.
         /// </summary>
         private const string IoFileExtension = ".ioblock";
@@ -88,7 +88,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             }
             return new Tuple<bool, HashSet<long>>(true, listBlockHeight);
         }
- 
+
         /// <summary>
         /// Initialize a new cache io index.
         /// </summary>
@@ -110,7 +110,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                     {
                         _dictionaryCacheIoIndexObject.Add(ioFileName, cacheIoIndexObject);
 
-                        foreach(long blockHeight in result.Item2)
+                        foreach (long blockHeight in result.Item2)
                         {
                             listBlockHeight.Add(blockHeight);
                         }
@@ -194,14 +194,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                         }
                     }
 
-                    long totalIoCacheMemoryUsage = GetIoCacheSystemMemoryConsumption();
+                    long totalIoCacheMemoryUsage = GetIoCacheSystemMemoryConsumption(cancellation);
 
 
                     if (!cancellation.IsCancellationRequested)
-                    {
                         cancellation.Cancel();
-                    }
-
 
 #if DEBUG
                     Debug.WriteLine("Cache IO Index Object - Total Memory usage from the cache: " + ClassUtility.ConvertBytesToMegabytes(totalIoCacheMemoryUsage));
@@ -211,7 +208,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             }
             finally
             {
-                if(!cancellation.IsCancellationRequested)
+                if (!cancellation.IsCancellationRequested)
                 {
                     cancellation.Cancel();
                 }
@@ -316,19 +313,15 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                 {
                     long restMemoryToTask = memoryAsked - totalMemoryRetrieved;
 
-                    if (GetIoCacheSystemMemoryConsumption() + restMemoryToTask <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
-                    {
+                    if (GetIoCacheSystemMemoryConsumption(cancellation) + restMemoryToTask <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                         return true;
-                    }
 
                     long totalMemoryFreeRetrieved = await _dictionaryCacheIoIndexObject[ioFileFileIndex].PurgeIoBlockDataMemory(false, cancellation, restMemoryToTask, true);
 
                     totalMemoryRetrieved += totalMemoryFreeRetrieved;
 
                     if (totalMemoryRetrieved >= memoryAsked)
-                    {
                         return true;
-                    }
                 }
             }
 
@@ -404,7 +397,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                                 {
                                     if (cancellationIoCache != null)
                                     {
-                                        if(cancellationIoCache.IsCancellationRequested)
+                                        if (cancellationIoCache.IsCancellationRequested)
                                         {
                                             break;
                                         }
@@ -448,14 +441,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             try
             {
 
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
+
                 useSemaphore = true;
 
                 string ioFileName = GetIoFileNameFromBlockHeight(blockHeight);
@@ -494,14 +481,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             try
             {
 
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 string ioFileName = GetIoFileNameFromBlockHeight(blockHeight);
@@ -539,14 +519,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
             try
             {
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 string ioFileName = GetIoFileNameFromBlockHeight(blockHeight);
@@ -583,14 +556,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
             try
             {
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
 
@@ -638,14 +604,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
             try
             {
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 Dictionary<string, List<ClassBlockObject>> listBlockObject = new Dictionary<string, List<ClassBlockObject>>();
@@ -719,7 +678,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                                             result = false;
                                         }
                                     }
-                                    
+
                                     totalTaskDone++;
                                 }, cancellation.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
                             }
@@ -813,14 +772,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             try
             {
 
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 semaphoreUsed = true;
 
 
@@ -863,14 +815,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             try
             {
 
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 string ioFileName = GetIoFileNameFromBlockHeight(blockHeight);
@@ -909,14 +854,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
             try
             {
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 if (blockHeight < BlockchainSetting.GenesisBlockHeight)
@@ -970,14 +908,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
             try
             {
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 bool result = true;
@@ -1150,14 +1081,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
             try
             {
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 long blockHeightFromTransactionHash = ClassTransactionUtility.GetBlockHeightFromTransactionHash(transactionHash);
@@ -1210,14 +1134,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             try
             {
 
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 if (blockHeight >= BlockchainSetting.GenesisBlockHeight)
@@ -1287,14 +1204,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             try
             {
 
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 // If the block height is provided.
@@ -1339,14 +1249,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
             try
             {
-                if (cancellationIoCache != null)
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
-                }
-                else
-                {
-                    await _semaphoreIoCacheIndexAccess.WaitAsync();
-                }
+                await _semaphoreIoCacheIndexAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
                 Dictionary<string, List<long>> listBlockHeightIndexedByIoFile = new Dictionary<string, List<long>>();
@@ -1509,7 +1412,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                                 }
                             }
                         }
-                        
+
 
 
                         // Clean up.
@@ -1553,7 +1456,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
         /// Return the total memory usage from the io cache system.
         /// </summary>
         /// <returns></returns>
-        public long GetIoCacheSystemMemoryConsumption()
+        public long GetIoCacheSystemMemoryConsumption(CancellationTokenSource cancellation)
         {
             if (_dictionaryCacheIoIndexObject.Count > 0)
             {
@@ -1561,7 +1464,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
                 foreach (string ioFileName in _dictionaryCacheIoIndexObject.Keys.ToArray())
                 {
-                    totalMemoryUsagePendingCalculation += _dictionaryCacheIoIndexObject[ioFileName].GetIoMemoryUsage();
+                    if (cancellation != null)
+                        cancellation.Token.ThrowIfCancellationRequested();
+
+                    totalMemoryUsagePendingCalculation += _dictionaryCacheIoIndexObject[ioFileName].GetIoMemoryUsage(cancellation);
                 }
 
                 _totalIoCacheSystemMemoryUsage = totalMemoryUsagePendingCalculation;

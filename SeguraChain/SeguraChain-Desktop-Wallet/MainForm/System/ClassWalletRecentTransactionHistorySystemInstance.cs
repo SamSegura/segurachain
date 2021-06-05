@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -400,7 +400,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                 {
                                                     if (walletDataObject.WalletTransactionList[blockHeightStart].Count > 0)
                                                     {
-                                                        foreach (string transactionHash in walletDataObject.WalletTransactionList[blockHeightStart])
+                                                        foreach (string transactionHash in walletDataObject.WalletTransactionList[blockHeightStart].ToArray())
                                                         {
                                                             cancellation?.Token.ThrowIfCancellationRequested();
 
@@ -619,6 +619,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                 else
                                 {
                                     _graphicsRecentTransactionHistory.DrawString(transactionAmountText, ClassWalletDefaultSetting.DefaultPanelRecentTransactionHistoryFont, new SolidBrush(ClassWalletDefaultSetting.DefaultLabelTransactionInPendingForeColor), positionAmountX, positionAmountY);
+
                                 }
                             }
                         }

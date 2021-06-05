@@ -968,14 +968,10 @@ namespace SeguraChain_Lib.Blockchain.Database
             }
 
             if (blockHeight <= BlockchainSetting.GenesisBlockHeight)
-            {
                 return ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_REFUSED;
-            }
 
             if (blockHeight > BlockchainMemoryManagement.GetLastBlockHeight)
-            {
                 return ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOT_SYNCED;
-            }
 
             if (enableBroadcast)
             {
@@ -992,12 +988,6 @@ namespace SeguraChain_Lib.Blockchain.Database
                 {
                     if (cancellation != null)
                     {
-                        await SemaphoreUnlockBlock.WaitAsync(cancellation.Token);
-                        useSemaphore = true;
-                    }
-                    else
-                    {
-                        cancellation = CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenStopBlockchain.Token);
                         await SemaphoreUnlockBlock.WaitAsync(cancellation.Token);
                         useSemaphore = true;
                     }
@@ -1333,9 +1323,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                             }
                         }
                         else
-                        {
                             resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOT_SYNCED;
-                        }
                     }
                     catch (Exception error)
                     {
@@ -1382,9 +1370,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             finally
             {
                 if (useSemaphore)
-                {
                     SemaphoreUnlockBlock.Release();
-                }
             }
             return resultUnlock;
         }
@@ -1410,20 +1396,16 @@ namespace SeguraChain_Lib.Blockchain.Database
                 {
 
                     bool doBlockReward = false;
-                    if (BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner.IsNullOrEmpty(out _) && BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject == null || fromSync)
-                    {
+                    if (BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner.IsNullOrEmpty(out _) &&
+                        BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject == null ||
+                        fromSync)
                         doBlockReward = true;
-                    }
                     else if (BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner == walletAddress)
-                    {
                         doBlockReward = true;
-                    }
                     else if (BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject != null)
                     {
                         if (BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject.WalletAddress == walletAddress)
-                        {
                             doBlockReward = true;
-                        }
                     }
 
                     if (doBlockReward)
@@ -1657,7 +1639,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             {
                 if (await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(blockHeight, false, cancellation) > 0)
                 {
-                    foreach (var txTransactionObject in await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, cancellation))
+                    foreach (var txTransactionObject in await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, false, cancellation))
                     {
                         ClassBlockTransactionInsertEnumStatus insertResult = InsertBlockTransaction(blockHeight, txTransactionObject, cancellation);
 

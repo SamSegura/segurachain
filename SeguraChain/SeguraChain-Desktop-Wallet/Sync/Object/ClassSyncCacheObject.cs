@@ -21,6 +21,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
 
         public BigInteger AvailableBalance;
         public BigInteger PendingBalance;
+        public BigInteger TotalBalance;
 
         /// <summary>
         /// Get the total amount of transactions cached.
@@ -383,6 +384,85 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
                 }
             }
             return null;
+        }
+
+        public void UpdateWalletBalance(CancellationTokenSource cancellation)
+        {
+            bool semaphoreUsed = false;
+            try
+            {
+
+                _semaphoreDictionaryAccess.Wait(cancellation.Token);
+                semaphoreUsed = true;
+
+                BigInteger availableBalance = 0;
+                BigInteger pendingBalance = 0;
+                BigInteger totalBalance = 0;
+
+                foreach(long blockHeight in _syncCacheDatabase.Keys.ToArray())
+                {
+                    cancellation.Token.ThrowIfCancellationRequested();
+
+                    foreach (string transactionHash in _syncCacheDatabase[blockHeight].Keys.ToArray())
+                    {
+                        cancellation.Token.ThrowIfCancellationRequested();
+
+                        if (!_syncCacheDatabase[blockHeight][transactionHash].IsMemPool)
+                        {
+                            if (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionTotalConfirmation
+                                >= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionBlockHeightTarget - _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionBlockHeightInsert))
+                            {
+                                if (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.WalletAddressReceiver == _syncCacheDatabase[blockHeight][transactionHash].WalletAddressOwner)
+                                {
+                                    availableBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
+                                    totalBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
+                                }
+                                else
+                                {
+                                    availableBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                                    totalBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                                }
+                            }
+                            else
+                            {
+                                if (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.WalletAddressReceiver == _syncCacheDatabase[blockHeight][transactionHash].WalletAddressOwner)
+                                {
+                                    pendingBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
+                                    totalBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
+                                }
+                                else
+                                {
+                                    pendingBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                                    totalBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.WalletAddressSender == _syncCacheDatabase[blockHeight][transactionHash].WalletAddressOwner)
+                            {
+                                availableBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                                totalBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                            }
+                            else
+                            {
+                                pendingBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
+                                totalBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
+                            }
+
+                        }
+                    }
+                }
+
+                AvailableBalance = availableBalance;
+                PendingBalance = pendingBalance;
+                TotalBalance = totalBalance;
+            }
+            finally
+            {
+                if (semaphoreUsed)
+                    _semaphoreDictionaryAccess.Release();
+            }
         }
     }
 }
