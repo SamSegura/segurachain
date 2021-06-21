@@ -32,26 +32,39 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             {
                 if (value != null)
                 {
-                    value.BlockCloned = false;
-                    if (!IsNull)
+                    lock (value)
                     {
-                        lock (_blockObject)
-                        {
-                            if (value.BlockIsUpdated)
-                                IsUpdated = true;
+                        if (value.BlockIsUpdated)
+                            IsUpdated = true;
 
-                            _blockObject = value;
+                        if (!IsNull)
+                        {
+                            lock (_blockObject)
+                            {
+                                if (value.BlockFromMemory || value.BlockCloned)
+                                    _blockObject = value.DirectCloneBlockObject();
+                                else
+                                {
+                                    if (_blockObject.BlockLastChangeTimestamp <= value.BlockLastChangeTimestamp)
+                                        _blockObject = value;
+                                }
+                                _blockObject.BlockFromMemory = false;
+                                _blockObject.BlockFromCache = true;
+                                _blockObject.BlockCloned = false;
+                                _blockObject.BlockIsUpdated = false;
+                                _blockObject.Disposed = false;
+                            }
+                        }
+                        else
+                        {
+                            _blockObject = value.BlockFromMemory || value.BlockFromCache ? value.DirectCloneBlockObject() : value;
+                            _blockObject.BlockFromMemory = false;
+                            _blockObject.BlockFromCache = true;
+                            _blockObject.BlockCloned = false;
                             _blockObject.BlockIsUpdated = false;
                             _blockObject.Disposed = false;
                         }
                     }
-                    else
-                    {
-                        _blockObject = value;
-                        _blockObject.Disposed = false;
-                        IsUpdated = true;
-                    }
-
                     LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
                 }
@@ -59,7 +72,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 {
                     if (!IsNull)
                     {
-                        _blockObject.Dispose();
+                        _blockObject?.Dispose();
                         _blockObject = null;
                         _ioDataSizeOnMemory = 0;
                         IsUpdated = false;
@@ -143,9 +156,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             get
             {
                 if (_blockObject == null)
-                {
                     return true;
-                }
 
                 try
                 {
@@ -155,7 +166,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         {
                             if (_blockObject.Disposed)
                                 return true;
-
 
                             if (_blockObject.BlockTransactions == null)
                                 return true;
@@ -174,38 +184,27 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     else
                     {
 
-                        bool isLocked = false;
                         bool exception = false;
+
                         try
                         {
-                            if (Monitor.TryEnter(_blockObject))
-                            {
-                                isLocked = true;
-                                try
-                                {
-                                    if (_blockObject.Disposed)
-                                        return true;
+                            if (_blockObject.Disposed)
+                                return true;
 
-                                    if (_blockObject.BlockTransactions == null)
-                                        return true;
+                            if (_blockObject.BlockTransactions == null)
+                                return true;
 
-                                    if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
-                                        return true;
+                            if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
+                                return true;
 
-                                    if (IsDeleted)
-                                        return true;
-                                }
-                                catch
-                                {
-                                    exception = true;
-                                }
-                            }
+                            if (IsDeleted)
+                                return true;
                         }
-                        finally
+                        catch
                         {
-                            if (isLocked)
-                                Monitor.Exit(_blockObject);
+                            exception = true;
                         }
+
 
                         if (exception) return true;
 

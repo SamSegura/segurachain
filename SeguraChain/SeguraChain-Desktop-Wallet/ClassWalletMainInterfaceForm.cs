@@ -94,12 +94,6 @@ namespace SeguraChain_Desktop_Wallet
             InitializeComponent();
             EnableDoubleBuffer();
 
-#if NET5_0_OR_GREATER
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-#else
-            this.AutoScaleDimensions = new SizeF(1F, 1F);
-#endif
-
             #region Insert control panels target to draw shadows.
 
             _listMainInterfaceControlShadow = new List<Control>();
@@ -158,6 +152,14 @@ namespace SeguraChain_Desktop_Wallet
         /// <param name="e"></param>
         private void ClassWalletMainInterfaceForm_Load(object sender, EventArgs e)
         {
+
+#if NET5_0_OR_GREATER
+            this.AutoScaleDimensions = new SizeF(7F, 16F);
+            this.AutoScaleMode = AutoScaleMode.Inherit;
+#else
+            this.AutoScaleDimensions = new SizeF(1F, 1F);
+#endif
+
             // Insert language list items.
             InsertLanguageToolstripList();
 
@@ -181,13 +183,9 @@ namespace SeguraChain_Desktop_Wallet
 
             // Create or load wallet.
             if (_noWalletFile)
-            {
                 StartCreateDefaultWallet();
-            }
             else
-            {
                 StartLoadFirstWallet();
-            }
 
             // Enable update tasks.
             EnableTaskUpdateWalletFileListOpened();
@@ -204,9 +202,8 @@ namespace SeguraChain_Desktop_Wallet
         private void ClassWalletMainInterfaceForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!_cancellationTokenTaskUpdateWalletListFilesFound.IsCancellationRequested)
-            {
                 _cancellationTokenTaskUpdateWalletListFilesFound.Cancel();
-            }
+
             _walletRecentTransactionHistorySystemInstance.ClearRecentTransactionHistory();
             StopTaskUpdateWallet();
         }
@@ -386,9 +383,7 @@ namespace SeguraChain_Desktop_Wallet
                     using (ClassPrintWalletObject printWalletObject = new ClassPrintWalletObject(
                     ClassWalletDataFunction.GenerateBitmapWalletQrCode(ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[ClassWalletDefaultSetting.WalletDefaultFilename].WalletPrivateKey),
                     ClassWalletDataFunction.GenerateBitmapWalletQrCode(ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[ClassWalletDefaultSetting.WalletDefaultFilename].WalletAddress)))
-                    {
                         printWalletObject.DoPrintWallet(this);
-                    }
                 }
             }
             else
@@ -434,10 +429,9 @@ namespace SeguraChain_Desktop_Wallet
                     }
                 }
             }
+
             if (!successfullyLoaded)
-            {
                 MessageBox.Show(@"Any wallet(s) has been loaded successfully, check if your wallet files are correct, dump/import your private key(s) into a new wallet if necessary.", @"Load wallet(s) failed.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
 
         /// <summary>
@@ -451,19 +445,16 @@ namespace SeguraChain_Desktop_Wallet
             {
                 // Cancel the update task who update wallet informations showed from the previous wallet file.
                 StopTaskUpdateWalletInformations();
+
                 if (!firstLoad)
                 {
                     if (_walletRecentTransactionHistorySystemInstance != null)
-                    {
                         _walletRecentTransactionHistorySystemInstance.ClearRecentTransactionHistory();
-                    }
 
                     if (_walletTransactionHistorySystemInstance != null)
                     {
                         if (_walletTransactionHistorySystemInstance.ContainsTransactionHistoryToWalletFileOpened(_currentWalletFilename))
-                        {
                             _walletTransactionHistorySystemInstance.ClearTransactionHistoryOfWalletFileOpened(_currentWalletFilename);
-                        }
                     }
                 }
 
@@ -482,17 +473,15 @@ namespace SeguraChain_Desktop_Wallet
 
                     if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData.ContainsKey(walletFilename))
                     {
-                        Task.Factory.StartNew(() =>
+                        Task.Factory.StartNew(async () =>
                         {
-                            long lastBlockHeightUnlocked = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(cancellation);
+                            long lastBlockHeightUnlocked = await ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(cancellation);
                             if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFilename].WalletLastBlockHeightSynced < lastBlockHeightUnlocked || ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFilename].WalletLastBlockHeightSynced > lastBlockHeightUnlocked || ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFilename].WalletEnableRescan)
                             {
                                 MethodInvoker invoke = () =>
                                 {
                                     using (ClassWalletRescanInternalForm walletRescanInternalForm = new ClassWalletRescanInternalForm(walletFilename, false))
-                                    {
                                         walletRescanInternalForm.ShowDialog(this);
-                                    }
                                 };
 
                                 BeginInvoke(invoke);
@@ -1496,32 +1485,31 @@ namespace SeguraChain_Desktop_Wallet
         /// <param name="e"></param>
         private void panelTransactionHistory_Paint(object sender, PaintEventArgs e)
         {
-            if (_walletTransactionHistorySystemInstance != null)
+            if (tabControlWallet.SelectedTab == tabPageTransactionHistory)
             {
-                if (_walletTransactionHistorySystemInstance.ContainsTransactionHistoryToWalletFileOpened(_currentWalletFilename))
+                if (_walletTransactionHistorySystemInstance != null)
                 {
-
-                    if (!_walletTransactionHistorySystemInstance.GetLoadStatus(_currentWalletFilename, out double percentProgress))
+                    if (_walletTransactionHistorySystemInstance.ContainsTransactionHistoryToWalletFileOpened(_currentWalletFilename))
                     {
-                        Bitmap bitmapTransactionHistory = _walletTransactionHistorySystemInstance[_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations];
-                        if (bitmapTransactionHistory != null)
+
+                        if (!_walletTransactionHistorySystemInstance.GetLoadStatus(_currentWalletFilename, out double percentProgress))
                         {
-                            if (bitmapTransactionHistory.RawFormat != null)
+                            Bitmap bitmapTransactionHistory = _walletTransactionHistorySystemInstance[_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations];
+                            if (bitmapTransactionHistory != null)
                             {
+                                if (bitmapTransactionHistory.RawFormat != null)
+                                {
 
-                                e.Graphics.DrawImageUnscaled(bitmapTransactionHistory, 0, 0);
+                                    e.Graphics.DrawImageUnscaled(bitmapTransactionHistory, 0, 0);
 
-
-                                _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, true);
-                                _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, false);
+                                    _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, true);
+                                    _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, false);
+                                }
                             }
                         }
+                        else
+                            _walletTransactionHistorySystemInstance.PaintTransactionLoadingAnimationToTransactionHistory(_currentWalletFilename, _walletMainFormLanguageObject.PANEL_TRANSACTION_HISTORY_ON_LOAD_TEXT, percentProgress, e.Graphics, panelTransactionHistory, _cancellationTokenTaskUpdateWalletContentInformations);
                     }
-                    else
-                    {
-                        _walletTransactionHistorySystemInstance.PaintTransactionLoadingAnimationToTransactionHistory(_currentWalletFilename, _walletMainFormLanguageObject.PANEL_TRANSACTION_HISTORY_ON_LOAD_TEXT, percentProgress, e.Graphics, panelTransactionHistory, _cancellationTokenTaskUpdateWalletContentInformations);
-                    }
-
                 }
             }
         }
@@ -1651,9 +1639,7 @@ namespace SeguraChain_Desktop_Wallet
                 if (_walletTransactionHistorySystemInstance.ContainsTransactionHistoryToWalletFileOpened(_currentWalletFilename))
                 {
                     if (!_walletTransactionHistorySystemInstance.GetLoadStatus(_currentWalletFilename, out _))
-                    {
                         _walletTransactionHistorySystemInstance.DisableTransactionHoverByPosition(_currentWalletFilename);
-                    }
                 }
             }
         }
@@ -1678,9 +1664,7 @@ namespace SeguraChain_Desktop_Wallet
                         if (found && blockTransactionToShow != null)
                         {
                             using (ClassWalletTransactionHistoryInformationInternalForm walletTransactionHistoryInformationInternalForm = new ClassWalletTransactionHistoryInformationInternalForm(blockTransactionToShow, isMemPool))
-                            {
                                 walletTransactionHistoryInformationInternalForm.ShowDialog(this);
-                            }
                         }
                     }
                 }
@@ -1709,13 +1693,9 @@ namespace SeguraChain_Desktop_Wallet
                                 int maxPage = _walletTransactionHistorySystemInstance.MaxPageTransactionHistory(_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations);
 
                                 if (inputPage <= maxPage)
-                                {
                                     _walletTransactionHistorySystemInstance.SetPageTransactionHistory(_currentWalletFilename, inputPage, _cancellationTokenTaskUpdateWalletContentInformations);
-                                }
                                 else
-                                {
                                     error = true;
-                                }
                             }
                             if (error)
                             {
@@ -1736,9 +1716,7 @@ namespace SeguraChain_Desktop_Wallet
         private void timerRefreshTransactionHistory_Tick(object sender, EventArgs e)
         {
             if (tabControlWallet.SelectedTab == tabPageTransactionHistory)
-            {
                 panelTransactionHistory.Refresh();
-            }
         }
 
         /// <summary>
@@ -1757,9 +1735,7 @@ namespace SeguraChain_Desktop_Wallet
                     bool continueExport = true;
 
                     if (allTransaction)
-                    {
                         continueExport = MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_ALL_NOTICE_TEXT, _walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_TITLE_TEXT, MessageBoxButtons.YesNo) == DialogResult.Yes;
-                    }
 
                     if (continueExport)
                     {
@@ -1777,13 +1753,9 @@ namespace SeguraChain_Desktop_Wallet
                                 if (!saveTransactionExportFileDialog.FileName.IsNullOrEmpty(out _))
                                 {
                                     if (_walletTransactionHistorySystemInstance.TryExportTransactionHistory(_currentWalletFilename, saveTransactionExportFileDialog.FileName, allTransaction, _walletMainFormLanguageObject, _cancellationTokenTaskUpdateWalletContentInformations))
-                                    {
                                         MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_DONE_TEXT, _walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_TITLE_TEXT);
-                                    }
                                     else
-                                    {
                                         MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_FAILED_TEXT, _walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_TITLE_TEXT, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                    }
                                 }
                             }
                         }
@@ -1806,29 +1778,29 @@ namespace SeguraChain_Desktop_Wallet
             try
             {
 
-                e.Graphics.Clear(ClassWalletDefaultSetting.DefaultRecentTransactionBackColor);
-
-                Bitmap bitmapRecentTransactions = _walletRecentTransactionHistorySystemInstance.GetRecentTransactionHistoryBitmap(_cancellationTokenTaskUpdateWalletContentInformations);
-
-                if (bitmapRecentTransactions != null)
+                if (tabControlWallet.SelectedTab == tabPageOverview)
                 {
-                    e.Graphics.DrawImageUnscaled(bitmapRecentTransactions, 0, 0);
+                    Bitmap bitmapRecentTransactions = _walletRecentTransactionHistorySystemInstance.GetRecentTransactionHistoryBitmap(_cancellationTokenTaskUpdateWalletContentInformations);
 
-                    Point point = panelInternalRecentTransactions.PointToClient(Cursor.Position);
-
-                    foreach (var showedRecentTransactionHistoryObject in _walletRecentTransactionHistorySystemInstance.DictionaryRecentTransactionHistoryObjects.Values.ToArray())
+                    if (bitmapRecentTransactions != null)
                     {
-                        if (showedRecentTransactionHistoryObject?.TransactionDrawRectangle != null)
+                        e.Graphics.DrawImageUnscaled(bitmapRecentTransactions, 0, 0);
+
+                        Point point = panelInternalRecentTransactions.PointToClient(Cursor.Position);
+
+                        foreach (var showedRecentTransactionHistoryObject in _walletRecentTransactionHistorySystemInstance.DictionaryRecentTransactionHistoryObjects.Values.ToArray())
                         {
-                            if (showedRecentTransactionHistoryObject.TransactionDrawRectangle.Contains(point))
+                            if (showedRecentTransactionHistoryObject?.TransactionDrawRectangle != null)
                             {
-                                e.Graphics.DrawRectangle(new Pen(ClassWalletDefaultSetting.DefaultPictureBoxTransactionBorderColor, 1.0f), showedRecentTransactionHistoryObject.TransactionDrawRectangle.X, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Y, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Width - 2, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Height - 2);
-                                break;
+                                if (showedRecentTransactionHistoryObject.TransactionDrawRectangle.Contains(point))
+                                {
+                                    e.Graphics.DrawRectangle(new Pen(ClassWalletDefaultSetting.DefaultPictureBoxTransactionBorderColor, 1.0f), showedRecentTransactionHistoryObject.TransactionDrawRectangle.X, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Y, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Width - 2, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Height - 2);
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-
             }
             catch
             {
@@ -1846,9 +1818,7 @@ namespace SeguraChain_Desktop_Wallet
             if (_walletRecentTransactionHistorySystemInstance != null)
             {
                 if (_walletRecentTransactionHistorySystemInstance.UpdateLastMousePosition(panelInternalRecentTransactions.PointToClient(Cursor.Position)))
-                {
                     panelInternalRecentTransactions.Refresh();
-                }
             }
         }
 
@@ -1862,9 +1832,7 @@ namespace SeguraChain_Desktop_Wallet
             if (_walletRecentTransactionHistorySystemInstance != null)
             {
                 if (_walletRecentTransactionHistorySystemInstance.UpdateLastMousePosition(panelInternalRecentTransactions.PointToClient(Cursor.Position)))
-                {
                     panelInternalRecentTransactions.Refresh();
-                }
             }
         }
 
@@ -1928,9 +1896,8 @@ namespace SeguraChain_Desktop_Wallet
                 if (blockTransaction?.TransactionObject != null)
                 {
                     using (ClassWalletTransactionHistoryInformationInternalForm walletTransactionHistoryInformationInternalForm = new ClassWalletTransactionHistoryInformationInternalForm(blockTransaction, isMemPool))
-                    {
                         walletTransactionHistoryInformationInternalForm.ShowDialog(this);
-                    }
+
                     panelInternalRecentTransactions.ResetCursor();
                     panelInternalRecentTransactions.Refresh();
                 }
@@ -1957,13 +1924,9 @@ namespace SeguraChain_Desktop_Wallet
         {
             int textLength = textBoxSendTransactionWalletAddressTarget.Text.Length;
             if (textLength >= BlockchainSetting.WalletAddressWifLengthMin && textLength <= BlockchainSetting.WalletAddressWifLengthMax)
-            {
                 textBoxSendTransactionWalletAddressTarget.ForeColor = ClassWalletUtility.CheckWalletAddress(textBoxSendTransactionWalletAddressTarget.Text) ? Color.Green : Color.Red;
-            }
             else
-            {
                 textBoxSendTransactionWalletAddressTarget.ForeColor = Color.Black;
-            }
         }
 
         /// <summary>
@@ -2088,17 +2051,13 @@ namespace SeguraChain_Desktop_Wallet
                     decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 
                     if (amountSelected < walletAvailableBalance)
-                    {
                         textBoxSendTransactionAmountSelected.ForeColor = Color.Green;
-                    }
+
                     else if (amountSelected == walletAvailableBalance)
-                    {
                         textBoxSendTransactionAmountSelected.ForeColor = Color.DarkOrange;
-                    }
+
                     else if (amountSelected > walletAvailableBalance)
-                    {
                         textBoxSendTransactionAmountSelected.ForeColor = Color.Red;
-                    }
 
                     if (int.TryParse(textBoxSendTransactionConfirmationsCountTarget.Text, out int totalConfirmationsTarget))
                     {
@@ -2128,9 +2087,7 @@ namespace SeguraChain_Desktop_Wallet
                                 }
                             }
                             else
-                            {
                                 CleanAmountAndFeeEstimations(true);
-                            }
                         }
                         else
                         {
@@ -2164,13 +2121,10 @@ namespace SeguraChain_Desktop_Wallet
         private void CleanAmountAndFeeEstimations(bool error)
         {
             if (error)
-            {
                 textBoxSendTransactionFeeCalculated.Text = _walletMainFormLanguageObject.LABEL_SEND_TRANSACTION_CONFIRMATION_TIME_ESTIMATED_FAILED_TEXT;
-            }
             else
-            {
                 textBoxSendTransactionFeeCalculated.Text = string.Empty;
-            }
+
             textBoxSendTransactionAmountToSpend.Text = string.Empty;
             textBoxSendTransactionTotalAmountSource.Text = string.Empty;
             textBoxSendTransactionFeeSizeCost.Text = string.Empty;
@@ -2248,51 +2202,35 @@ namespace SeguraChain_Desktop_Wallet
         /// <summary>
         /// Start a task to send a transaction.
         /// </summary>
-        private bool StartSendTransactionTask(out bool error)
+        private ClassEnumSendTransactionResult StartSendTransactionTask()
         {
-            error = true; // Default.
 
             if (textBoxSendTransactionWalletAddressTarget.Text.IsNullOrEmpty(out _))
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             if (!ClassWalletUtility.CheckWalletAddress(textBoxSendTransactionWalletAddressTarget.Text))
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
 
             if (textBoxSendTransactionAmountSelected.Text.IsNullOrEmpty(out _))
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
+
             if (textBoxSendTransactionFeeCalculated.Text.IsNullOrEmpty(out _))
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             string walletAddress = ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[_currentWalletFilename].WalletAddress;
 
             if (walletAddress == textBoxSendTransactionWalletAddressTarget.Text)
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             if (!int.TryParse(textBoxSendTransactionConfirmationsCountTarget.Text, out int totalConfirmationsTarget))
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             if (totalConfirmationsTarget < BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations || totalConfirmationsTarget > BlockchainSetting.TransactionMandatoryMaxBlockTransactionConfirmations)
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             if (!decimal.TryParse(textBoxSendTransactionAmountSelected.Text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal amountToSpend))
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             Task<ClassSendTransactionFeeCostCalculationResultObject> taskSendTransactionFeeCostCalculationResult;
 
@@ -2303,20 +2241,16 @@ namespace SeguraChain_Desktop_Wallet
             }
             catch
             {
-                return false;
+                return ClassEnumSendTransactionResult.SEND_FAILED;
             }
 
             if (taskSendTransactionFeeCostCalculationResult.IsCanceled || taskSendTransactionFeeCostCalculationResult.IsFaulted || !taskSendTransactionFeeCostCalculationResult.IsCompleted)
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             ClassSendTransactionFeeCostCalculationResultObject sendTransactionFeeCostCalculationResult = taskSendTransactionFeeCostCalculationResult.Result;
 
             if (sendTransactionFeeCostCalculationResult.Failed)
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             decimal feeToPay = (decimal)sendTransactionFeeCostCalculationResult.TotalFeeCost / BlockchainSetting.CoinDecimal;
 
@@ -2325,18 +2259,14 @@ namespace SeguraChain_Desktop_Wallet
             decimal walletAvailableBalance = (decimal)walletAvailableBalanceBigInteger / BlockchainSetting.CoinDecimal;
 
             if (amountToSpend + feeToPay > walletAvailableBalance)
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             BigInteger amountToSpendDecimals = (BigInteger)(amountToSpend * BlockchainSetting.CoinDecimal);
 
             BigInteger sumToSpend = amountToSpendDecimals + sendTransactionFeeCostCalculationResult.TotalFeeCost;
 
             if (sumToSpend > walletAvailableBalanceBigInteger)
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             string walletPrivateKey;
 
@@ -2347,73 +2277,57 @@ namespace SeguraChain_Desktop_Wallet
                     sendTransactionPassphraseForm.ShowDialog(this);
 
                     if (!sendTransactionPassphraseForm.WalletDecryptPrivateKeyResultStatus)
-                    {
-                        return false;
-                    }
+                        return ClassEnumSendTransactionResult.SEND_FAILED;
 
                     walletPrivateKey = sendTransactionPassphraseForm.WalletDecryptedPrivateKey;
                 }
             }
             else
-            {
                 walletPrivateKey = ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[_currentWalletFilename].WalletPrivateKey;
-            }
 
             if (walletPrivateKey.IsNullOrEmpty(out _))
-            {
-                return false;
-            }
+                return ClassEnumSendTransactionResult.SEND_FAILED;
 
             bool doSendTransactionTask;
 
-            ClassWalletSendTransactionConfirmationForm walletSendTransactionConfirmationForm = new ClassWalletSendTransactionConfirmationForm(amountToSpendDecimals, sendTransactionFeeCostCalculationResult.TotalFeeCost, textBoxSendTransactionWalletAddressTarget.Text);
-
-            walletSendTransactionConfirmationForm.ShowDialog(this);
-
-            doSendTransactionTask = walletSendTransactionConfirmationForm.SendTransactionConfirmationStatus;
-            if (!walletSendTransactionConfirmationForm.IsDisposed)
+            using (ClassWalletSendTransactionConfirmationForm walletSendTransactionConfirmationForm = new ClassWalletSendTransactionConfirmationForm(amountToSpendDecimals, sendTransactionFeeCostCalculationResult.TotalFeeCost, textBoxSendTransactionWalletAddressTarget.Text))
             {
-                walletSendTransactionConfirmationForm.Dispose();
+                walletSendTransactionConfirmationForm.ShowDialog(this);
+
+                doSendTransactionTask = walletSendTransactionConfirmationForm.SendTransactionConfirmationStatus;
             }
 
             if (!doSendTransactionTask)
             {
-                error = false;
                 if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[_currentWalletFilename].WalletEncrypted)
-                {
                     walletPrivateKey.Clear();
-                }
-                return false;
+
+                return ClassEnumSendTransactionResult.SEND_CANCELLED;
             }
 
             if (!long.TryParse(textBoxSendTransactionPaymentId.Text, out long paymendId))
-            {
                 paymendId = 0;
-            }
+
             using (ClassWalletSendTransactionWaitRequestForm walletSendTransactionWaitRequestForm = new ClassWalletSendTransactionWaitRequestForm(_currentWalletFilename, textBoxSendTransactionWalletAddressTarget.Text, amountToSpend, feeToPay, paymendId, totalConfirmationsTarget, walletPrivateKey, sendTransactionFeeCostCalculationResult.TransactionAmountSourceList, _cancellationTokenTaskUpdateWalletContentInformations))
             {
                 walletSendTransactionWaitRequestForm.ShowDialog(this);
 
                 if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[_currentWalletFilename].WalletEncrypted)
-                {
                     walletPrivateKey.Clear();
-                }
-                error = false;
 
                 if (_cancellationTokenTaskUpdateWalletContentInformations.IsCancellationRequested)
-                {
-                    return false;
-                }
+                    return ClassEnumSendTransactionResult.SEND_FAILED;
 
                 if (!walletSendTransactionWaitRequestForm.SendTransactionStatus)
                 {
                     MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_NETWORK_ERROR_CONTENT_TEXT, _walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_NETWORK_ERROR_TITLE_TEXT, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
+                    return ClassEnumSendTransactionResult.SEND_FAILED;
                 }
 
             }
             MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_NETWORK_SUCCESS_CONTENT_TEXT, _walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_NETWORK_SUCCESS_TITLE_TEXT, MessageBoxButtons.OK, MessageBoxIcon.Information);
-            return true;
+
+            return ClassEnumSendTransactionResult.SEND_SUCCESS;
         }
 
         /// <summary>
@@ -2423,21 +2337,21 @@ namespace SeguraChain_Desktop_Wallet
         /// <param name="e"></param>
         private void buttonSendTransactionDoProcess_Click(object sender, EventArgs e)
         {
-            if (!StartSendTransactionTask(out bool error))
-            {
-                if (error)
-                {
-                    MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_ERROR_CONTENT_TEXT, _walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_ERROR_TITLE_TEXT, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
+            var sendTransactionResult = StartSendTransactionTask();
 
-            try
+            if (sendTransactionResult == ClassEnumSendTransactionResult.SEND_FAILED)
+                MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_ERROR_CONTENT_TEXT, _walletMainFormLanguageObject.MESSAGEBOX_SEND_TRANSACTION_DO_PROCESS_ERROR_TITLE_TEXT, MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            else if (sendTransactionResult == ClassEnumSendTransactionResult.SEND_SUCCESS)
             {
-                UpdateTransactionFeeCostEstimated().Wait(_cancellationTokenTaskUpdateWalletContentInformations.Token);
-            }
-            catch
-            {
-                // Ignored, catch the exception once the task is cancelled.
+                try
+                {
+                    UpdateTransactionFeeCostEstimated().Wait(_cancellationTokenTaskUpdateWalletContentInformations.Token);
+                }
+                catch
+                {
+                    // Ignored, catch the exception once the task is cancelled.
+                }
             }
         }
 
@@ -2495,16 +2409,15 @@ namespace SeguraChain_Desktop_Wallet
                     while (!result.IsCompleted)
                     {
                         if (!ClassDesktopWalletCommonData.DesktopWalletStarted)
-                        {
                             break;
-                        }
-                        await Task.Delay(ClassWalletDefaultSetting.DefaultLabelWalletAddressEventCopyAwaitDelay);
+
+                        await Task.Delay(ClassWalletDefaultSetting.DefaultLabelWalletAddressEventCopyAwaitDelay, _cancellationTokenTaskUpdateWalletContentInformations.Token);
                     }
 
 
                     _semaphoreCopyWalletAddressClickEvent.Release();
 
-                }, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+                }, _cancellationTokenTaskUpdateWalletContentInformations.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
             }
 
         }
@@ -2530,9 +2443,7 @@ namespace SeguraChain_Desktop_Wallet
                     if (saveQrCodeFileDialog.ShowDialog(this) == DialogResult.OK)
                     {
                         if (!saveQrCodeFileDialog.FileName.IsNullOrEmpty(out _))
-                        {
                             panelQrCodeWalletAddress.BackgroundImage.Save(saveQrCodeFileDialog.FileName, ImageFormat.Png);
-                        }
                     }
                 }
             }

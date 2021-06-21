@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
+using Newtonsoft.Json;
 using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Function;
 using SeguraChain_Lib.Blockchain.Mining.Object;
@@ -24,27 +26,31 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         public void Dispose()
         {
-            Dispose(true);
+            Dispose(true); 
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if (Disposed)
+            if (Disposed && _blockTransactions?.Count == 0)
                 return;
 
 
             if (disposing)
             {
-                BlockTransactions?.Clear();
-                GC.SuppressFinalize(this);
+                _blockTransactions?.Clear();
+                _blockTransactions?.TrimExcess();
                 Disposed = true;
             }
         }
 
         #endregion
 
+        #region Block Data
+
         public long BlockHeight;
         public BigInteger BlockDifficulty;
+
         public string BlockHash;
         public ClassMiningPoWaCShareObject BlockMiningPowShareUnlockObject;
         public long TimestampCreate;
@@ -67,14 +73,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public bool BlockUnlockValid;
         public long BlockLastChangeTimestamp;
         public long BlockNetworkAmountConfirmations;
-        public bool BlockIsUpdated;
-        public bool BlockCloned;
-
-        /// <summary>
-        /// Only used pending to sync a block.
-        /// </summary>
-        public int BlockTransactionCountInSync;
-        public int BlockSlowNetworkAmountConfirmations;
 
         #region About transactions.
 
@@ -111,7 +109,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             }
         }
 
-        private SortedList<string, ClassBlockTransaction> _blockTransactions; // Contains transactions id's and transactions confirmations numbers.
+        private SortedList<string, ClassBlockTransaction> _blockTransactions; // Contains transactions hash has index of key with their associated BlockTransaction.
 
         public bool BlockTransactionConfirmationCheckTaskDone;
         public long BlockTotalTaskTransactionConfirmationDone;
@@ -126,6 +124,37 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         #endregion
 
+        #endregion
+
+        #region Internal stats.
+
+        [JsonIgnore]
+        public int BlockTransactionCountInSync;
+
+        [JsonIgnore]
+        public int BlockSlowNetworkAmountConfirmations;
+
+        [JsonIgnore]
+        public bool BlockIsUpdated;
+
+        [JsonIgnore]
+        public bool BlockCloned;
+
+        [JsonIgnore]
+        public bool BlockFromCache;
+
+        [JsonIgnore]
+        public bool BlockFromMemory;
+
+        #endregion
+
+        #region Shortcut functions.
+
+        [JsonIgnore]
+        public bool IsConfirmedByNetwork => BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations &&
+                BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED;
+
+        #endregion
 
         /// <summary>
         /// Constructor.
@@ -141,7 +170,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             BlockUnlockValid = blockUnlockValid;
             _blockTransactions = new SortedList<string, ClassBlockTransaction>();
             BlockTransactionConfirmationCheckTaskDone = blockTransactionConfirmationCheckTaskDone;
-            BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
             TotalCoinConfirmed = 0;
             TotalCoinPending = 0;
             TotalFee = 0;
@@ -149,6 +177,9 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             TotalTransactionConfirmed = 0;
         }
 
+ 
+
+        #region Clone functions.
 
         /// <summary>
         /// Permit to copy the block object and his transaction completly, to bypass the GC memory indexing process.
@@ -160,25 +191,48 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             blockObjectCopy = null; // Default.
             try
             {
-                ClassBlockUtility.StringToBlockObject(ClassBlockUtility.SplitBlockObject(this), out blockObjectCopy);
+                blockObjectCopy = new ClassBlockObject(BlockHeight, BlockDifficulty, BlockHash, TimestampCreate, TimestampFound, BlockStatus, BlockUnlockValid, BlockTransactionConfirmationCheckTaskDone)
+                {
+                    BlockDifficulty = BlockDifficulty,
+                    BlockFromMemory = BlockFromMemory,
+                    BlockFromCache = BlockFromCache,
+                    BlockFinalHashTransaction = BlockFinalHashTransaction,
+                    BlockHash = BlockHash,
+                    BlockHeight = BlockHeight,
+                    BlockIsUpdated = BlockIsUpdated,
+                    BlockLastChangeTimestamp = BlockLastChangeTimestamp,
+                    BlockLastHeightTransactionConfirmationDone = BlockLastHeightTransactionConfirmationDone,
+                    BlockMiningPowShareUnlockObject = BlockMiningPowShareUnlockObject,
+                    BlockNetworkAmountConfirmations = BlockNetworkAmountConfirmations,
+                    BlockSlowNetworkAmountConfirmations = BlockSlowNetworkAmountConfirmations,
+                    BlockStatus = BlockStatus,
+                    BlockTotalTaskTransactionConfirmationDone = BlockTotalTaskTransactionConfirmationDone,
+                    BlockTransactionConfirmationCheckTaskDone = BlockTransactionConfirmationCheckTaskDone,
+                    BlockTransactionCountInSync = BlockTransactionCountInSync,
+                    BlockTransactionFullyConfirmed = BlockTransactionFullyConfirmed,
+                    BlockUnlockValid = BlockUnlockValid,
+                    Disposed = Disposed,
+                    TimestampCreate = TimestampCreate,
+                    TimestampFound = TimestampFound,
+                    TotalCoinConfirmed = TotalCoinConfirmed,
+                    TotalCoinPending = TotalCoinPending,
+                    TotalFee = TotalFee,
+                    TotalTransaction = _blockTransactions == null ? 0 :  _blockTransactions.Count,
+                    TotalTransactionConfirmed = TotalTransactionConfirmed,
+                };
 
                 // Retrieve the count of tx's of the block source.
-                if (_blockTransactions != null && retrieveTx)
+                if (retrieveTx)
                 {
-                    if (_blockTransactions.Count > 0)
+                    if (_blockTransactions?.Count > 0)
                     {
-                        blockObjectCopy.TotalTransaction = _blockTransactions.Count;
-
-                        // Copy tx's into the block object copied if asked.
-                        if (retrieveTx)
+                        lock (_blockTransactions)
                         {
-                            foreach (var tx in BlockTransactions)
-                                if (ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(tx.Value), out ClassBlockTransaction blockTransaction))
-                                    blockObjectCopy.BlockTransactions.Add(tx.Key, blockTransaction);
+                            foreach(var blockTransactionPair in _blockTransactions.ToArray())
+                                blockObjectCopy.BlockTransactions.Add(blockTransactionPair.Key, blockTransactionPair.Value);
                         }
                     }
                 }
-
                 blockObjectCopy.BlockCloned = true;
             }
             catch
@@ -210,5 +264,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             }
             return blockObjectCopy;
         }
+
+        #endregion
     }
 }

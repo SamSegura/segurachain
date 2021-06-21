@@ -940,9 +940,7 @@ namespace SeguraChain_Lib.Utility
                 return Math.Round((((double)bytesCount / 1024) / 1024), 2) + " MB(s)";
             }
             return "0 MB(s)";
-        }
-
-
+        } 
 
         #endregion
     }
@@ -1180,9 +1178,7 @@ namespace SeguraChain_Lib.Utility
             if (content != null)
             {
                 if (content.Length > 0)
-                {
                     return _asciiEncoding.GetString(content);
-                }
             }
             return null;
         }
@@ -1198,22 +1194,17 @@ namespace SeguraChain_Lib.Utility
             if (source != null)
             {
                 if (compare == null)
-                {
                     return false;
-                }
 
                 if (source.Length != compare.Length)
-                {
                     return false;
-                }
 
                 return !source.Where((t, i) => t != compare[i]).Any();
             }
 
             if (compare != null)
-            {
                 return false;
-            }
+
             return true;
         }
     }
@@ -1247,81 +1238,37 @@ namespace SeguraChain_Lib.Utility
                             int packetSize = packetMaxSize;
 
                             if (countPacketSendLength + packetSize > packetLength)
-                            {
                                 packetSize = packetLength - countPacketSendLength;
-                            }
 
                             if (packetSize <= 0)
-                            {
                                 break;
-                            }
 
                             byte[] dataBytes = new byte[packetSize];
 
                             Array.Copy(packetBytesToSend, countPacketSendLength, dataBytes, 0, packetSize);
 
                             await networkStream.WriteAsync(dataBytes, 0, dataBytes.Length, cancellation.Token);
+                            await networkStream.FlushAsync(cancellation.Token);
 
                             countPacketSendLength += packetSize;
 
                             if (countPacketSendLength >= packetLength)
-                            {
                                 break;
-                            }
                         }
                     }
                     else
                     {
                         await networkStream.WriteAsync(packetBytesToSend, 0, packetBytesToSend.Length, cancellation.Token);
+                        await networkStream.FlushAsync(cancellation.Token);
                     }
-
-                    await networkStream.FlushAsync(cancellation.Token);
                 }
             }
             catch
             {
                 sendStatus = false;
             }
-            return sendStatus;
-        }
-    }
 
-    public static class ClassUtilityMemoryStreamExtension
-    {
-        /// <summary>
-        /// Extension function who clear and reset the memory stream.
-        /// </summary>
-        /// <param name="memoryStream"></param>
-        public static void Clear(this MemoryStream memoryStream)
-        {
-            if (memoryStream?.Length > 0)
-            {
-                try
-                {
-                    byte[] buffer = memoryStream.GetBuffer();
-                    if (buffer != null)
-                    {
-                        if (buffer.Length > 0)
-                        {
-                            Array.Clear(buffer, 0, buffer.Length);
-                        }
-                    }
-                }
-                catch
-                {
-                    // Ignored, can be null or the length equal of 0
-                }
-                try
-                {
-                    memoryStream.Position = 0;
-                    memoryStream.SetLength(0);
-                    memoryStream.Capacity = 0;
-                }
-                catch
-                {
-                    // ignored, the capacity can change.
-                }
-            }
+            return sendStatus;
         }
     }
 

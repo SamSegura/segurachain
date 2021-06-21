@@ -28,36 +28,30 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.labelSendTransactionWaitRequestText = new System.Windows.Forms.Label();
-            this.timerSendTransactionProcessTask = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // labelSendTransactionWaitRequestText
             // 
             this.labelSendTransactionWaitRequestText.AutoSize = true;
-            this.labelSendTransactionWaitRequestText.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelSendTransactionWaitRequestText.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.labelSendTransactionWaitRequestText.ForeColor = System.Drawing.Color.Ivory;
-            this.labelSendTransactionWaitRequestText.Location = new System.Drawing.Point(12, 47);
+            this.labelSendTransactionWaitRequestText.Location = new System.Drawing.Point(14, 54);
+            this.labelSendTransactionWaitRequestText.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.labelSendTransactionWaitRequestText.Name = "labelSendTransactionWaitRequestText";
             this.labelSendTransactionWaitRequestText.Size = new System.Drawing.Size(325, 13);
             this.labelSendTransactionWaitRequestText.TabIndex = 0;
             this.labelSendTransactionWaitRequestText.Text = "LABEL_SEND_TRANSACTION_WAIT_REQUEST_TEXT";
             // 
-            // timerSendTransactionProcessTask
-            // 
-            this.timerSendTransactionProcessTask.Tick += new System.EventHandler(this.timerSendTransactionProcessTask_Tick);
-            // 
             // ClassWalletSendTransactionWaitRequestForm
             // 
-#if NET5_0_OR_GREATER
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-#endif
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(90)))), ((int)(((byte)(120)))));
-            this.ClientSize = new System.Drawing.Size(514, 101);
+            this.ClientSize = new System.Drawing.Size(600, 117);
             this.Controls.Add(this.labelSendTransactionWaitRequestText);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Name = "ClassWalletSendTransactionWaitRequestForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "ClassWalletSendTransactionWaitRequestForm";
@@ -72,6 +66,5 @@
         #endregion
 
         private System.Windows.Forms.Label labelSendTransactionWaitRequestText;
-        private System.Windows.Forms.Timer timerSendTransactionProcessTask;
     }
 }

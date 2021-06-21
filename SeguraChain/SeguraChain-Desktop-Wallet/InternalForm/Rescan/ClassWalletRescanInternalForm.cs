@@ -65,7 +65,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Rescan
                 {
                     UpdateWalletRescanPercentProgress();
 
-                    long lastBlockHeightSynced = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(_walletRescanCancellationToken);
+                    long lastBlockHeightSynced = await ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(_walletRescanCancellationToken);
 
                     if (lastBlockHeightSynced >= BlockchainSetting.GenesisBlockHeight)
                     {

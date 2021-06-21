@@ -1179,8 +1179,7 @@ namespace SeguraChain_Desktop_Wallet
             // 
             // ClassWalletMainInterfaceForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(49)))), ((int)(((byte)(55)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(1377, 781);
             this.Controls.Add(this.labelMainInterfaceSyncProgress);

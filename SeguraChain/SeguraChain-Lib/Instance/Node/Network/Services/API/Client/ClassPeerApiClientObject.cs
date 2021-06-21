@@ -63,14 +63,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
-            if (_disposed)
+            if (_disposed && !ClientConnectionStatus)
                 return;
 
             if (disposing)
-            {
                 ClientConnectionStatus = false;
 
-            }
             _disposed = true;
         }
         #endregion
@@ -121,14 +119,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                         {
                             byte[] packetBuffer = new byte[BlockchainSetting.PeerMaxPacketBufferSize];
 
-                            //byteRead = await networkStream.ReadAsync(packetBuffer, 0, packetBuffer.Length, CancellationTokenApiClient.Token);
-
-                            /*
-                            Task<int> readData = networkStream.ReadAsync(packetBuffer, 0, packetBuffer.Length, CancellationTokenApiClient.Token);
-                            readData.Wait(100, CancellationTokenApiClient.Token);
-
-                            packetLength = await readData;*/
-
 
                             int packetLength = await networkStream.ReadAsync(packetBuffer, 0, packetBuffer.Length, CancellationTokenApiClient.Token);
 
@@ -139,7 +129,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
 
                                 if (!packetReceived.IsNullOrEmpty(out _))
                                 {
-
                                     #region Take in count the common POST HTTP request syntax of data.
 
                                     // The method to handle HTTP POST request is very not great, but it's work. Like that we don't have to program a webserver and handle only this kind of request.
@@ -223,9 +212,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                 }
 
                                 if (packetBuffer.Length > 0)
-                                {
                                     Array.Clear(packetBuffer, 0, packetBuffer.Length);
-                                }
                             }
                         }
                     }
@@ -431,7 +418,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
 
                                                 if (apiPeerPacketAskBlockTransactionById.TransactionIndex < totalTransaction)
                                                 {
-                                                    var listTransaction = await ClassBlockchainStats.GetTransactionListFromBlockHeightTarget(apiPeerPacketAskBlockTransactionById.BlockHeight, true, CancellationTokenApiClient);
+                                                    var listTransaction = await ClassBlockchainStats.GetTransactionListFromBlockHeightTarget(apiPeerPacketAskBlockTransactionById.BlockHeight, false, CancellationTokenApiClient);
 
                                                     if (apiPeerPacketAskBlockTransactionById.TransactionIndex < listTransaction.Count)
                                                     {
@@ -608,7 +595,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                                     {
                                                         if (await ClassBlockchainDatabase.BlockchainMemoryManagement.CheckIfTransactionHashAlreadyExist(transactionHash, blockHeight, CancellationTokenApiClient))
                                                         {
-                                                            ClassBlockTransaction blockTransaction = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockTransactionFromSpecificTransactionHashAndHeight(transactionHash, blockHeight, true, CancellationTokenApiClient);
+                                                            ClassBlockTransaction blockTransaction = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockTransactionFromSpecificTransactionHashAndHeight(transactionHash, blockHeight, true, true, CancellationTokenApiClient);
 
                                                             if (blockTransaction != null)
                                                             {

@@ -726,32 +726,22 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             bool checkPacketSignature = CheckPacketSignature(peerIp, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkSettingObject, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, peerNetworkClientSyncObject.PeerPacketReceived.PacketOrder, peerNetworkClientSyncObject.PeerPacketReceived.PacketHash, peerNetworkClientSyncObject.PeerPacketReceived.PacketSignature, cancellation);
 
             if (!checkPacketSignature)
-            {
                 return false;
-            }
 
             if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
-            {
                 return false;
-            }
 
             if (!DeserializePacketContent(packetDecrypted.GetStringFromByteArrayAscii(), out packetSendBlockData))
-            {
                 return false;
-            }
 
             Task<bool> result = CheckPacketBlockData(packetSendBlockData, blockHeightTarget, refuseLockedBlock, peerNetworkSettingObject, cancellation);
             result.Wait(cancellation.Token);
 
             if (!result.IsCompleted)
-            {
                 return false;
-            }
 
             if (!result.Result)
-            {
                 return false;
-            }
 
             return true;
         }
@@ -769,19 +759,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
         {
 
             if (packetSendBlockData?.BlockData?.BlockHash == null)
-            {
                 return false;
-            }
 
             if (!ClassUtility.CheckPacketTimestamp(packetSendBlockData.PacketTimestamp, peerNetworkSettingObject.PeerMaxTimestampDelayPacket, peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
-            {
                 return false;
-            }
 
             if (packetSendBlockData.BlockData == null)
-            {
                 return false;
-            }
 
             // Reset block data just in case.
             packetSendBlockData.BlockData.BlockTransactionFullyConfirmed = false;
@@ -798,9 +782,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             packetSendBlockData.BlockData.TotalTransactionConfirmed = 0;
 
             if (!await ClassBlockUtility.CheckBlockDataObject(packetSendBlockData.BlockData, blockHeightTarget, refuseLockedBlock, cancellation))
-            {
                 return false;
-            }
 
             return true;
         }
@@ -829,37 +811,26 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             bool checkPacketSignature = CheckPacketSignature(peerIp, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkSettingObject, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, peerNetworkClientSyncObject.PeerPacketReceived.PacketOrder, peerNetworkClientSyncObject.PeerPacketReceived.PacketHash, peerNetworkClientSyncObject.PeerPacketReceived.PacketSignature, cancellation);
 
             if (!checkPacketSignature)
-            {
                 return false;
-            }
 
             if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
-            {
                 return false;
-            }
 
             if (!DeserializePacketContent(packetDecrypted.GetStringFromByteArrayAscii(), out packetSendBlockTransactionData))
-            {
                 return false;
-            }
 
 
             if (!ClassUtility.CheckPacketTimestamp(packetSendBlockTransactionData.PacketTimestamp, peerNetworkSettingObject.PeerMaxTimestampDelayPacket, peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
-            {
                 return false;
-            }
 
             Task<bool> checkBlockTransactionData = CheckPacketBlockTransactionData(packetSendBlockTransactionData, blockHeightTarget, null, cancellation);
             checkBlockTransactionData.Wait(cancellation.Token);
 
             if (!checkBlockTransactionData.IsCompleted)
-            {
                 return false;
-            }
+
             if (!checkBlockTransactionData.Result)
-            {
                 return false;
-            }
 
             return true;
         }
@@ -884,47 +855,31 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
             bool checkPacketSignature = CheckPacketSignature(peerIp, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkSettingObject, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, peerNetworkClientSyncObject.PeerPacketReceived.PacketOrder, peerNetworkClientSyncObject.PeerPacketReceived.PacketHash, peerNetworkClientSyncObject.PeerPacketReceived.PacketSignature, cancellation);
 
             if (!checkPacketSignature)
-            {
                 return false;
-            }
 
             if (!TryDecryptPacketPeerContent(peerIp, peerPort, peerNetworkClientSyncObject.PeerPacketReceived.PacketPeerUniqueId, peerNetworkClientSyncObject.PeerPacketReceived.PacketContent, out byte[] packetDecrypted))
-            {
                 return false;
-            }
 
             if (!DeserializePacketContent(packetDecrypted.GetStringFromByteArrayAscii(), out packetSendBlockTransactionDataByRange))
-            {
                 return false;
-            }
 
             if (packetSendBlockTransactionDataByRange.ListTransactionObject == null)
-            {
                 return false;
-            }
 
             if (packetSendBlockTransactionDataByRange.ListTransactionObject.Count == 0)
-            {
                 return false;
-            }
-
 
             if (!ClassUtility.CheckPacketTimestamp(packetSendBlockTransactionDataByRange.PacketTimestamp, peerNetworkSettingObject.PeerMaxTimestampDelayPacket, peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
-            {
                 return false;
-            }
 
             Task<bool> checkBlockTransactionData = ClassPeerPacketSendBlockTransactionDataByRange(packetSendBlockTransactionDataByRange, blockHeightTarget, listWalletAndPublicKeys, cancellation);
             checkBlockTransactionData.Wait(cancellation.Token);
 
             if (!checkBlockTransactionData.IsCompleted)
-            {
                 return false;
-            }
+
             if (!checkBlockTransactionData.Result)
-            {
                 return false;
-            }
 
             return true;
         }
@@ -965,22 +920,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
                             lock (listWalletAndPublicKeys)
                             {
                                 if (!listWalletAndPublicKeys.ContainsKey(packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletAddressSender))
-                                {
                                     listWalletAndPublicKeys.Add(packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletAddressSender, packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletPublicKeySender);
-                                }
                             }
                             break;
                         case ClassTransactionEnumType.TRANSFER_TRANSACTION:
                             lock (listWalletAndPublicKeys)
                             {
                                 if (!listWalletAndPublicKeys.ContainsKey(packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletAddressSender))
-                                {
                                     listWalletAndPublicKeys.Add(packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletAddressSender, packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletPublicKeySender);
-                                }
+
                                 if (!listWalletAndPublicKeys.ContainsKey(packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletAddressReceiver))
-                                {
                                     listWalletAndPublicKeys.Add(packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletAddressReceiver, packetSendBlockTransactionDataByRange.ListTransactionObject[transactionHash].WalletPublicKeyReceiver);
-                                }
                             }
                             break;
                     }
@@ -1003,34 +953,22 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Fun
         private async Task<bool> CheckPacketBlockTransactionData(ClassPeerPacketSendBlockTransactionData packetSendBlockTransactionData, long blockHeightTarget, DisposableDictionary<string, string> listWalletAndPublicKeys, CancellationTokenSource cancellation)
         {
             if (packetSendBlockTransactionData == null)
-            {
                 return false;
-            }
 
             if (packetSendBlockTransactionData.BlockHeight != blockHeightTarget)
-            {
                 return false;
-            }
 
             if (packetSendBlockTransactionData.TransactionObject == null)
-            {
                 return false;
-            }
 
             if (packetSendBlockTransactionData.TransactionObject.BlockHeightTransaction != blockHeightTarget)
-            {
                 return false;
-            }
 
             if (packetSendBlockTransactionData.TransactionObject.TransactionHash.IsNullOrEmpty(out var txHashTrimmed))
-            {
                 return false;
-            }
 
             if (ClassTransactionUtility.GetBlockHeightFromTransactionHash(txHashTrimmed) != blockHeightTarget)
-            {
                 return false;
-            }
 
             ClassTransactionEnumStatus checkTxResult = await ClassBlockchainDatabase.BlockchainMemoryManagement.CheckTransaction(packetSendBlockTransactionData.TransactionObject, null, false, listWalletAndPublicKeys, cancellation, false);
 

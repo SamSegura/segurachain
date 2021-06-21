@@ -761,7 +761,7 @@ namespace SeguraChain_Test_Tool
 
                 for(int k = 0; k < transactionCountPerBlock; k++)
                 {
-                    dictionaryBlockObjects[i].BlockTransactions.Add(blockTransaction.TransactionHash, new ClassBlockTransaction()
+                    dictionaryBlockObjects[i].BlockTransactions.Add(blockTransaction.TransactionHash, new ClassBlockTransaction(0, blockTransaction)
                     {
                         TransactionObject = blockTransaction,
                         TransactionBlockHeightInsert = i,
@@ -820,9 +820,9 @@ namespace SeguraChain_Test_Tool
 
                     string blockHash = ClassBlockUtility.GenerateBlockHash(blockHeight, blockDifficulty, 1, finalTransactionHash, BlockchainSetting.WalletAddressDev(0));
 
-                    if (ClassBlockchainDatabase.BlockchainMemoryManagement.Add(blockHeight, new ClassBlockObject(blockHeight, blockDifficulty, blockHash, timestampCreate, ClassUtility.GetCurrentTimestampInSecond(),  ClassBlockEnumStatus.UNLOCKED, false, false), false, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_MOSTLY_USED, null).Result)
+                    if (ClassBlockchainDatabase.BlockchainMemoryManagement.Add(blockHeight, new ClassBlockObject(blockHeight, blockDifficulty, blockHash, timestampCreate, ClassUtility.GetCurrentTimestampInSecond(),  ClassBlockEnumStatus.UNLOCKED, false, false), CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, new CancellationTokenSource()).Result)
                     {
-                        ClassBlockchainDatabase.BlockchainMemoryManagement[blockHeight, null].BlockTransactions.Add(blockTransaction.TransactionHash, new ClassBlockTransaction()
+                        ClassBlockchainDatabase.BlockchainMemoryManagement[blockHeight, null].BlockTransactions.Add(blockTransaction.TransactionHash, new ClassBlockTransaction(0, blockTransaction)
                         {
                             IndexInsert = 0,
                             TransactionBlockHeightInsert = blockHeight,

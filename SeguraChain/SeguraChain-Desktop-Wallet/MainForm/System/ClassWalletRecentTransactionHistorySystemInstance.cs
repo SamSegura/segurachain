@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SeguraChain_Desktop_Wallet.Common;
+using SeguraChain_Desktop_Wallet.Components;
 using SeguraChain_Desktop_Wallet.MainForm.Object;
 using SeguraChain_Desktop_Wallet.Properties;
 using SeguraChain_Desktop_Wallet.Settings.Enum;
@@ -77,9 +78,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreRecentTransactionHistoryAccess.Release();
-                }
             }
         }
 
@@ -142,9 +141,8 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                 foreach (var recentTransactionObject in DictionaryRecentTransactionHistoryObjects.Values.ToArray())
                 {
                     if (recentTransactionObject == null)
-                    {
                         break;
-                    }
+
                     if (recentTransactionObject.TransactionDrawRectangle.Contains(_mousePositionX, _mousePositionY))
                     {
                         containsPosition = true;
@@ -183,7 +181,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                     if (recentTransactionObjectPair.Value.TransactionDrawRectangle.Contains(mousePosition.X, mousePosition.Y))
                     {
                         long blockHeightTransaction = ClassTransactionUtility.GetBlockHeightFromTransactionHash(recentTransactionObjectPair.Key);
-                        blockTransaction = ClassDesktopWalletCommonData.WalletSyncSystem.GetBlockTransactionFromSyncCache(walletAddress, recentTransactionObjectPair.Key, blockHeightTransaction, cancellation, out isMemPool);
+                        blockTransaction = ClassDesktopWalletCommonData.WalletSyncSystem.GetBlockTransactionFromSyncCache(walletAddress, recentTransactionObjectPair.Key, blockHeightTransaction, out isMemPool);
                         break;
                     }
                 }
@@ -222,7 +220,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                     {
                         if (!walletDataObject.WalletEnableRescan)
                         {
-                            if (walletDataObject.WalletLastBlockHeightSynced >= ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(cancellation))
+                            if (walletDataObject.WalletLastBlockHeightSynced >= await ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(cancellation))
                             {
                                 string walletAddress = walletDataObject.WalletAddress;
                                 long walletLastBlockHeightSynced = walletDataObject.WalletLastBlockHeightSynced;
@@ -368,7 +366,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                                 {
                                                     cancellation?.Token.ThrowIfCancellationRequested();
 
-                                                    DrawTransactionToRecentHistory(new ClassBlockTransaction()
+                                                    DrawTransactionToRecentHistory(new ClassBlockTransaction(0, transactionObject)
                                                     {
                                                         TransactionStatus = true,
                                                         TransactionObject = transactionObject

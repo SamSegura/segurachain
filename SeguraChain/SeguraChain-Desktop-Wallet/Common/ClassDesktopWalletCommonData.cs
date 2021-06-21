@@ -126,7 +126,7 @@ namespace SeguraChain_Desktop_Wallet.Common
 
                 using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
                 {
-                    writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
+                     writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
                 }
             }
             catch
@@ -168,10 +168,9 @@ namespace SeguraChain_Desktop_Wallet.Common
         private static async Task<bool> InitializeWalletSyncSystem()
         {
             WalletSyncSystem = new ClassWalletSyncSystem();
-            if (!WalletSyncSystem.LoadSyncDatabaseCache(WalletSettingObject))
-            {
+
+            if (!await WalletSyncSystem.LoadSyncDatabaseCache(WalletSettingObject))
                 return false;
-            }
 
             return await WalletSyncSystem.StartSync();
         }
@@ -203,7 +202,7 @@ namespace SeguraChain_Desktop_Wallet.Common
 
             // Stop the sync cache system.
             WalletSyncSystem.StopTaskUpdateSyncCache();
-            WalletSyncSystem.SaveSyncDatabaseCache(WalletSettingObject);
+            await WalletSyncSystem.SaveSyncDatabaseCache(WalletSettingObject);
 
             // Stop the sync system.
             await WalletSyncSystem.CloseSync();

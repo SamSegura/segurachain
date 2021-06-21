@@ -1,9 +1,9 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Disk.Object;
 using SeguraChain_Lib.Blockchain.Database.Memory.Main.Enum;
+using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
 {
@@ -20,6 +20,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
         /// Store the block transaction cache.
         /// </summary>
         public Dictionary<string, ClassCacheIoBlockTransactionObject> BlockTransactionCache;
+
 
         /// <summary>
         /// Constructor.
@@ -39,14 +40,43 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
             {
                 if (value != null)
                 {
-                    value.BlockCloned = false;
-                    _content = value;
+                    lock (value)
+                    {
+                        if (_content != null)
+                        {
+                            if (_content.BlockLastChangeTimestamp <= value.BlockLastChangeTimestamp)
+                            {
+                                if (value.BlockFromCache || value.BlockCloned)
+                                {
+                                    _content.Dispose();
+                                    _content = value.DirectCloneBlockObject();
+                                }
+                                else _content = value;
 
-                    if (value.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                        ContentMirror = value;
+                                _content.BlockCloned = false;
+                                _content.BlockFromCache = false;
+                                _content.BlockIsUpdated = false;
+                                _content.BlockFromMemory = true;
+                            }
+                        }
+                        else
+                        {
+                            _content = value.BlockFromCache || value.BlockCloned ? value.DirectCloneBlockObject() : value;
+                            _content.BlockCloned = false;
+                            _content.BlockFromCache = false;
+                            _content.BlockIsUpdated = false;
+                            _content.BlockFromMemory = true;
+                        }
+
+                        if (value.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                            ContentMirror = value;
+                    }
                 }
                 else
+                {
+                    _content?.Dispose();
                     _content = null;
+                }
             }
         }
 
@@ -60,7 +90,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
             {
                 if (_contentMirror != null)
                 {
-                    if (value != null)
+                    if (value?.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                     {
                         _contentMirror.BlockHeight = value.BlockHeight;
                         _contentMirror.BlockDifficulty = value.BlockDifficulty;
@@ -83,23 +113,19 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
                         _contentMirror.TotalFee = value.TotalFee;
                         _contentMirror.TotalTransaction = value.TotalTransaction;
                         _contentMirror.TotalTransactionConfirmed = value.TotalTransactionConfirmed;
+                        _contentMirror.BlockStatus = value.BlockStatus;
 
-                        if (value.BlockTransactions != null)
-                        {
-                            if (value.BlockTransactions.Count > 0)
-                            {
-                                _contentMirror.TotalTransaction = value.BlockTransactions.Count;
-                            }
-                        }
+                        if (value.BlockTransactions?.Count > 0)
+                            _contentMirror.TotalTransaction = value.BlockTransactions.Count;
+
                         if (_contentMirror.BlockTransactions != null)
-                        {
                             _contentMirror.BlockTransactions.Clear();
-                        }
                     }
                 }
                 else
                 {
-                    value?.DeepCloneBlockObject(false, out _contentMirror);
+                    if (value?.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                        value?.DeepCloneBlockObject(false, out _contentMirror);
                 }
             }
         }

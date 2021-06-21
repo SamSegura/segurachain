@@ -120,14 +120,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             bool semaphoreUsed = false;
             try
             {
-                if (cancellation != null)
-                {
-                    _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
-                }
-                else
-                {
-                    _semaphoreBlockchainWalletIndexDataAccess.Wait();
-                }
+                 _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
                 semaphoreUsed = true;
 
                 if (_dictionaryBlockchainWalletIndexDataObjectMemory.ContainsKey(walletAddress))
@@ -146,20 +139,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 {
                     blockchainWalletMemoryObject = TryRetrieveWalletIndex(walletAddress, GetWalletIndexDataCacheFilename(walletAddress), out bool exist);
                     if (exist || blockchainWalletMemoryObject != null)
-                    {
                         result = true;
-                    }
                 }
-
-                _semaphoreBlockchainWalletIndexDataAccess.Release();
-                semaphoreUsed = false;
             }
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreBlockchainWalletIndexDataAccess.Release();
-                }
             }
             return result;
         }
@@ -167,12 +153,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         /// <summary>
         /// Clear every wallet index data from memory and the cache.
         /// </summary>
-        public void Clear()
+        public void Clear(CancellationTokenSource cancellation)
         {
             bool semaphoreUsed = false;
             try
             {
-                _semaphoreBlockchainWalletIndexDataAccess.Wait();
+                _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
                 semaphoreUsed = true;
 
                 _dictionaryBlockchainWalletIndexDataObjectMemory.Clear();
@@ -180,20 +166,14 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 if (Directory.Exists(_blockchainDatabaseSetting.GetBlockchainWalletIndexCacheDirectoryPath))
                 {
                     foreach(string walletIndexCacheFile in Directory.GetFiles(_blockchainDatabaseSetting.GetBlockchainWalletIndexCacheDirectoryPath))
-                    {
                         File.Delete(walletIndexCacheFile);
-                    }
                 }
 
-                _semaphoreBlockchainWalletIndexDataAccess.Release();
-                semaphoreUsed = false;
             }
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreBlockchainWalletIndexDataAccess.Release();
-                }
             }
         }
 
@@ -210,14 +190,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
             try
             {
-                if (cancellation != null)
-                {
-                    _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
-                }
-                else
-                {
-                    _semaphoreBlockchainWalletIndexDataAccess.Wait();
-                }
+                _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
                 semaphoreUsed = true;
 
                 result = _dictionaryBlockchainWalletIndexDataObjectMemory.TryAdd(walletAddress, new BlockchainWalletMemoryObject()
@@ -225,15 +198,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     Updated = true
                 });
 
-                _semaphoreBlockchainWalletIndexDataAccess.Release();
-                semaphoreUsed = false;
             }
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreBlockchainWalletIndexDataAccess.Release();
-                }
             }
             return result;
         }
@@ -272,15 +241,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     }
 
                     if (!failed)
-                    {
                         result = true;
-                    }
                 }
                 else
                 {
                     result = true;
                 }
-
             }
 
             return result;
@@ -370,9 +336,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                 }
 
                                                 if (failed)
-                                                {
                                                     break;
-                                                }
                                             }
                                         }
                                     }
@@ -391,14 +355,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 if (!_dictionaryBlockchainWalletIndexDataObjectMemory.ContainsKey(walletAddress))
                                 {
                                     if (CanInsertObjectInActiveMemory(walletAddress, blockchainWalletMemoryObject))
-                                    {
                                         _dictionaryBlockchainWalletIndexDataObjectMemory.TryAdd(walletAddress, blockchainWalletMemoryObject);
-                                    }
                                 }
                                 else
-                                {
                                     _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress] = blockchainWalletMemoryObject;
-                                }
                             }
                         }
                     }
@@ -447,9 +407,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 bool completeRead = false;
 
                                 if (blockchainWalletMemoryObject == null)
-                                {
                                     blockchainWalletMemoryObject = new BlockchainWalletMemoryObject();
-                                }
 
                                 while (true)
                                 {
@@ -508,17 +466,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                     }
 
                                                     if (failed)
-                                                    {
                                                         break;
-                                                    }
                                                 }
                                             }
                                         }
                                     }
                                     else
-                                    {
                                         break;
-                                    }
                                 }
 
                                 if (!failed && completeRead)
@@ -540,20 +494,18 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         /// Retrieve all wallet index cached.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Tuple<string, BlockchainWalletMemoryObject>> RetrieveAllWalletIndexCached()
+        public IEnumerable<Tuple<string, BlockchainWalletMemoryObject>> RetrieveAllWalletIndexCached(CancellationTokenSource cancellation)
         {
             bool semaphoreUsed = false;
             try
             {
-                _semaphoreBlockchainWalletIndexDataAccess.Wait();
+                _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
                 semaphoreUsed = true;
 
                 if (_dictionaryBlockchainWalletIndexDataObjectMemory.Count > 0)
                 {
                     foreach (var walletAddress in _dictionaryBlockchainWalletIndexDataObjectMemory.Keys)
-                    {
                         yield return new Tuple<string, BlockchainWalletMemoryObject>(walletAddress, _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress]);
-                    }
                 }
 
                 string[] walletIndexCacheFileArray = Directory.GetFiles(_blockchainDatabaseSetting.GetBlockchainWalletIndexCacheDirectoryPath);
@@ -576,9 +528,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                     bool failed = false;
                                     bool completeRead = false;
 
-
                                     BlockchainWalletMemoryObject blockchainWalletMemoryObject = new BlockchainWalletMemoryObject();
-
 
                                     while (true)
                                     {
@@ -637,24 +587,17 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                         }
 
                                                         if (failed)
-                                                        {
                                                             break;
-                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                         else
-                                        {
                                             break;
-                                        }
                                     }
 
                                     if (!failed && completeRead)
-                                    {
                                         yield return new Tuple<string, BlockchainWalletMemoryObject>(walletAddress, blockchainWalletMemoryObject);
-                                    }
-
                                 }
                             }
                         }
@@ -664,9 +607,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreBlockchainWalletIndexDataAccess.Release();
-                }
             }
         }
 
@@ -681,14 +622,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             bool semaphoreUsed = false;
             try
             {
-                if (cancellation != null)
-                {
-                    _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
-                }
-                else
-                {
-                    _semaphoreBlockchainWalletIndexDataAccess.Wait();
-                }
+                _semaphoreBlockchainWalletIndexDataAccess.Wait(cancellation.Token);
                 semaphoreUsed = true;
 
                 blockchainWalletMemoryObject.MemorySize = CalculateMemorySizeFromBlockchainWalletMemoryObject(walletAddress, blockchainWalletMemoryObject);
@@ -696,30 +630,20 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 blockchainWalletMemoryObject.Updated = true;
 
                 if (_dictionaryBlockchainWalletIndexDataObjectMemory.ContainsKey(walletAddress))
-                {
                     _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress] = blockchainWalletMemoryObject;
-                }
                 else
                 {
                     if (CanInsertObjectInActiveMemory(walletAddress, blockchainWalletMemoryObject))
-                    {
                         _dictionaryBlockchainWalletIndexDataObjectMemory.TryAdd(walletAddress, blockchainWalletMemoryObject);
-                    }
                     else
-                    {
                         WriteWalletIndexData(walletAddress, blockchainWalletMemoryObject);
-                    }
                 }
 
-                _semaphoreBlockchainWalletIndexDataAccess.Release();
-                semaphoreUsed = false;
             }
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreBlockchainWalletIndexDataAccess.Release();
-                }
             }
         }
 
@@ -731,15 +655,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         private void WriteWalletIndexData(string walletAddress, BlockchainWalletMemoryObject blockchainWalletMemoryObject)
         {
             if (!File.Exists(_blockchainDatabaseSetting.GetBlockchainWalletIndexCacheDirectoryPath + GetWalletIndexDataCacheFilename(walletAddress)))
-            {
                 File.Create(_blockchainDatabaseSetting.GetBlockchainWalletIndexCacheDirectoryPath + GetWalletIndexDataCacheFilename(walletAddress)).Close();
-            }
+
             using(StreamWriter writer = new StreamWriter(_blockchainDatabaseSetting.GetBlockchainWalletIndexCacheDirectoryPath + GetWalletIndexDataCacheFilename(walletAddress), true))
             {
                 foreach(string walletDataLine in WalletMemoryObjectToWalletFileStringDataCache(walletAddress, blockchainWalletMemoryObject))
-                {
                     writer.WriteLine(walletDataLine);
-                }
             }
         }
 
@@ -755,15 +676,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
             try
             {
-                if (cancellation != null)
-                {
-                    await _semaphoreBlockchainWalletIndexDataAccess.WaitAsync(cancellation.Token);
-                }
-                else
-                {
-                    await _semaphoreBlockchainWalletIndexDataAccess.WaitAsync();
-                }
-
+                await _semaphoreBlockchainWalletIndexDataAccess.WaitAsync(cancellation.Token);
                 semaphoreUsed = true;
 
                 long totalWalletIndexKeepInMemory = 0;
@@ -776,13 +689,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         if (_dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].LastTimestampCallOrUpdate + _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxDelayKeepAliveWalletIndexCached < ClassUtility.GetCurrentTimestampInMillisecond())
                         {
                             if (_dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].Updated)
-                            {
                                 WriteWalletIndexData(walletAddress, _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress]);
-                            }
+
                             if(_dictionaryBlockchainWalletIndexDataObjectMemory.TryRemove(walletAddress, out _))
-                            {
                                 totalWalletIndexOutOfMemory++;
-                            }
                             else
                             {
                                 totalMemoryUsage += _dictionaryBlockchainWalletIndexDataObjectMemory[walletAddress].MemorySize;
@@ -802,15 +712,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 Debug.WriteLine("Total wallet index data put out of memory: " + totalWalletIndexOutOfMemory + " | Total keep in memory: " + totalWalletIndexKeepInMemory);
                 Debug.WriteLine("Total memory usage from wallet index keep alive: " + ClassUtility.ConvertBytesToMegabytes(totalMemoryUsage) + "/" + ClassUtility.ConvertBytesToMegabytes(_blockchainDatabaseSetting.BlockchainCacheSetting.GlobalCacheMaxWalletIndexKeepMemorySize));
 #endif
-                _semaphoreBlockchainWalletIndexDataAccess.Release();
-                semaphoreUsed = false;
             }
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreBlockchainWalletIndexDataAccess.Release();
-                }
             }
 
             return totalWalletIndexOutOfMemory;

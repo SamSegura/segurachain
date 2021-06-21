@@ -213,40 +213,30 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                         if (blockInformationObject != null)
                                                         {
                                                             if (!await BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, false, _cancellationTokenStopBlockchain))
-                                                            {
                                                                 return false;
-                                                            }
                                                         }
                                                         else
                                                         {
-                                                            if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, false, CacheBlockMemoryInsertEnumType.INSERT_IN_PERSISTENT_CACHE_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_PROBABLY_NOT_REALLY_USED, _cancellationTokenStopBlockchain))
-                                                            {
+                                                            if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, CacheBlockMemoryInsertEnumType.INSERT_IN_PERSISTENT_CACHE_OBJECT, _cancellationTokenStopBlockchain))
                                                                 return false;
-                                                            }
                                                         }
                                                     }
                                                     else
                                                     {
-                                                        if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, false, CacheBlockMemoryInsertEnumType.INSERT_IN_PERSISTENT_CACHE_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_PROBABLY_NOT_REALLY_USED, _cancellationTokenStopBlockchain))
-                                                        {
+                                                        if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, CacheBlockMemoryInsertEnumType.INSERT_IN_PERSISTENT_CACHE_OBJECT,  _cancellationTokenStopBlockchain))
                                                             return false;
-                                                        }
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, true, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_MOSTLY_USED, _cancellationTokenStopBlockchain))
-                                                    {
+                                                    if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, _cancellationTokenStopBlockchain))
                                                         return false;
-                                                    }
                                                 }
                                             }
                                             else
                                             {
-                                                if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, true, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_MOSTLY_USED, _cancellationTokenStopBlockchain))
-                                                {
+                                                if (!await BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT,  _cancellationTokenStopBlockchain))
                                                     return false;
-                                                }
                                             }
 
                                         }
@@ -264,9 +254,7 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                 }
                 else
-                {
                     File.Create(blockchainDatabaseSetting.GetBlockDatabaseFilePath).Close();
-                }
 
                 #endregion
 
@@ -299,20 +287,20 @@ namespace SeguraChain_Lib.Blockchain.Database
                             {
                                 if (!walletCheckpointObject.PossibleWalletAddress.IsNullOrEmpty(out walletCheckpointObject.PossibleWalletAddress))
                                 {
-                                    if (!BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.ContainsKey(walletCheckpointObject.PossibleWalletAddress, null, out _))
+                                    if (!BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.ContainsKey(walletCheckpointObject.PossibleWalletAddress, _cancellationTokenStopBlockchain, out _))
                                     {
-                                        if(BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.TryAdd(walletCheckpointObject.PossibleWalletAddress, null))
+                                        if(BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.TryAdd(walletCheckpointObject.PossibleWalletAddress, _cancellationTokenStopBlockchain))
                                         {
-                                            var walletIndexData = BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.GetBlockchainWalletMemoryObject(walletCheckpointObject.PossibleWalletAddress, null);
+                                            var walletIndexData = BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject[walletCheckpointObject.PossibleWalletAddress, _cancellationTokenStopBlockchain];
                                             walletIndexData.InsertWalletBalanceCheckpoint(walletCheckpointObject.BlockHeight, walletCheckpointObject.PossibleValue, walletCheckpointObject.PossibleValue2, 0, walletCheckpointObject.PossibleWalletAddress);
-                                            BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.UpdateWalletIndexData(walletCheckpointObject.PossibleWalletAddress, walletIndexData, null);
+                                            BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.AddOrUpdateWalletMemoryObject(walletCheckpointObject.PossibleWalletAddress, walletIndexData, _cancellationTokenStopBlockchain);
                                         }
                                     }
                                     else
                                     {
-                                        var walletIndexData = BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.GetBlockchainWalletMemoryObject(walletCheckpointObject.PossibleWalletAddress, null);
+                                        var walletIndexData = BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject[walletCheckpointObject.PossibleWalletAddress, _cancellationTokenStopBlockchain];
                                         walletIndexData.InsertWalletBalanceCheckpoint(walletCheckpointObject.BlockHeight, walletCheckpointObject.PossibleValue, walletCheckpointObject.PossibleValue2, 0, walletCheckpointObject.PossibleWalletAddress);
-                                        BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.UpdateWalletIndexData(walletCheckpointObject.PossibleWalletAddress, walletIndexData, null);
+                                        BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.AddOrUpdateWalletMemoryObject(walletCheckpointObject.PossibleWalletAddress, walletIndexData, _cancellationTokenStopBlockchain);
                                     }
                                 }
                             }
@@ -340,7 +328,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                 // Remove all blocks, expect the genesis block.
                 foreach (var blockKey in BlockchainMemoryManagement.ListBlockHeight.ToArray())
                 {
-                    if (!await BlockchainMemoryManagement.Remove(blockKey, true, _cancellationTokenStopBlockchain))
+                    if (!await BlockchainMemoryManagement.Remove(blockKey, _cancellationTokenStopBlockchain))
                     {
                         ClassLog.WriteLine("Failed to reset the blockchain database. If it's not work after another attempt, it's suggested to do it manually.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
                         return false;
@@ -378,7 +366,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             if (blockchainDatabaseSetting.BlockchainCacheSetting.EnableCacheDatabase)
             {
                 ClassLog.WriteLine("All data loaded, purge cache system..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                await BlockchainMemoryManagement.ForcePurgeCache();
+                await BlockchainMemoryManagement.ForcePurgeCache(_cancellationTokenStopBlockchain);
                 ClassLog.WriteLine("Purge of the cache system done, retrieve most recent blocks into the active memory..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
                 #region Retrieve block most recent blocks data to the active memory.
@@ -501,12 +489,10 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                         long blockHeight = i + 1;
 
-                        ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, _cancellationTokenStopBlockchain);
+                        ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
 
                         while (blockObject == null)
-                        {
-                            blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, _cancellationTokenStopBlockchain);
-                        }
+                            blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
 
                         bool blockIsLocked = false;
 
@@ -540,9 +526,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                         finally
                         {
                             if (blockIsLocked)
-                            {
                                 Monitor.Exit(blockObject);
-                            }
                         }
 
                     }
@@ -569,9 +553,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             try
             {
                 if (!_cancellationTokenStopBlockchain.IsCancellationRequested)
-                {
                     _cancellationTokenStopBlockchain.Cancel();
-                }
             }
             catch
             {
@@ -589,12 +571,13 @@ namespace SeguraChain_Lib.Blockchain.Database
 
             ClassLog.WriteLine("Save checkpoint(s)..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
-            foreach (var tupleWalletIndexCached in BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.RetrieveAllWalletIndexCached())
+
+            BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.SaveWalletMemoryIndex(false, new CancellationTokenSource());
+
+            foreach (var tupleWalletIndexCached in BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.RetrieveAllWalletIndexCached(true, new CancellationTokenSource()))
             {
                 foreach (var listCheckpoint in tupleWalletIndexCached.Item2.ListBlockchainWalletBalanceCheckpoints)
-                {
                     InsertCheckpoint(ClassCheckpointEnumType.WALLET_CHECKPOINT, listCheckpoint.Key, tupleWalletIndexCached.Item1, listCheckpoint.Value.LastWalletBalance, listCheckpoint.Value.LastWalletPendingBalance);
-                }
             }
 
             SaveCheckpointData(blockchainDatabaseSetting);
@@ -838,12 +821,10 @@ namespace SeguraChain_Lib.Blockchain.Database
                                 long blockHeightInsert = blockHeight;
 
                                 if (transactionObject.BlockHeightTransaction > blockHeightInsert)
-                                {
                                     blockHeightInsert = transactionObject.BlockHeightTransaction;
-                                }
 
 
-                                BlockchainMemoryManagement[blockHeight, cancellation].BlockTransactions.Add(blockTransactionHash, new ClassBlockTransaction()
+                                BlockchainMemoryManagement[blockHeight, cancellation].BlockTransactions.Add(blockTransactionHash, new ClassBlockTransaction(countInsert, transactionObject)
                                 {
                                     IndexInsert = countInsert,
                                     TransactionObject = transactionObject,
@@ -1053,19 +1034,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                 {
                                                                                     Tuple<ClassBlockEnumMiningShareVoteStatus, bool> blockMiningShareVoteStatus = await ClassPeerNetworkBroadcastFunction.AskBlockMiningShareVoteToPeerListsAsync(apiServerIp, apiServerOpenNatIp, string.Empty, blockHeight, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject, cancellation, true);
 
-                                                                                    int countRetry = 0;
-                                                                                    while(blockMiningShareVoteStatus.Item1 == ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOCONSENSUS && 
-                                                                                         !blockMiningShareVoteStatus.Item2 && countRetry < 10)
-                                                                                    {
-                                                                                        blockMiningShareVoteStatus = await ClassPeerNetworkBroadcastFunction.AskBlockMiningShareVoteToPeerListsAsync(apiServerIp, apiServerOpenNatIp, string.Empty, blockHeight, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject, cancellation, true);
-                                                                                        countRetry++;
-                                                                                    }
-
-                                                                                    if (countRetry > 10 && !blockMiningShareVoteStatus.Item2 && blockMiningShareVoteStatus.Item1 == ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOCONSENSUS)
-                                                                                    {
-                                                                                        blockMiningShareVoteStatus = new Tuple<ClassBlockEnumMiningShareVoteStatus, bool>(ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED, false);
-                                                                                    }
-
+        
                                                                                     if (blockMiningShareVoteStatus.Item2)
                                                                                     {
 
@@ -1076,9 +1045,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                             resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
                                                                                         }
                                                                                         else
-                                                                                        {
                                                                                             resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_REFUSED;
-                                                                                        }
                                                                                     }
                                                                                     else
                                                                                     {
@@ -1544,7 +1511,7 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                         string newBlockHash = ClassBlockUtility.GenerateBlockHash(newBlockHeight, newBlockDifficulty, BlockchainMemoryManagement[blockHeight, cancellation].BlockTransactions.Count, BlockchainMemoryManagement[blockHeight, cancellation].BlockFinalHashTransaction, walletAddressWinner);
 
-                        if (await BlockchainMemoryManagement.Add(newBlockHeight, new ClassBlockObject(newBlockHeight, newBlockDifficulty, newBlockHash, timestampFound, 0,  ClassBlockEnumStatus.LOCKED, false, false), false, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, CacheBlockMemoryEnumInsertPolicy.INSERT_MOSTLY_USED, cancellation))
+                        if (await BlockchainMemoryManagement.Add(newBlockHeight, new ClassBlockObject(newBlockHeight, newBlockDifficulty, newBlockHash, timestampFound, 0,  ClassBlockEnumStatus.LOCKED, false, false), CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, cancellation))
                         {
                             ClassLog.WriteLine("New block " + newBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
                             return true;
@@ -1616,7 +1583,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                 }
             }
  
-            if (ClassMemPoolDatabase.InsertTxToMemPool(transactionObject, cancellation))
+            if (ClassMemPoolDatabase.InsertTxToMemPool(transactionObject))
             {
                 ClassLog.WriteLine("Transaction hash: " + transactionObject.TransactionHash + " of type: " + transactionObject.TransactionType + " who target the block height: " + transactionObject.BlockHeightTransaction + " has been inserted to the mempool.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
 
@@ -1718,7 +1685,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                     break;
                 }
 
-                ClassGcMemoryObject blockObjectClassGcMemoryObject = new ClassGcMemoryObject(await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, _cancellationTokenStopBlockchain));
+                ClassGcMemoryObject blockObjectClassGcMemoryObject = new ClassGcMemoryObject(await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain));
 
                 if (blockObjectClassGcMemoryObject.Target == null)
                 {
@@ -1859,7 +1826,7 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                 foreach (var blockHeight in BlockchainMemoryManagement.ListBlockHeight)
                 {
-                    ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, _cancellationTokenStopBlockchain);
+                    ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
 
                     if (blockObject == null)
                     {
@@ -1882,11 +1849,9 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                     foreach (var txHash in blockObject.BlockTransactions.Keys)
                     {
-                        blockObject.BlockTransactions[txHash].Spent = false;
                         blockObject.BlockTransactions[txHash].TotalSpend = 0;
                         blockObject.BlockTransactions[txHash].TransactionInvalidStatus = ClassTransactionEnumStatus.VALID_TRANSACTION;
                         blockObject.BlockTransactions[txHash].TransactionStatus = true;
-
                         blockObject.BlockTransactions[txHash].TransactionTotalConfirmation = 0;
                     }
 
@@ -1917,7 +1882,7 @@ namespace SeguraChain_Lib.Blockchain.Database
         {
             if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
             {
-                if (blockObject.BlockUnlockValid && blockObject.BlockTransactionConfirmationCheckTaskDone && blockObject.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
+                if (blockObject.BlockTransactionConfirmationCheckTaskDone && blockObject.IsConfirmedByNetwork)
                 {
                     if (blockObject.BlockTotalTaskTransactionConfirmationDone > 0 && blockObject.BlockLastHeightTransactionConfirmationDone > lastBlockHeightUnlockedChecked)
                     {
@@ -1981,7 +1946,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             {
                 if (blockTransaction.TransactionTotalConfirmation > 0)
                 {
-                    if (blockTransaction.TransactionTotalConfirmation > (lastBlockHeightUnlockedChecked - blockHeight))
+                    if (blockTransaction.TransactionTotalConfirmation > (lastBlockHeightUnlockedChecked - blockHeight)+1)
                     {
 #if DEBUG
                         Debug.WriteLine("Invalid of block transactions confirmations done on the transaction hash: " + blockTransaction.TransactionObject.TransactionHash + "." +

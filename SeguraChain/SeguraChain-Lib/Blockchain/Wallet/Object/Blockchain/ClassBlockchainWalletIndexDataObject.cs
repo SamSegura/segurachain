@@ -65,7 +65,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
         /// <param name="useSemaphore"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        public async Task<bool> InsertWalletTransactionHash(string transactionHash, long blockHeight, bool useSemaphore, CancellationTokenSource cancellation)
+        public async Task<bool> InsertWalletTransactionHash(string transactionHash, long blockHeight, CancellationTokenSource cancellation)
         {
             bool result = true;
 
@@ -73,35 +73,13 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
 
             try
             {
-                if (useSemaphore)
-                {
-                    if (cancellation != null)
-                    {
-                        await _semaphoreAccessWalletTxIndex.WaitAsync(cancellation.Token);
-                    }
-                    else
-                    {
-                        await _semaphoreAccessWalletTxIndex.WaitAsync();
-                    }
-                    semaphoreUsed = true;
-                }
+
+                await _semaphoreAccessWalletTxIndex.WaitAsync(cancellation.Token);
+                semaphoreUsed = true;
 
                 // Force to use semaphore if the block height is not indexed.
                 if (!_dictionaryWalletTransactionIndex.ContainsKey(blockHeight))
                 {
-                    if (!useSemaphore)
-                    {
-                        if (cancellation != null)
-                        {
-                            await _semaphoreAccessWalletTxIndex.WaitAsync(cancellation.Token);
-                        }
-                        else
-                        {
-                            await _semaphoreAccessWalletTxIndex.WaitAsync();
-                        }
-                        semaphoreUsed = true;
-                    }
-
                     try
                     {
                         _dictionaryWalletTransactionIndex.Add(blockHeight, 1);
@@ -116,9 +94,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
                     }
                 }
                 else
-                {
                     _dictionaryWalletTransactionIndex[blockHeight]++;
-                }
 
                 /*
                 if (result)
@@ -141,9 +117,8 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreAccessWalletTxIndex.Release();
-                }
+
             }
             return result;
         }
@@ -163,14 +138,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
 
             try
             {
-                if (cancellation != null)
-                {
-                    await _semaphoreAccessWalletTxIndex.WaitAsync(cancellation.Token);
-                }
-                else
-                {
-                    await _semaphoreAccessWalletTxIndex.WaitAsync();
-                }
+                await _semaphoreAccessWalletTxIndex.WaitAsync(cancellation.Token);
                 semaphoreUsed = true;
 
                 if (_dictionaryWalletTransactionIndex.ContainsKey(blockHeight))
@@ -178,9 +146,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
                     _dictionaryWalletTransactionIndex[blockHeight]--;
 
                     if (_dictionaryWalletTransactionIndex[blockHeight] <= 0)
-                    {
                         _dictionaryWalletTransactionIndex.Remove(blockHeight);
-                    }
 
                     result = true;
                 }
@@ -191,9 +157,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreAccessWalletTxIndex.Release();
-                }
             }
 
             return result;
@@ -210,27 +174,34 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
         /// <param name="transactionHash"></param>
         /// <param name="blockHeight"></param>
         /// <returns></returns>
-        public bool InsertWalletMemPoolTransactionIndex(string transactionHash, long blockHeight)
+        public async Task<bool> InsertWalletMemPoolTransactionIndexAsync(string transactionHash, long blockHeight, CancellationTokenSource cancellation)
         {
-            _semaphoreAccessWalletMemPoolTxIndex.Wait();
-
+            bool semaphoreUsed = false;
             bool result = false;
-            if (!_dictionaryWalletMemPoolTransactionIndex.ContainsKey(transactionHash))
+
+            try
             {
-                try
-                {
-                    _dictionaryWalletMemPoolTransactionIndex.Add(transactionHash, blockHeight);
+                await _semaphoreAccessWalletMemPoolTxIndex.WaitAsync(cancellation.Token);
+                semaphoreUsed = true;
 
-                    result = true;
-
-                }
-                catch
+                if (!_dictionaryWalletMemPoolTransactionIndex.ContainsKey(transactionHash))
                 {
-                    result = false;
+                    try
+                    {
+                        _dictionaryWalletMemPoolTransactionIndex.Add(transactionHash, blockHeight);
+                        result = true;
+                    }
+                    catch
+                    {
+                        result = false;
+                    }
                 }
             }
-
-            _semaphoreAccessWalletMemPoolTxIndex.Release();
+            finally
+            {
+                if(semaphoreUsed)
+                    _semaphoreAccessWalletMemPoolTxIndex.Release();
+            }
 
             return result;
         }
@@ -240,18 +211,25 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Object.Blockchain
         /// </summary>
         /// <param name="transactionHash"></param>
         /// <returns></returns>
-        public bool RemoveWalletMemPoolTransactionIndex(string transactionHash)
+        public async Task<bool> RemoveWalletMemPoolTransactionIndexAsync(string transactionHash, CancellationTokenSource cancellation)
         {
-            _semaphoreAccessWalletMemPoolTxIndex.Wait();
-
+            bool semaphoreUsed = false;
             bool result = false;
 
-            if (_dictionaryWalletMemPoolTransactionIndex.ContainsKey(transactionHash))
+            try
             {
-                result = _dictionaryWalletMemPoolTransactionIndex.Remove(transactionHash);
-            }
+                await _semaphoreAccessWalletMemPoolTxIndex.WaitAsync(cancellation.Token);
+                semaphoreUsed = true;
 
-            _semaphoreAccessWalletMemPoolTxIndex.Release();
+                if (_dictionaryWalletMemPoolTransactionIndex.ContainsKey(transactionHash))
+                    result = _dictionaryWalletMemPoolTransactionIndex.Remove(transactionHash);
+
+            }
+            finally
+            {
+                if (semaphoreUsed)
+                    _semaphoreAccessWalletMemPoolTxIndex.Release();
+            }
 
             return result;
         }

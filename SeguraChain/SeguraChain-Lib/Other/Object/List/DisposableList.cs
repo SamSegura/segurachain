@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
+using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Other.Object.List
 {
@@ -19,22 +20,17 @@ namespace SeguraChain_Lib.Other.Object.List
                     {
                         var typeOfData = typeof(V);
                         if (typeof(ClassBlockObject) != typeOfData && typeof(byte) != typeOfData && typeof(byte[]) != typeOfData && typeof(string[]) != typeOfData)
-                        {
                             Sort();
-                        }
+                        
                     }
                     fromCopy = true;
                 }
             }
             if(!fromCopy)
-            {
                 GetList = capacity > 0 ? new List<V>(capacity) : new List<V>();
-            }
 
             if (GetList == null)
-            {
                 GetList = new List<V>();
-            }
         }
 
         #region Dispose functions
@@ -55,7 +51,7 @@ namespace SeguraChain_Lib.Other.Object.List
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
-            if (Disposed)
+            if (Disposed && GetList?.Count == 0)
                 return;
 
             if (disposing)
@@ -63,6 +59,7 @@ namespace SeguraChain_Lib.Other.Object.List
                 Clear();
                 GetList = null;
             }
+
             Disposed = true;
         }
 
@@ -71,15 +68,9 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public int Count => GetList.Count;
 
-        public void Add(V data)
-        {
-            GetList.Add(data);
-        }
+        public void Add(V data) => GetList.Add(data);
 
-        public bool Contains(V data)
-        {
-            return GetList.Contains(data);
-        }
+        public bool Contains(V data) => GetList.Contains(data);
 
         public bool Remove(V data)
         {
@@ -93,10 +84,7 @@ namespace SeguraChain_Lib.Other.Object.List
             }
         }
 
-        public V ElementAt(int index)
-        {
-            return GetList.ElementAt(index);
-        }
+        public V ElementAt(int index) => GetList.ElementAt(index);
 
         public V this[int i]
         {
@@ -114,9 +102,7 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public List<V> GetList { get; set; }
 
-        public void Sort()
-        {
-            GetList.Sort();
-        }
+        public void Sort() => GetList.Sort();
+
     }
 }

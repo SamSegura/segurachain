@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SeguraChain_Lib.Utility;
+using System;
 using System.Collections.Generic;
 
 
@@ -32,7 +33,7 @@ namespace SeguraChain_Lib.Other.Object.List
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
-            if (Disposed)
+            if (Disposed && GetList?.Count == 0)
                 return;
 
             if (disposing)
@@ -40,6 +41,7 @@ namespace SeguraChain_Lib.Other.Object.List
                 Clear();
                 GetList = null;
             }
+
             Disposed = true;
         }
 
@@ -47,15 +49,10 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public int Count => GetList.Count;
 
-        public void Add(V key, T data)
-        {
-            GetList.Add(key, data);
-        }
+        public void Add(V key, T data) => GetList.Add(key, data);
 
-        public bool ContainsKey(V key)
-        {
-            return GetList.ContainsKey(key);
-        }
+        public bool ContainsKey(V key) => GetList.ContainsKey(key);
+
 
         public bool Remove(V key)
         {

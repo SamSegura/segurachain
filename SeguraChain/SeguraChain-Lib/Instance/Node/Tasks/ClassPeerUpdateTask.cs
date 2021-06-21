@@ -1,19 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using SeguraChain_Lib.Blockchain.Block.Enum;
-using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Database;
 using SeguraChain_Lib.Blockchain.Database.Memory.Main.Object;
-using SeguraChain_Lib.Blockchain.MemPool.Database;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Stats.Function;
-using SeguraChain_Lib.Blockchain.Transaction.Object;
-using SeguraChain_Lib.Instance.Node.Network.Database.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager;
-using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
@@ -40,7 +33,6 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
         private const int CleanUpApiDeadConnectionInterval = 10 * 1000;
         private const int CleanUpPeerDeadConnectionInterval = 10 * 1000;
         private const int UpdateBlockTransactionConfirmationInterval = 1 * 1000;
-        private const int UpdateBlockchainStatsInterval = 1 * 1000;
         private const int UpdateNodeInternalStats = 1 * 1000;
 
 
@@ -74,25 +66,19 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                 if (!_nodeInstance.PeerSettingObject.PeerNetworkSettingObject.IsDedicatedServer)
                 {
                     if (_nodeInstance.PeerOpenNatInitializationStatus)
-                    {
                         StartTaskCheckOpenNatPublicIp();
-                    }
                     else
-                    {
                         ClassLog.WriteLine("Can't start the task who manage the OpenNAT because the initialization of the port by OpenNAT have failed.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                    }
                 }
             }
 
             StartTaskConfirmBlockTransaction();
             StartTaskCleanUpClosedApiClientConnection();
             StartTaskCleanUpClosedPeerClientConnection();
-            if (_nodeInstance.PeerSettingObject.PeerFirewallSettingObject.PeerEnableFirewallLink)
-            {
-                StartTaskManageApiFirewall();
-            }
 
-            StartTaskUpdateBlockchainNetworkStats();
+            if (_nodeInstance.PeerSettingObject.PeerFirewallSettingObject.PeerEnableFirewallLink)
+                StartTaskManageApiFirewall();
+
             StartTaskUpdateNodeInternalStats();
         }
 
@@ -107,9 +93,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
 
             // Await to complete the last task of block transaction confirmations.
             while (_enableCallStopTaskUpdateBlockTransaction)
-            {
                 await Task.Delay(100);
-            }
 
             ClassLog.WriteLine("The last block transaction confirmation task has been done, continue to closing of the node.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
 
@@ -125,9 +109,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                 if (_cancellationTokenSourceUpdateTask != null)
                 {
                     if (!_cancellationTokenSourceUpdateTask.IsCancellationRequested)
-                    {
                         _cancellationTokenSourceUpdateTask.Cancel();
-                    }
                 }
             }
             catch
@@ -236,9 +218,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                             long totalClosed = _nodeInstance.PeerApiServerObject.CleanUpAllIncomingClosedConnection(out int totalIp);
 
                             if (totalClosed > 0)
-                            {
                                 ClassLog.WriteLine("Total incoming dead api connection cleaned: " + totalClosed + " | Total IP: "+totalIp, ClassEnumLogLevelType.LOG_LEVEL_API_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                            }
                         }
                         catch
                         {
@@ -273,9 +253,8 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                             long totalClosed = _nodeInstance.PeerNetworkServerObject.CleanUpAllIncomingClosedConnection(out int totalIp);
 
                             if (totalClosed > 0)
-                            {
                                 ClassLog.WriteLine("Total incoming dead peer connection cleaned: " + totalClosed + " | Total IP: " + totalIp, ClassEnumLogLevelType.LOG_LEVEL_PEER_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                            }
+
                         }
                         catch
                         {
@@ -292,29 +271,6 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
         }
 
  
-
-        /// <summary>
-        /// Start a task who automatically update blockchain network stats from data synced.
-        /// </summary>
-        private void StartTaskUpdateBlockchainNetworkStats()
-        {
-            try
-            {
-                Task.Factory.StartNew(async () =>
-                {
-                    while (_nodeInstance.PeerToolStatus)
-                    {
-                        _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
-                        await ClassBlockchainStats.UpdateBlockchainNetworkStats(true, _cancellationTokenSourceUpdateTask);
-                        await Task.Delay(UpdateBlockchainStatsInterval, _cancellationTokenSourceUpdateTask.Token);
-                    }
-                }, _cancellationTokenSourceUpdateTask.Token, TaskCreationOptions.PreferFairness, TaskScheduler.Current).ConfigureAwait(false);
-            }
-            catch
-            {
-                // Ignored, catch the exception once the task is cancelled.
-            }
-        }
 
         /// <summary>
         /// Start a task who automatically confirm transactions.
@@ -362,21 +318,22 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                                                 {
                                                     if (blockConfirmationResultObject.ListBlockHeightConfirmed.Count > 0)
                                                     {
-                                                        if (await ClassBlockchainDatabase.BlockchainMemoryManagement.IncrementBlockTransactionConfirmationOnBlockFullyConfirmed(blockConfirmationResultObject.ListBlockHeightConfirmed, lastBlockHeightUnlockedChecked, _cancellationTokenSourceUpdateTask))
+                                                        while (!await ClassBlockchainDatabase.BlockchainMemoryManagement.IncrementBlockTransactionConfirmationOnBlockFullyConfirmed(blockConfirmationResultObject.ListBlockHeightConfirmed, lastBlockHeightUnlockedChecked, _cancellationTokenSourceUpdateTask))
                                                         {
-                                                            ClassLog.WriteLine("New block height transaction confirmation reach: " + previousBlockHeightUnlockedChecked + " Total block fully confirmed: " + blockConfirmationResultObject.ListBlockHeightConfirmed.Count, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
-#if DEBUG
-                                                            Debug.WriteLine("New block height transaction confirmation reach: " + previousBlockHeightUnlockedChecked + " Total block fully confirmed: " + blockConfirmationResultObject.ListBlockHeightConfirmed.Count);
-#endif
-                                                        }
-                                                        else
-                                                        {
+                                                            _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
+
                                                             ClassLog.WriteLine("Failed to confirm back every block heights transactions fully confirmed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 
 #if DEBUG
                                                             Debug.WriteLine("Failed to confirm back every block heights transactions fully confirmed.");
 #endif
                                                         }
+
+                                                        ClassLog.WriteLine("New block height transaction confirmation reach: " + previousBlockHeightUnlockedChecked + " Total block fully confirmed: " + blockConfirmationResultObject.ListBlockHeightConfirmed.Count, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+#if DEBUG
+                                                        Debug.WriteLine("New block height transaction confirmation reach: " + previousBlockHeightUnlockedChecked + " Total block fully confirmed: " + blockConfirmationResultObject.ListBlockHeightConfirmed.Count);
+#endif
+
                                                         blockConfirmationResultObject.ListBlockHeightConfirmed.Clear();
                                                     }
 
@@ -388,6 +345,8 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                                 }
 
                                 #endregion
+
+                                await ClassBlockchainStats.UpdateBlockchainNetworkStats(true, _cancellationTokenSourceUpdateTask);
 
                             }
 
@@ -406,13 +365,9 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                         catch (Exception error)
                         {
                             if (!_cancellationTokenSourceUpdateTask.IsCancellationRequested)
-                            {
                                 ClassLog.WriteLine("Error on the task who confirm automatically blockchain transactions. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                            }
                             else
-                            {
                                 break;
-                            }
                         }
                     }
                 }, _cancellationTokenSourceUpdateTask.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);

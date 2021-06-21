@@ -240,9 +240,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
         public static async Task<ClassTransactionEnumStatus> CheckTransactionWithBlockchainData(ClassTransactionObject transactionObject, bool fromOutside, bool checkBalance, bool fromBroadcastInstance, ClassBlockObject blockObjectSource, long totalConfirmations, DisposableDictionary<string, string> listWalletAndPublicKeysCache, bool useSemaphore, CancellationTokenSource cancellation)
         {
             if (transactionObject == null)
-            {
                 return ClassTransactionEnumStatus.EMPTY_TRANSACTION;
-            }
 
             long lastBlockHeight = ClassBlockchainStats.GetLastBlockHeight();
             ClassTransactionEnumStatus normalCheckTransactionResult;
@@ -252,84 +250,63 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             {
                 if (transactionObject.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION || transactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
                 {
+                    long blockHeightSend = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetCloserBlockHeightFromTimestamp(transactionObject.TimestampBlockHeightCreateSend, cancellation);
+
+                    if (blockHeightSend < BlockchainSetting.GenesisBlockHeight)
+                        return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
+
                     ClassBlockObject blockObjectInformations;
                     if (!fromBroadcastInstance)
                     {
-                        long blockHeightSend = ClassBlockchainDatabase.BlockchainMemoryManagement.GetCloserBlockHeightFromTimestamp(transactionObject.TimestampBlockHeightCreateSend, cancellation);
-
-                        if (blockHeightSend < BlockchainSetting.GenesisBlockHeight)
-                        {
-                            return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                        }
 
                         blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(blockHeightSend, cancellation);
                         if (blockObjectInformations == null)
-                        {
                             return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                        }
 
                         if (blockObjectInformations.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                         {
                             if (blockHeightSend + BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation < lastBlockHeight)
-                            {
                                 return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                            }
                         }
                     }
 
                     if (transactionObject.BlockHeightTransaction <= lastBlockHeight)
-                    {
                         return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                    }
 
                     if (transactionObject.BlockHeightTransaction > lastBlockHeight + BlockchainSetting.TransactionMandatoryMaxBlockHeightStartConfirmation)
-                    {
                         return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                    }
 
                      blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(transactionObject.BlockHeightTransaction, cancellation);
 
                     if (blockObjectInformations != null)
                     {
                         if (blockObjectInformations.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                        {
                             return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
-                        }
                     }
 
                     if (transactionObject.BlockHeightTransactionConfirmationTarget <= lastBlockHeight)
-                    {
                         return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT_TARGET_CONFIRMATION;
-                    }
 
                     if (transactionObject.BlockHeightTransactionConfirmationTarget - transactionObject.BlockHeightTransaction < BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations)
-                    {
                         return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT_TARGET_CONFIRMATION;
-                    }
+                    
                     normalCheckTransactionResult = await ClassBlockchainStats.CheckTransaction(transactionObject, blockObjectSource, false, listWalletAndPublicKeysCache, cancellation, true);
+
                 }
                 else
-                {
                     return ClassTransactionEnumStatus.INVALID_TRANSACTION_TYPE;
-                }
             }
             // Internal.
             else
             {
                 if (totalConfirmations >= (transactionObject.BlockHeightTransactionConfirmationTarget - transactionObject.BlockHeightTransaction))
-                {
                     normalCheckTransactionResult = ClassTransactionEnumStatus.VALID_TRANSACTION;
-                }
                 else
-                {
                     normalCheckTransactionResult = await ClassBlockchainStats.CheckTransaction(transactionObject, blockObjectSource, true, null, cancellation, false);
-                }
             }
 
             if (normalCheckTransactionResult != ClassTransactionEnumStatus.VALID_TRANSACTION)
-            {
                 return normalCheckTransactionResult;
-            }
 
             if (checkBalance)
             {
@@ -341,9 +318,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                             var resultBalance = await ClassBlockchainStats.GetWalletBalanceFromTransactionAsync(transactionObject.WalletAddressSender, lastBlockHeight, true, false, false, useSemaphore, cancellation);
 
                             if (resultBalance.WalletBalance < transactionObject.Amount + transactionObject.Fee)
-                            {
                                 return ClassTransactionEnumStatus.NOT_ENOUGHT_AMOUNT;
-                            }
                         }
                         break;
                 }
@@ -364,9 +339,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                 if (!transactionHash.IsNullOrEmpty(out _))
                 {
                     if (transactionData.TransactionHash == transactionHash)
-                    {
                         return true;
-                    }
                 }
             }
             return false;
@@ -423,23 +396,17 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
 
                 // Ensure the block height of start.
                 if (blockHeightToTravel < BlockchainSetting.GenesisBlockHeight)
-                {
                     blockHeightToTravel = BlockchainSetting.GenesisBlockHeight;
-                }
 
                 // Insert each block height to travel.
                 for (long i = 0; i < BlockchainSetting.BlockExpectedPerDay; i++)
                 {
                     if (blockHeightToTravel < lastBlockHeight)
-                    {
                         listBlockHeightRange.Add(blockHeightToTravel);
-                    }
 
                     blockHeightToTravel++;
                     if (blockHeightToTravel > lastBlockHeightUnlocked)
-                    {
                         break;
-                    }
                 }
 
                 // This one store the timespend.
@@ -462,11 +429,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                     {
                         // Ignore last block, this one was locked on the sending transaction process.
                         if (blockInformationObject.BlockHeight < lastBlockHeight)
-                        {
-
                             totalBlockTimeSpend += (blockInformationObject.TimestampFound - blockInformationObject.TimestampCreate);
-
-                        }
                     }
                 }
 
@@ -479,9 +442,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                     long blockHeightStartConfirmationsIncrement = BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation + (long)(BlockchainSetting.BlockTime / blockTimeFactor);
 
                     if (blockHeightStartConfirmationsIncrement < BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation)
-                    {
                         blockHeightStartConfirmationsIncrement = BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation;
-                    }
 
                     return lastBlockHeight + blockHeightStartConfirmationsIncrement;
                 }
@@ -500,62 +461,42 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
         public static bool CompareTransactionObject(ClassTransactionObject transactionObject1, ClassTransactionObject transactionObject2)
         {
             if (transactionObject1 == null || transactionObject2 == null)
-            {
                 return false;
-            }
 
             if (transactionObject1.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION ||
                 transactionObject1.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
             {
                 if (transactionObject1.AmountTransactionSource == null)
-                {
                     return false;
-                }
 
                 if (transactionObject1.AmountTransactionSource.Count == 0)
-                {
                     return false;
-                }
 
                 if (transactionObject1.AmountTransactionSource.Keys.Count(x => x.IsNullOrEmpty(out _)) > 0)
-                {
                     return false;
-                }
 
                 if (transactionObject1.AmountTransactionSource.Values.Count(x => x == null) > 0)
-                {
                     return false;
-                }
             }
 
             if (transactionObject2.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION ||
                 transactionObject2.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION)
             {
                 if (transactionObject2.AmountTransactionSource == null)
-                {
                     return false;
-                }
 
                 if (transactionObject2.AmountTransactionSource.Count == 0)
-                {
                     return false;
-                }
 
                 if (transactionObject2.AmountTransactionSource.Keys.Count(x => x.IsNullOrEmpty(out _)) > 0)
-                {
                     return false;
-                }
 
                 if (transactionObject2.AmountTransactionSource.Values.Count(x => x == null) > 0)
-                {
                     return false;
-                }
             }
 
             if (SplitTransactionObject(transactionObject1) != SplitTransactionObject(transactionObject2))
-            {
                 return false;
-            }
 
             return true;
         }
@@ -607,9 +548,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
 
                 // Ensure the block height of start.
                 if (blockHeightToTravel < BlockchainSetting.GenesisBlockHeight)
-                {
                     blockHeightToTravel = BlockchainSetting.GenesisBlockHeight;
-                }
 
                 // Insert each block height to travel.
                 for (long i = 0; i < BlockchainSetting.BlockExpectedPerDay; i++)
@@ -620,9 +559,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
 
                         blockHeightToTravel++;
                         if (blockHeightToTravel > lastBlockHeightUnlocked)
-                        {
                             break;
-                        }
                     }
                 }
 
@@ -694,9 +631,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
 
                         // Just in case, do not allow negative or equal of 0 fee cost.
                         if (feeCost <= 0)
-                        {
                             feeCost = BlockchainSetting.MinFeeTransaction;
-                        }
                     }
                 }
             }
@@ -798,39 +733,38 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                 string[] blockTransactionLineSplit = blockTransactionLine.Split(new[] { ClassTransactionSplitDataConfig.TransactionSplitDataCharacterSeparator }, StringSplitOptions.None);
 
 
-                blockTransactionObject = new ClassBlockTransaction
+                blockTransactionObject = new ClassBlockTransaction(0, new ClassTransactionObject()
+                {
+                    TransactionType = (ClassTransactionEnumType)System.Enum.Parse(typeof(ClassTransactionEnumType), blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_TYPE]),
+                    BlockHeightTransaction = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HEIGHT]),
+                    BlockHeightTransactionConfirmationTarget = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HEIGHT_CONFIRMATION_TARGET]),
+                    TransactionHash = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_HASH],
+                    Amount = BigInteger.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_AMOUNT]),
+                    Fee = BigInteger.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_FEE]),
+                    WalletAddressReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_WALLET_ADDRESS_RECEIVER],
+                    PaymentId = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_PAYMENT_ID]),
+                    TransactionVersion = int.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_VERSION]),
+                    TimestampSend = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_TIMESTAMP_SEND]),
+                    WalletAddressSender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_WALLET_ADDRESS_SENDER],
+                    WalletPublicKeySender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_PUBLIC_KEY_SENDER],
+                    TransactionSignatureSender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_SIGNATURE_SENDER],
+                    WalletPublicKeyReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_PUBLIC_KEY_RECEIVER],
+                    TransactionSignatureReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_SIGNATURE_RECEIVER],
+                    BlockHash = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HASH],
+                    TransactionHashBlockReward = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_HASH_BLOCK_REWARD],
+                    TimestampBlockHeightCreateSend = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_TIMESTAMP_BLOCK_HEIGHT_CREATE]),
+                    TransactionBigSignatureSender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BIG_SIGNATURE_SENDER],
+                    TransactionBigSignatureReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BIG_SIGNATURE_RECEIVER],
+                })
                 {
                     TransactionTotalConfirmation = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_BLOCK_TRANSACTION_TOTAL_CONFIRMATION]),
                     TransactionStatus = int.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_BLOCK_TRANSACTION_STATUS]) == 1,
                     TransactionInvalidRemoveTimestamp = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_BLOCK_TRANSACTION_INVALID_REMOVE_TIMESTAMP]),
                     TransactionBlockHeightInsert = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HEIGHT_INSERT]),
                     TransactionBlockHeightTarget = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HEIGHT_TARGET]),
-                    Spent = int.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_SPEND_STATUS]) == 1,
                     TotalSpend = BigInteger.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_TOTAL_SPEND]),
                     TransactionInvalidStatus = (ClassTransactionEnumStatus)System.Enum.Parse(typeof(ClassTransactionEnumStatus), blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_INVALID_TRANSACTION_STATUS]),
-                    TransactionObject = new ClassTransactionObject()
-                    {
-                        TransactionType = (ClassTransactionEnumType)System.Enum.Parse(typeof(ClassTransactionEnumType), blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_TYPE]),
-                        BlockHeightTransaction = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HEIGHT]),
-                        BlockHeightTransactionConfirmationTarget = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HEIGHT_CONFIRMATION_TARGET]),
-                        TransactionHash = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_HASH],
-                        Amount = BigInteger.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_AMOUNT]),
-                        Fee = BigInteger.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_FEE]),
-                        WalletAddressReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_WALLET_ADDRESS_RECEIVER],
-                        PaymentId = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_PAYMENT_ID]),
-                        TransactionVersion = int.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_VERSION]),
-                        TimestampSend = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_TIMESTAMP_SEND]),
-                        WalletAddressSender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_WALLET_ADDRESS_SENDER],
-                        WalletPublicKeySender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_PUBLIC_KEY_SENDER],
-                        TransactionSignatureSender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_SIGNATURE_SENDER],
-                        WalletPublicKeyReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_PUBLIC_KEY_RECEIVER],
-                        TransactionSignatureReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_SIGNATURE_RECEIVER],
-                        BlockHash = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BLOCK_HASH],
-                        TransactionHashBlockReward = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_HASH_BLOCK_REWARD],
-                        TimestampBlockHeightCreateSend = long.Parse(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_TIMESTAMP_BLOCK_HEIGHT_CREATE]),
-                        TransactionBigSignatureSender = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BIG_SIGNATURE_SENDER],
-                        TransactionBigSignatureReceiver = blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_BIG_SIGNATURE_RECEIVER],
-                    }
+
                 };
 
                 ClassUtility.TryDeserialize(blockTransactionLineSplit[(int)ClassTransactionEnumSplitData.INDEX_TRANSACTION_SOURCE_LIST], out blockTransactionObject.TransactionObject.AmountTransactionSource);
@@ -881,9 +815,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
 
             // Transaction amount.
             if (amountToSend > 0)
-            {
                 totalMemoryUsage += amountToSend.ToByteArray().Length;
-            }
 
             // Wallet address receiver.
             totalMemoryUsage += BlockchainSetting.WalletAddressWifLengthMax * sizeof(char);
@@ -909,9 +841,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                     foreach (var amountTransactionSourceObject in transactionAmountSourceList)
                     {
                         if (transactionAmountSourceList[amountTransactionSourceObject.Key].Amount > 0)
-                        {
                             totalMemoryUsage += transactionAmountSourceList[amountTransactionSourceObject.Key].Amount.ToByteArray().Length;
-                        }
                     }
                 }
             }
@@ -926,9 +856,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             long feeCostSize = BlockchainSetting.FeeTransactionPerKb * totalMemoryUsage;
 
             if (feeCostSize > 0)
-            {
                 feeCostSize /= 1024;
-            }
 
             return feeCostSize;
         }
@@ -956,13 +884,9 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                 if (blockTransaction.TransactionObject != null)
                 {
                     if (blockTransaction.TransactionSize == 0)
-                    {
                         totalMemoryUsage += GetTransactionMemorySize(blockTransaction.TransactionObject, false);
-                    }
                     else
-                    {
                         totalMemoryUsage += blockTransaction.TransactionSize;
-                    }
                 }
 
                 // Block transaction status.
@@ -1000,17 +924,13 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
 
             // Transaction amount.
             if (transactionObject.Amount > 0)
-            {
                 totalMemoryUsage += transactionObject.Amount.ToByteArray().Length;
-            }
 
             // Transaction fee.
             if (!exceptFee)
             {
                 if (transactionObject.Fee > 0)
-                {
                     totalMemoryUsage += transactionObject.Fee.ToByteArray().Length;
-                }
             }
 
             // Wallet address receiver.
@@ -1037,83 +957,64 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                     foreach (var amountTransactionSourceObject in transactionObject.AmountTransactionSource)
                     {
                         if (transactionObject.AmountTransactionSource[amountTransactionSourceObject.Key].Amount > 0)
-                        {
                             totalMemoryUsage += transactionObject.AmountTransactionSource[amountTransactionSourceObject.Key].Amount.ToByteArray().Length;
-                        }
                     }
                 }
             }
 
             // Wallet Address Sender.
             if (!transactionObject.WalletAddressSender.IsNullOrEmpty(out _))
-            {
                 totalMemoryUsage += transactionObject.WalletAddressSender.Length * sizeof(char);
-            }
 
             // Public Key Sender.
             if (!transactionObject.WalletPublicKeySender.IsNullOrEmpty(out _))
-            {
                 totalMemoryUsage += transactionObject.WalletPublicKeySender.Length * sizeof(char);
-            }
 
             // Signature Sender.
             if (!exceptFee)
             {
                 if (!transactionObject.TransactionSignatureSender.IsNullOrEmpty(out _))
-                {
                     totalMemoryUsage += transactionObject.TransactionSignatureSender.Length * sizeof(char);
-                }
+                
             }
 
             // Big signature sender.
             if (!exceptFee)
             {
                 if (!transactionObject.TransactionBigSignatureSender.IsNullOrEmpty(out _))
-                {
                     totalMemoryUsage += transactionObject.TransactionBigSignatureSender.Length * sizeof(char);
-                }
             }
 
             // Public Key Receiver.
             if (!exceptFee)
             {
                 if (!transactionObject.WalletPublicKeyReceiver.IsNullOrEmpty(out _))
-                {
                     totalMemoryUsage += transactionObject.WalletPublicKeyReceiver.Length * sizeof(char);
-                }
             }
 
             // Signature Receiver.
             if (!exceptFee)
             {
                 if (!transactionObject.TransactionSignatureReceiver.IsNullOrEmpty(out _))
-                {
                     totalMemoryUsage += transactionObject.TransactionSignatureReceiver.Length * sizeof(char);
-                }
             }
 
             // Big signature receiver.
             if (!exceptFee)
             {
                 if (!transactionObject.TransactionBigSignatureReceiver.IsNullOrEmpty(out _))
-                {
                     totalMemoryUsage += transactionObject.TransactionBigSignatureReceiver.Length * sizeof(char);
-                }
             }
 
             // Block hash.
             if (!exceptFee)
             {
                 if (!transactionObject.BlockHash.IsNullOrEmpty(out _))
-                {
                     totalMemoryUsage += transactionObject.BlockHash.Length * sizeof(char);
-                }
 
                 // Block hash reward.
                 if (!transactionObject.TransactionHashBlockReward.IsNullOrEmpty(out _))
-                {
                     totalMemoryUsage += transactionObject.TransactionHashBlockReward.Length * sizeof(char);
-                }
             }
 
             return totalMemoryUsage;

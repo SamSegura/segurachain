@@ -139,9 +139,9 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// Get the last block height unlocked.
         /// </summary>
         /// <returns></returns>
-        public static long GetLastBlockHeightUnlocked(CancellationTokenSource cancellation)
+        public static async Task<long> GetLastBlockHeightUnlocked(CancellationTokenSource cancellation)
         {
-            return ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeightUnlocked(cancellation);
+            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeightUnlocked(cancellation);
         }
 
         /// <summary>
@@ -164,7 +164,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <returns></returns>
         public static DisposableList<long> GetListBlockMissing(long blockHeightTarget, bool enableMaxRange, bool ignoreLockedBlocks, CancellationTokenSource cancellation, int maxRange)
         {
-            return ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockMissing(blockHeightTarget, enableMaxRange, ignoreLockedBlocks, true, cancellation, maxRange);
+            return ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockMissing(blockHeightTarget, enableMaxRange, ignoreLockedBlocks, cancellation, maxRange);
         }
 
         /// <summary>
@@ -292,7 +292,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <param name="cancellation"></param>
         public static async Task<ClassBlockchainWalletBalanceCalculatedObject> GetWalletBalanceFromTransactionAsync(string walletAddress, long maxBlockHeightTarget, bool useCheckpoint, bool buildCheckpoint, bool isWallet, bool useSemaphore, CancellationTokenSource cancellation)
         {
-            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetWalletBalanceFromTransaction(walletAddress, maxBlockHeightTarget, useCheckpoint, buildCheckpoint, isWallet, useSemaphore, cancellation);
+            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetWalletBalanceFromTransaction(walletAddress, maxBlockHeightTarget, useCheckpoint, buildCheckpoint, isWallet, useSemaphore, null, cancellation);
         }
 
         #endregion

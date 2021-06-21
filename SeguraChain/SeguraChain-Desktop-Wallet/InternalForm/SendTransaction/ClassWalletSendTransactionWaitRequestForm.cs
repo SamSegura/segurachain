@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using SeguraChain_Desktop_Wallet.Common;
 using SeguraChain_Desktop_Wallet.Components;
@@ -24,7 +25,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.SendTransaction
         private ClassWalletSendTransactionWaitRequestFormLanguage _walletSendTransactionWaitRequestFormLanguage;
         private CancellationTokenSource _cancellation;
         public bool SendTransactionStatus;
-        private bool _taskStarted;
+        private bool _taskComplete;
         private bool _formClosed;
 
         /// <summary>
@@ -55,37 +56,52 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.SendTransaction
 
         private void ClassWalletSendTransactionWaitRequestForm_Load(object sender, EventArgs e)
         {
-            timerSendTransactionProcessTask.Start();
             _walletSendTransactionWaitRequestFormLanguage = ClassDesktopWalletCommonData.LanguageDatabase.GetLanguageContentObject<ClassWalletSendTransactionWaitRequestFormLanguage>(ClassLanguageEnumType.LANGUAGE_TYPE_SEND_TRANSACTION_WAIT_REQUEST_FORM);
             labelSendTransactionWaitRequestText.Text = _walletSendTransactionWaitRequestFormLanguage.LABEL_SEND_TRANSACTION_WAIT_REQUEST_TEXT;
+            SendAndWaitTransactionResponse();
         }
 
-        /// <summary>
-        /// Once the time of the timer is reach, the task who proceed to send the transaction is started.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void timerSendTransactionProcessTask_Tick(object sender, EventArgs e)
-        {
-            if (!_taskStarted)
-            {
-                _taskStarted = true;
-                
-                try
-                {
 
-                    SendTransactionStatus = await ClassDesktopWalletCommonData.WalletSyncSystem.BuildAndSendTransaction(_currentWalletFileName, _walletAddressTarget, _amountToSpend, _feeToPay, _paymentId, _totalConfirmationsTarget, _walletPrivateKey, _transactionAmountSourceList, _cancellation);
+        private void SendAndWaitTransactionResponse()
+        {
+            try
+            {
+                Task.Factory.StartNew(async () =>
+                {
+                    try
+                    {
+                        SendTransactionStatus = await ClassDesktopWalletCommonData.WalletSyncSystem.BuildAndSendTransaction(_currentWalletFileName, _walletAddressTarget, _amountToSpend, _feeToPay, _paymentId, _totalConfirmationsTarget, _walletPrivateKey, _transactionAmountSourceList, _cancellation);
+                    }
+                    catch
+                    {
+                        // Ignored.
+                    }
+                    _taskComplete = true;
+
+                }, _cancellation.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+
+                Task.Factory.StartNew(async () =>
+                {
+                    while(!_taskComplete)
+                    {
+                        if (_cancellation.IsCancellationRequested)
+                            break;
+
+                        await Task.Delay(10, _cancellation.Token);
+                    }
 
                     _formClosed = true;
+
+                    MethodInvoker closeForm = Close;
+
+                    BeginInvoke(closeForm);
+
+                }, _cancellation.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+            }
+            catch
+            {
+                if (!_formClosed)
                     Close();
-                }
-                catch
-                {
-                    if (!_formClosed && _cancellation.IsCancellationRequested)
-                    {
-                        Close();
-                    }
-                }
             }
         }
 
@@ -94,9 +110,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.SendTransaction
             try
             {
                 if (!_cancellation.IsCancellationRequested)
-                {
                     _cancellation.Cancel();
-                }
             }
             catch
             {

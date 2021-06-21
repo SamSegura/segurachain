@@ -10,7 +10,6 @@ using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -241,7 +240,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         }
                         else
                         {
-                            ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, true, cancellationIoCache);
+                            ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, true, false, cancellationIoCache);
 
                             if (blockObject != null)
                                 listBlockInformation.Add(blockObject);
@@ -275,7 +274,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 await _ioSemaphoreAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
-                blockObject = await CallGetRetrieveDataAccess(blockHeight, false, true, cancellationIoCache);
+                blockObject = await CallGetRetrieveDataAccess(blockHeight, false, true, false, cancellationIoCache);
             }
             finally
             {
@@ -306,7 +305,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 if (_ioStructureObjectsDictionary.ContainsKey(blockHeight))
                 {
 
-                    ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, true, cancellationIoCache);
+                    ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, true, false, cancellationIoCache);
 
                     if (blockObject != null)
                         blockTransactionCount = blockObject.TotalTransaction;
@@ -329,7 +328,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// <param name="keepAlive"></param>
         /// <param name="cancellationIoCache"></param>
         /// <returns></returns>
-        public async Task<ClassBlockObject> GetIoBlockDataFromBlockHeight(long blockHeight, bool keepAlive, CancellationTokenSource cancellationIoCache)
+        public async Task<ClassBlockObject> GetIoBlockDataFromBlockHeight(long blockHeight, bool keepAlive, bool clone, CancellationTokenSource cancellationIoCache)
         {
             ClassBlockObject blockObject;
             bool useSemaphore = false;
@@ -339,7 +338,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 await _ioSemaphoreAccess.WaitAsync(cancellationIoCache.Token);
                 useSemaphore = true;
 
-                blockObject = await CallGetRetrieveDataAccess(blockHeight, keepAlive, false, cancellationIoCache);
+                blockObject = await CallGetRetrieveDataAccess(blockHeight, keepAlive, false, clone, cancellationIoCache);
             }
             finally
             {
@@ -358,7 +357,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// <param name="blockInformationsOnly"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private async Task<ClassBlockObject> CallGetRetrieveDataAccess(long blockHeight, bool keepAlive, bool blockInformationsOnly, CancellationTokenSource cancellation)
+        private async Task<ClassBlockObject> CallGetRetrieveDataAccess(long blockHeight, bool keepAlive, bool blockInformationsOnly, bool clone, CancellationTokenSource cancellation)
         {
             ClassBlockObject blockObject = null;
 
@@ -369,7 +368,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     if (!_ioStructureObjectsDictionary[blockHeight].IsNull)
                     {
                         if (!blockInformationsOnly)
-                            blockObject = _ioStructureObjectsDictionary[blockHeight].BlockObject;
+                            blockObject = clone ? _ioStructureObjectsDictionary[blockHeight].BlockObject.DirectCloneBlockObject() : _ioStructureObjectsDictionary[blockHeight].BlockObject;
                         else
                             _ioStructureObjectsDictionary[blockHeight].BlockObject.DeepCloneBlockObject(false, out blockObject);
                     }
@@ -379,7 +378,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                         if (!blockInformationsOnly)
                             // Update the io cache file and remove the data updated from the active memory
-                            if (blockObject != null)
+                            if (blockObject != null && keepAlive)
                                 await InsertInActiveMemory(blockObject, keepAlive, true, cancellation);
                     }
                 }
@@ -395,7 +394,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// <param name="keepAlive">Keep alive or not data inside of the active memory.</param>
         /// <param name="cancellationIoCache"></param>
         /// <returns></returns>
-        public async Task<DisposableList<ClassBlockObject>> GetIoListBlockDataFromListBlockHeight(HashSet<long> listBlockHeight, bool keepAlive, CancellationTokenSource cancellationIoCache)
+        public async Task<DisposableList<ClassBlockObject>> GetIoListBlockDataFromListBlockHeight(HashSet<long> listBlockHeight, bool keepAlive, bool clone, CancellationTokenSource cancellationIoCache)
         {
 
             DisposableList<ClassBlockObject> listBlockObjectDisposable = new DisposableList<ClassBlockObject>();
@@ -415,7 +414,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     {
                         if (!_ioStructureObjectsDictionary[blockHeight].IsNull)
                         {
-                            listBlockObjectDisposable.Add(_ioStructureObjectsDictionary[blockHeight].BlockObject);
+                            listBlockObjectDisposable.Add(clone ? _ioStructureObjectsDictionary[blockHeight].BlockObject.DirectCloneBlockObject() : _ioStructureObjectsDictionary[blockHeight].BlockObject);
                             listBlockHeight.Remove(blockHeight);
                         }
                     }
@@ -438,11 +437,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                     listBlockHeight.Remove(blockHeight);
 
                                     // Update the io cache file and remove the data updated from the active memory
-                                    await InsertInActiveMemory(blockObject, keepAlive, true, cancellationIoCache);
+                                    if (keepAlive)
+                                        await InsertInActiveMemory(blockObject, keepAlive, true, cancellationIoCache);
                                 }
                                 else
                                 {
-                                    listBlockObjectDisposable.Add(_ioStructureObjectsDictionary[blockHeight].BlockObject);
+                                    listBlockObjectDisposable.Add(clone ? _ioStructureObjectsDictionary[blockHeight].BlockObject.DirectCloneBlockObject() : _ioStructureObjectsDictionary[blockHeight].BlockObject);
                                     listBlockHeight.Remove(blockHeight);
                                 }
                             }
@@ -467,7 +467,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// <param name="transactionHash"></param>
         /// <param name="cancellationIoCache"></param>
         /// <returns></returns>
-        public async Task<ClassBlockTransaction> GetBlockTransactionFromIoBlockHeightByTransactionHash(long blockHeight, string transactionHash, CancellationTokenSource cancellationIoCache)
+        public async Task<ClassBlockTransaction> GetBlockTransactionFromIoBlockHeightByTransactionHash(long blockHeight, string transactionHash, bool keepAlive, CancellationTokenSource cancellationIoCache)
         {
             ClassBlockTransaction blockTransaction = null;
 
@@ -476,7 +476,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             try
             {
                 await _ioSemaphoreAccess.WaitAsync(cancellationIoCache.Token);
-
                 useSemaphore = true;
 
                 if (_ioStructureObjectsDictionary.ContainsKey(blockHeight))
@@ -484,7 +483,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                     if (_ioStructureObjectsDictionary[blockHeight].IsNull)
                     {
-                        ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, false, cancellationIoCache);
+                        ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, keepAlive, false, false, cancellationIoCache);
 
                         if (blockObject != null)
                             if (blockObject.BlockTransactions.ContainsKey(transactionHash))
@@ -519,7 +518,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// <returns></returns>
         public async Task<bool> PushOrUpdateIoBlockData(ClassBlockObject blockObject, bool keepAlive, CancellationTokenSource cancellationIoCache)
         {
-            blockObject.BlockIsUpdated = true;
 
             bool result = false;
 
@@ -532,9 +530,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                 if (_ioStructureObjectsDictionary.ContainsKey(blockObject.BlockHeight))
                 {
-
-                    await InsertInActiveMemory(blockObject, true, false, cancellationIoCache);
-
+                    blockObject.BlockIsUpdated = true;
+                    await InsertInActiveMemory(blockObject, keepAlive, false, cancellationIoCache);
                     _ioStructureObjectsDictionary[blockObject.BlockHeight].IsDeleted = false;
                     result = true;
                 }
@@ -557,18 +554,14 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     if (!exception)
                     {
                         if (await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache))
-                        {
                             result = true;
-                        }
                     }
                 }
             }
             finally
             {
                 if (useSemaphore)
-                {
                     _ioSemaphoreAccess.Release();
-                }
             }
             return result;
         }
@@ -599,37 +592,37 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     {
                         if (_ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions != null)
                         {
-                            _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockIsUpdated = true;
                             if (_ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions.ContainsKey(blockTransaction.TransactionObject.TransactionHash))
                                 _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions[blockTransaction.TransactionObject.TransactionHash] = blockTransaction;
 
                             else
                                 _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions.Add(blockTransaction.TransactionObject.TransactionHash, blockTransaction);
 
-                            result = true;
-
+                            _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockIsUpdated = true;
                             _ioStructureObjectsDictionary[blockHeight].IsDeleted = false;
+                            result = true;
                         }
                     }
                     else
                     {
-                        ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, false, cancellationIoCache);
+                        ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, false, false, cancellationIoCache);
 
                         if (blockObject?.BlockTransactions != null)
                         {
-                            blockObject.BlockIsUpdated = true;
 
                             if (blockObject.BlockTransactions.ContainsKey(blockTransaction.TransactionObject.TransactionHash))
                                 blockObject.BlockTransactions[blockTransaction.TransactionObject.TransactionHash] = blockTransaction;
                             else
                                 blockObject.BlockTransactions.Add(blockTransaction.TransactionObject.TransactionHash, blockTransaction);
 
-                            result = true;
+                            blockObject.BlockIsUpdated = true;
 
                             _ioStructureObjectsDictionary[blockHeight].IsDeleted = false;
 
                             // Update the io cache file and remove the data updated from the active memory
-                            await InsertInActiveMemory(blockObject, true, false, cancellationIoCache);
+                            await InsertInActiveMemory(blockObject, true, keepAlive, cancellationIoCache);
+
+                            result = true;
                         }
                     }
                 }
@@ -637,9 +630,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             finally
             {
                 if (useSemaphore)
-                {
                     _ioSemaphoreAccess.Release();
-                }
             }
             return result;
         }
@@ -677,7 +668,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 if (_ioStructureObjectsDictionary.ContainsKey(listBlockObject[i].BlockHeight))
                                 {
 
-                                    await InsertInActiveMemory(listBlockObject[i], true, false, cancellationIoCache);
+                                    await InsertInActiveMemory(listBlockObject[i], keepAlive, false, cancellationIoCache);
 
                                     _ioStructureObjectsDictionary[listBlockObject[i].BlockHeight].IsDeleted = false;
                                     result = true;
@@ -701,26 +692,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                     }
 
                                     if (!exception)
-                                    {
-                                        if (await WriteNewIoDataOnIoStreamFile(listBlockObject[i], cancellationIoCache))
-                                        {
-                                            result = true;
-                                        }
-                                        else
-                                        {
-                                            result = false;
-                                        }
-                                    }
+                                        result = await WriteNewIoDataOnIoStreamFile(listBlockObject[i], cancellationIoCache);
                                     else
-                                    {
                                         result = false;
-                                    }
                                 }
 
                                 if (!result)
-                                {
                                     break;
-                                }
                             }
                         }
                     }
@@ -733,9 +711,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             finally
             {
                 if (useSemaphore)
-                {
                     _ioSemaphoreAccess.Release();
-                }
             }
 
             return result;
@@ -782,12 +758,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                                         if (_ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions != null)
                                         {
-                                            _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockIsUpdated = true;
 
                                             if (_ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions.ContainsKey(transactionHash))
                                                 _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions[transactionHash] = listBlockTransaction[i];
                                             else
                                                 _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions.Add(transactionHash, listBlockTransaction[i]);
+                                            _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockIsUpdated = true;
 
                                             result = true;
                                         }
@@ -795,29 +771,28 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                     else
                                     {
 
-                                        ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, false, cancellationIoCache);
+                                        ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, keepAlive, false, false, cancellationIoCache);
 
                                         if (blockObject?.BlockTransactions != null)
                                         {
-                                            blockObject.BlockIsUpdated = true;
 
                                             if (blockObject.BlockTransactions.ContainsKey(transactionHash))
                                                 blockObject.BlockTransactions[transactionHash] = listBlockTransaction[i];
                                             else
                                                 blockObject.BlockTransactions.Add(transactionHash, listBlockTransaction[i]);
 
-                                            result = true;
+                                            blockObject.BlockIsUpdated = true;
 
                                             // Update the io cache file and remove the data updated from the active memory
-                                            await InsertInActiveMemory(blockObject, true, false, cancellationIoCache);
+                                            await InsertInActiveMemory(blockObject, keepAlive, false, cancellationIoCache);
+
+                                            result = true;
                                         }
                                     }
                                 }
 
                                 if (!result)
-                                {
                                     break;
-                                }
                             }
                         }
                     }
@@ -830,9 +805,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             finally
             {
                 if (useSemaphore)
-                {
                     _ioSemaphoreAccess.Release();
-                }
             }
 
             return result;
@@ -890,14 +863,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
             try
             {
-                if (cancellation != null)
-                {
-                    await _ioSemaphoreAccess.WaitAsync(cancellation.Token);
-                }
-                else
-                {
-                    await _ioSemaphoreAccess.WaitAsync();
-                }
+                await _ioSemaphoreAccess.WaitAsync(cancellation.Token);
+
                 useSemaphore = true;
 
                 result = _ioStructureObjectsDictionary.ContainsKey(blockHeight);
@@ -944,7 +911,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         }
                         else
                         {
-                            ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, false, cancellationIoCache);
+                            ClassBlockObject blockObject = await CallGetRetrieveDataAccess(blockHeight, false, false, false, cancellationIoCache);
 
                             if (blockObject != null)
                             {
@@ -979,14 +946,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
             try
             {
-                if (cancellation != null)
-                {
-                    await _ioSemaphoreAccess.WaitAsync(cancellation.Token);
-                }
-                else
-                {
-                    await _ioSemaphoreAccess.WaitAsync();
-                }
+                await _ioSemaphoreAccess.WaitAsync(cancellation.Token);
+
                 useSemaphore = true;
 
                 listBlockHeight = new HashSet<long>(_ioStructureObjectsDictionary.Keys.ToList());
@@ -1022,11 +983,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             {
                 if (!semaphoreUsed)
                 {
-                    if (cancellation != null)
-                    {
-                        await _ioSemaphoreAccess.WaitAsync(cancellation.Token);
-                        useSemaphore = true;
-                    }
+                    await _ioSemaphoreAccess.WaitAsync(cancellation.Token);
+                    useSemaphore = true;
                 }
 
                 using (DisposableDictionary<long, ClassBlockObject> listIoData = new DisposableDictionary<long, ClassBlockObject>())
@@ -1206,7 +1164,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     #endregion
 
                 }
-
             }
             finally
             {
@@ -1235,14 +1192,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
             if (!cancel)
             {
-                if (!fromReading) blockObject.BlockIsUpdated = true;
-
                 if (keepAlive)
                 {
-
                     if (!_ioStructureObjectsDictionary[blockObject.BlockHeight].IsNull)
                     {
-                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = fromReading ? blockObject : blockObject.DirectCloneBlockObject();
+                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
                         insertInMemory = true;
                     }
                     else
@@ -1264,7 +1218,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                             // Try to push the block updated in memory.
                             if (totalMemoryConsumption + totalMemoryToAsk <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                             {
-                                _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = fromReading ? blockObject : blockObject.DirectCloneBlockObject();
+                                _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
                                 _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
                                 insertInMemory = true;
                             }
@@ -1275,13 +1229,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                                 if (totalMemoryRetrieved >= totalMemoryToAsk)
                                 {
-                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = fromReading ? blockObject : blockObject.DirectCloneBlockObject();
+                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
                                     _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
                                     insertInMemory = true;
                                 }
                                 else if (_ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellationIoCache) + (totalMemoryToAsk - totalMemoryRetrieved) <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                                 {
-                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = fromReading ? blockObject : blockObject.DirectCloneBlockObject();
+                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
                                     _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
                                     insertInMemory = true;
                                 }
@@ -1290,7 +1244,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                     // Do a purge on other io cache files indexed.
                                     if (await _ioCacheSystem.DoPurgeFromIoCacheIndex(_ioDataStructureFilename, newMemorySize, cancellationIoCache))
                                     {
-                                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = fromReading ? blockObject : blockObject.DirectCloneBlockObject();
+                                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
                                         _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
                                         insertInMemory = true;
                                     }
@@ -1314,9 +1268,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                 if (!insertInMemory)
                 {
                     if (!fromReading)
-                    { 
-                        if (await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache))
-                            if (!keepAlive) _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = null;
+                    {
+                        if (!_ioStructureObjectsDictionary[blockObject.BlockHeight].IsNull)
+                            _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
+                        else
+                            await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache);
                     }
                 }
             }
@@ -1495,89 +1451,72 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             bool readStatus = true;
             byte[] data = new byte[ioFileSize];
 
-            long size = 0;
-            int percentRead = _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMinPercentReadFromBlockDataSize;
-            long sizeByBlockToRead = (ioFileSize * percentRead) / 100;
-
-            while (sizeByBlockToRead >= int.MaxValue - 1)
+            using (DisposableList<byte[]> listData = new DisposableList<byte[]>())
             {
-                if (cancellation != null)
-                    if (cancellation.IsCancellationRequested)
-                    {
-                        readStatus = false;
-                        break;
-                    }
 
-                percentRead--;
-                if (percentRead <= 0)
-                {
+                long size = 0;
+                int percentRead = _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMinPercentReadFromBlockDataSize;
+                long sizeByBlockToRead = (ioFileSize * percentRead) / 100;
+
+                if (sizeByBlockToRead <= 0)
                     sizeByBlockToRead = _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMinReadByBlockSize;
-                    break;
-                }
 
-                sizeByBlockToRead = (ioFileSize * percentRead) / 100;
-            }
-
-            if (sizeByBlockToRead <= 0)
-            {
-                sizeByBlockToRead = _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMinReadByBlockSize;
-            }
-
-            if (readStatus)
-            {
-
-                while (size < data.Length)
+                if (readStatus)
                 {
-                    try
+
+                    while (size < data.Length)
                     {
-                        if (cancellation != null)
+                        try
                         {
-                            if (cancellation.IsCancellationRequested)
+                            if (cancellation != null)
                             {
-                                readStatus = false;
+                                if (cancellation.IsCancellationRequested)
+                                {
+                                    readStatus = false;
+                                    break;
+                                }
+                            }
+                            if (size + sizeByBlockToRead <= data.Length)
+                            {
+                                byte[] blockData = new byte[sizeByBlockToRead];
+
+                                ioFileStream.Read(blockData, 0, blockData.Length);
+
+                                listData.Add(blockData);
+
+                                size += sizeByBlockToRead;
+                            }
+                            else
+                            {
+                                long rest = data.Length - size;
+
+                                if (rest > 0)
+                                {
+                                    byte[] blockData = new byte[rest];
+
+                                    ioFileStream.Read(blockData, 0, blockData.Length);
+                                    listData.Add(blockData);
+
+                                    size += rest;
+                                }
+                            }
+
+                            if (size == data.Length)
+                            {
                                 break;
                             }
                         }
-                        if (size + sizeByBlockToRead <= data.Length)
+                        catch
                         {
-                            byte[] blockData = new byte[sizeByBlockToRead];
-
-                            ioFileStream.Read(blockData, 0, blockData.Length);
-
-                            Array.Copy(blockData, 0, data, size, blockData.Length);
-
-                            size += sizeByBlockToRead;
-                        }
-                        else
-                        {
-                            long rest = data.Length - size;
-
-                            if (rest > 0)
-                            {
-                                byte[] blockData = new byte[rest];
-
-                                ioFileStream.Read(blockData, 0, blockData.Length);
-                                Array.Copy(blockData, 0, data, size, blockData.Length);
-
-                                size += rest;
-                            }
-                        }
-
-                        if (size == data.Length)
-                        {
+                            readStatus = false;
                             break;
                         }
                     }
-                    catch
-                    {
-                        readStatus = false;
-                        break;
-                    }
+
                 }
 
+                return new Tuple<bool, byte[]>(readStatus, listData.GetList.SelectMany(x => x).ToArray());
             }
-
-            return new Tuple<bool, byte[]>(readStatus, data);
         }
 
 
@@ -1983,38 +1922,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             int percentWrite = _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMinPercentWriteFromBlockDataSize;
             long sizeByBlockToWrite = (data.Length * percentWrite) / 100;
 
-            while (sizeByBlockToWrite >= int.MaxValue - 1)
-            {
-                if (cancellation != null)
-                    if (cancellation.IsCancellationRequested)
-                    {
-                        writeStatus = false;
-                        break;
-                    }
-
-                percentWrite--;
-                if (percentWrite <= 0)
-                {
-                    sizeByBlockToWrite = _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMinWriteByBlockSize;
-                    break;
-                }
-
-                sizeByBlockToWrite = (data.Length * percentWrite) / 100;
-
-                if (cancellation != null)
-                {
-                    if (cancellation.IsCancellationRequested)
-                    {
-                        writeStatus = false;
-                        break;
-                    }
-                }
-            }
-
             if (sizeByBlockToWrite <= 0)
-            {
                 sizeByBlockToWrite = _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMinWriteByBlockSize;
-            }
 
             if (writeStatus)
             {
@@ -2061,9 +1970,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         }
 
                         if (dataSizeWritten >= data.Length)
-                        {
                             break;
-                        }
                     }
                     catch
                     {

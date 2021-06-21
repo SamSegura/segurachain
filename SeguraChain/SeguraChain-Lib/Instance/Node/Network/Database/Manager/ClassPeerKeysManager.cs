@@ -173,10 +173,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
 
                     try
                     {
-                        if (cancellation != null)
-                            await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-                        else
-                            await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync();
+                        await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
+
 
                         useSemaphore = true;
                         if (sendAskPeerAuthKeysObject.AesEncryptionKey != null && sendAskPeerAuthKeysObject.AesEncryptionIv != null)
@@ -221,10 +219,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
 
                         try
                         {
-                            if (cancellation != null)
-                                await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-                            else
-                                await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync();
+                            await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
+
 
                             useSemaphore = true;
                             ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendAskPeerAuthKeysObject.AesEncryptionKey, sendAskPeerAuthKeysObject.AesEncryptionIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);

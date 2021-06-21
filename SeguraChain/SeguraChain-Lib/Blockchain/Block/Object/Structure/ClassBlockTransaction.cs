@@ -16,14 +16,17 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         private ClassTransactionObject _transactionObject;
         public ClassTransactionObject TransactionObject
         {
-            get => _transactionObject;
+            get
+            {
+                if (TransactionSize == 0)
+                    TransactionSize = ClassTransactionUtility.GetTransactionMemorySize(_transactionObject, false);
+                return _transactionObject;
+            }
             set
             {
                 _transactionObject = value;
                 if (TransactionSize == 0)
-                {
                     TransactionSize = ClassTransactionUtility.GetTransactionMemorySize(_transactionObject, false);
-                }
             }
         }
 
@@ -31,10 +34,27 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public long TransactionInvalidRemoveTimestamp;
         public ClassTransactionEnumStatus TransactionInvalidStatus;
         public int IndexInsert;
-        public bool Spent;
+        public bool Spent => TotalSpend >= TransactionObject.Amount;
+
         public BigInteger TotalSpend;
         public long TransactionSize;
 
+
+        public ClassBlockTransaction(int indexInsert, ClassTransactionObject transactionObject)
+        {
+            IndexInsert = indexInsert;
+            _transactionObject = transactionObject;
+            TransactionBlockHeightInsert = _transactionObject.BlockHeightTransaction;
+            TransactionBlockHeightTarget = _transactionObject.BlockHeightTransactionConfirmationTarget;
+            TransactionTotalConfirmation = 0;
+            TransactionStatus = true;
+            TotalSpend = 0;
+            TransactionSize = ClassTransactionUtility.GetTransactionMemorySize(_transactionObject, false);
+        }
+
+        public bool NeedUpdateAmountTransactionSource => TransactionTotalConfirmation == 0 &&
+                                                                    (TransactionObject.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION ||
+                                                                    TransactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION);
         public ClassBlockTransaction Clone()
         {
             ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(this), out ClassBlockTransaction blockTransaction);
