@@ -652,7 +652,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                         ClassBlockObject blockObject = await GetBlockMirrorObject(blockHeight, cancellation);
 
-                        if (blockObject != null)
+                        if (blockObject?.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                             listBlockInformationData.Add(blockObject);
                         else
                             listBlockHeightNotFound.Add(blockHeight);
@@ -661,9 +661,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 }
 
                 if (listBlockHeightNotFound.Count > 0)
+                {
                     foreach (var blockObjectPair in await GetBlockInformationListByBlockHeightListTargetFromMemoryDataCache(listBlockHeightNotFound, cancellation))
+                    {
                         if (blockObjectPair.Value != null)
                             listBlockInformationData.Add(blockObjectPair.Value);
+                    }
+                }
 
                 // Clean up.
                 listBlockHeightNotFound.Clear();
@@ -1238,7 +1242,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
             {
                 if (Count > 0)
                 {
-                    semaphoreUsed = await _semaphoreSlimUpdateTransactionConfirmations.WaitAsync(1000, cancellation.Token);
+                    await _semaphoreSlimUpdateTransactionConfirmations.WaitAsync(cancellation.Token);
+                    semaphoreUsed = true;
 
                     if (blockchainNetworkStatsObject.LastNetworkBlockHeight == 0)
                         blockchainNetworkStatsObject.LastNetworkBlockHeight = GetLastBlockHeight;
@@ -1249,145 +1254,126 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     {
                         blockchainNetworkStatsObject.LastBlockHeight = lastBlockHeight;
 
-                        if (semaphoreUsed)
+                        var lastBlock = await GetBlockInformationDataStrategy(lastBlockHeight, cancellation);
+
+                        if (lastBlock != null)
                         {
-                            var lastBlock = await GetBlockInformationDataStrategy(lastBlockHeight, cancellation);
+                            long lastBlockHeightUnlocked = await GetLastBlockHeightUnlocked(cancellation);
+                            long lastBlockHeightConfirmationDoneProgress = await GetLastBlockHeightTransactionConfirmationDone(cancellation);
+                            long totalMemPoolTransaction = ClassMemPoolDatabase.GetCountMemPoolTx;
+                            ClassBlockEnumStatus lastBlockStatus = lastBlock.BlockStatus;
+                            string lastBlockHash = lastBlock.BlockHash;
+                            BigInteger lastBlockDifficulty = lastBlock.BlockDifficulty;
 
-                            if (lastBlock != null)
+                            bool canceled = false;
+
+                            long startHeightAvgMining = (lastBlockHeightUnlocked - BlockchainSetting.BlockDifficultyRangeCalculation);
+
+                            if (startHeightAvgMining <= 0)
+                                startHeightAvgMining = 1;
+
+                            long endHeightAvgMining = startHeightAvgMining + BlockchainSetting.BlockDifficultyRangeCalculation;
+
+                            BigInteger totalFeeCirculating = 0;
+                            BigInteger totalCoinPending = 0;
+                            BigInteger totalCoinCirculating = 0;
+                            long totalTransaction = 0;
+                            long totalTransactionConfirmed = 0;
+                            long averageMiningTotalTimespend = 0;
+                            long averageMiningTimespendExpected = 0;
+                            long lastBlockHeightTransactionConfirmationDone = 0;
+
+                            int totalTravel = 0;
+
+                            long timestampTaskStart = ClassUtility.GetCurrentTimestampInMillisecond();
+
+                            long lastBlockHeightTravel = 0;
+
+                            try
                             {
-                                long lastBlockHeightUnlocked = await GetLastBlockHeightUnlocked(cancellation);
-                                long lastBlockHeightConfirmationDoneProgress = await GetLastBlockHeightTransactionConfirmationDone(cancellation);
-                                long totalMemPoolTransaction = ClassMemPoolDatabase.GetCountMemPoolTx;
-                                ClassBlockEnumStatus lastBlockStatus = lastBlock.BlockStatus;
-                                string lastBlockHash = lastBlock.BlockHash;
-                                BigInteger lastBlockDifficulty = lastBlock.BlockDifficulty;
 
-                                if (blockchainNetworkStatsObject.LastBlockHeightTransactionConfirmationDone != lastBlockHeightConfirmationDoneProgress ||
-                                    blockchainNetworkStatsObject.LastBlockHeightUnlocked != lastBlockHeightUnlocked ||
-                                    blockchainNetworkStatsObject.LastBlockHeight != lastBlockHeight)
+                                for (long i = 0; i < lastBlockHeightConfirmationDoneProgress; i++)
                                 {
-                                    bool canceled = false;
+                                    long blockHeight = i + 1;
+                                    ClassBlockObject blockObject = await GetBlockInformationDataStrategy(blockHeight, cancellation);
 
-                                    long startHeightAvgMining = (lastBlockHeightUnlocked - BlockchainSetting.BlockDifficultyRangeCalculation);
-
-                                    if (startHeightAvgMining <= 0)
-                                        startHeightAvgMining = 1;
-
-                                    long endHeightAvgMining = startHeightAvgMining + BlockchainSetting.BlockDifficultyRangeCalculation;
-
-                                    BigInteger totalFeeCirculating = 0;
-                                    BigInteger totalCoinPending = 0;
-                                    BigInteger totalCoinCirculating = 0;
-                                    long totalTransaction = 0;
-                                    long totalTransactionConfirmed = 0;
-                                    long averageMiningTotalTimespend = 0;
-                                    long averageMiningTimespendExpected = 0;
-                                    long lastBlockHeightTransactionConfirmationDone = 0;
-
-                                    int totalTravel = 0;
-
-                                    long timestampTaskStart = ClassUtility.GetCurrentTimestampInMillisecond();
-
-                                    long lastBlockHeightTravel = 0;
-
-                                    try
+                                    if (blockObject != null)
                                     {
-                                        HashSet<long> listBlockHeight = new HashSet<long>();
-
-                                        for (long i = 0; i < lastBlockHeight; i++)
+                                        if (blockObject.BlockHeight > lastBlockHeightTravel)
                                         {
-                                            long blockHeight = i + 1;
-                                            listBlockHeight.Add(blockHeight);
-                                        }
-
-                                        foreach (ClassBlockObject blockObject in await GetListBlockInformationDataFromListBlockHeightStrategy(listBlockHeight, cancellation))
-                                        {
-                                            if (blockObject != null)
+                                            if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED && blockObject.BlockTransactionConfirmationCheckTaskDone)
                                             {
-                                                if (blockObject.BlockHeight > lastBlockHeightTravel)
+                                                if (totalTravel >= startHeightAvgMining && totalTravel <= endHeightAvgMining)
                                                 {
-                                                    if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                                                    {
-                                                        if (totalTravel >= startHeightAvgMining && totalTravel <= endHeightAvgMining)
-                                                        {
-                                                            averageMiningTotalTimespend += blockObject.TimestampFound - blockObject.TimestampCreate;
-                                                            averageMiningTimespendExpected += BlockchainSetting.BlockTime;
-                                                        }
+                                                    averageMiningTotalTimespend += blockObject.TimestampFound - blockObject.TimestampCreate;
+                                                    averageMiningTimespendExpected += BlockchainSetting.BlockTime;
+                                                }
 
-                                                        lastBlockHeightUnlocked = blockObject.BlockHeight;
+                                                lastBlockHeightUnlocked = blockObject.BlockHeight;
 
-                                                        if (blockObject.IsConfirmedByNetwork)
-                                                        {
+                                                if (blockObject.IsConfirmedByNetwork)
+                                                {
 
-                                                            totalTransaction += blockObject.TotalTransaction;
-                                                            totalTransactionConfirmed += blockObject.TotalTransactionConfirmed;
+                                                    totalTransaction += blockObject.TotalTransaction;
+                                                    totalTransactionConfirmed += blockObject.TotalTransactionConfirmed;
 
 
-                                                            if (blockObject.BlockTransactionConfirmationCheckTaskDone)
-                                                                lastBlockHeightTransactionConfirmationDone = blockObject.BlockLastHeightTransactionConfirmationDone;
+                                                    if (blockObject.BlockTransactionConfirmationCheckTaskDone)
+                                                        lastBlockHeightTransactionConfirmationDone = blockObject.BlockLastHeightTransactionConfirmationDone;
 
-                                                            totalCoinPending += blockObject.TotalCoinPending;
-                                                            totalCoinCirculating += blockObject.TotalCoinConfirmed;
-                                                            if (blockObject.TotalFee > 0)
-                                                                totalFeeCirculating += blockObject.TotalFee;
-                                                        }
-                                                    }
-
-                                                    lastBlockHeightTravel = blockObject.BlockHeight;
-                                                    totalTravel++;
+                                                    totalCoinPending += blockObject.TotalCoinPending;
+                                                    totalCoinCirculating += blockObject.TotalCoinConfirmed;
+                                                    if (blockObject.TotalFee > 0)
+                                                        totalFeeCirculating += blockObject.TotalFee;
                                                 }
                                             }
-                                            else
-                                            {
-                                                canceled = true;
-                                                break;
-                                            }
-                                        }
 
-                                        // Clean up.
-                                        listBlockHeight.Clear();
+                                            lastBlockHeightTravel = blockObject.BlockHeight;
+                                            totalTravel++;
+                                        }
                                     }
-                                    catch (Exception error)
+                                    else
                                     {
                                         canceled = true;
-
-                                        ClassLog.WriteLine("Error on building latest blockchain stats. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-#if DEBUG
-                                        Debug.WriteLine("Error on building latest blockchain stats. Exception: " + error.Message);
-#endif
-                                    }
-
-
-                                    // Retrieve latest stats calculated if their is any cancellation done.
-                                    if (!canceled)
-                                    {
-                                        // Update tasks stats confirmed.
-                                        blockchainNetworkStatsObject.TotalCoinCirculating = totalCoinCirculating;
-                                        blockchainNetworkStatsObject.TotalCoinPending = totalCoinPending;
-                                        blockchainNetworkStatsObject.TotalFee = totalFeeCirculating;
-                                        blockchainNetworkStatsObject.TotalTransactionsConfirmed = totalTransactionConfirmed;
-                                        blockchainNetworkStatsObject.TotalTransactions = totalTransaction;
-                                        blockchainNetworkStatsObject.LastAverageMiningTimespendDone = averageMiningTotalTimespend;
-                                        blockchainNetworkStatsObject.LastAverageMiningTimespendExpected = averageMiningTimespendExpected;
-                                        blockchainNetworkStatsObject.LastBlockHeightTransactionConfirmationDone = lastBlockHeightTransactionConfirmationDone;
-                                        blockchainNetworkStatsObject.LastBlockHeightUnlocked = lastBlockHeightUnlocked;
-                                        blockchainNetworkStatsObject.LastUpdateStatsDateTime = ClassUtility.GetDatetimeFromTimestamp(ClassUtility.GetCurrentTimestampInSecond());
-                                        blockchainNetworkStatsObject.BlockchainStatsTimestampToGenerate = ClassUtility.GetCurrentTimestampInMillisecond() - timestampTaskStart;
-                                        blockchainNetworkStatsObject.LastBlockHeight = lastBlockHeight;
-                                        blockchainNetworkStatsObject.LastBlockDifficulty = lastBlockDifficulty;
-                                        blockchainNetworkStatsObject.LastBlockHash = lastBlockHash;
-                                        blockchainNetworkStatsObject.LastBlockStatus = lastBlockStatus;
+                                        break;
                                     }
                                 }
                             }
+                            catch (Exception error)
+                            {
+                                canceled = true;
+
+                                ClassLog.WriteLine("Error on building latest blockchain stats. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+#if DEBUG
+                                Debug.WriteLine("Error on building latest blockchain stats. Exception: " + error.Message);
+#endif
+                            }
+
+
+                            // Retrieve latest stats calculated if their is any cancellation done.
+                            if (!canceled)
+                            {
+                                // Update tasks stats confirmed.
+                                blockchainNetworkStatsObject.TotalCoinCirculating = totalCoinCirculating;
+                                blockchainNetworkStatsObject.TotalCoinPending = totalCoinPending;
+                                blockchainNetworkStatsObject.TotalFee = totalFeeCirculating;
+                                blockchainNetworkStatsObject.TotalTransactionsConfirmed = totalTransactionConfirmed;
+                                blockchainNetworkStatsObject.TotalTransactions = totalTransaction;
+                                blockchainNetworkStatsObject.LastAverageMiningTimespendDone = averageMiningTotalTimespend;
+                                blockchainNetworkStatsObject.LastAverageMiningTimespendExpected = averageMiningTimespendExpected;
+                                blockchainNetworkStatsObject.LastBlockHeightTransactionConfirmationDone = lastBlockHeightTransactionConfirmationDone;
+                                blockchainNetworkStatsObject.LastBlockHeightUnlocked = lastBlockHeightUnlocked;
+                                blockchainNetworkStatsObject.LastUpdateStatsDateTime = ClassUtility.GetDatetimeFromTimestamp(ClassUtility.GetCurrentTimestampInSecond());
+                                blockchainNetworkStatsObject.BlockchainStatsTimestampToGenerate = ClassUtility.GetCurrentTimestampInMillisecond() - timestampTaskStart;
+                                blockchainNetworkStatsObject.LastBlockHeight = lastBlockHeight;
+                                blockchainNetworkStatsObject.LastBlockDifficulty = lastBlockDifficulty;
+                                blockchainNetworkStatsObject.LastBlockHash = lastBlockHash;
+                                blockchainNetworkStatsObject.LastBlockStatus = lastBlockStatus;
+                            }
+
                         }
                     }
-
-                    if (semaphoreUsed)
-                    {
-                        _semaphoreSlimUpdateTransactionConfirmations.Release();
-                        semaphoreUsed = false;
-                    }
+                    
                 }
             }
             finally
@@ -1709,64 +1695,66 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                                     long totalTaskToDo = lastBlockHeightUnlockedChecked - blockObject.BlockHeight;
                                                                                     if (blockObject.BlockTotalTaskTransactionConfirmationDone <= totalTaskToDo)
                                                                                     {
-
+                                                                                        ClassBlockObject blockObjectUpdated = null;
                                                                                         if (!blockObject.BlockTransactionFullyConfirmed)
-                                                                                            await TaskTravelBlockTransactionAsync(blockObject, lastBlockHeightUnlockedObject, listBlockObjectUpdated.GetList, cancellation);
+                                                                                            blockObjectUpdated = await TaskTravelBlockTransactionAsync(blockObject, lastBlockHeightUnlockedObject, listBlockObjectUpdated.GetList, cancellation);
+                                                                                        else
+                                                                                            blockObjectUpdated = blockObject;
 
-                                                                                        lastBlockHeightTransactionConfirmationDone = blockHeight;
+                                                                                       lastBlockHeightTransactionConfirmationDone = blockHeight;
 
-                                                                                        blockObject.BlockTransactionConfirmationCheckTaskDone = true;
-                                                                                        blockObject.BlockTotalTaskTransactionConfirmationDone = totalTaskToDo;
-                                                                                        blockObject.BlockLastHeightTransactionConfirmationDone = lastBlockHeightUnlockedChecked;
-                                                                                        blockObject.BlockUnlockValid = true;
-                                                                                        blockObject.BlockNetworkAmountConfirmations = BlockchainSetting.BlockAmountNetworkConfirmations;
-                                                                                        blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-                                                                                        blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
-                                                                                        blockObject.TotalCoinConfirmed = 0;
-                                                                                        blockObject.TotalFee = 0;
-                                                                                        blockObject.TotalCoinPending = 0;
-                                                                                        blockObject.TotalTransactionConfirmed = 0;
+                                                                                        blockObjectUpdated.BlockTransactionConfirmationCheckTaskDone = true;
+                                                                                        blockObjectUpdated.BlockTotalTaskTransactionConfirmationDone = totalTaskToDo;
+                                                                                        blockObjectUpdated.BlockLastHeightTransactionConfirmationDone = lastBlockHeightUnlockedChecked;
+                                                                                        blockObjectUpdated.BlockUnlockValid = true;
+                                                                                        blockObjectUpdated.BlockNetworkAmountConfirmations = BlockchainSetting.BlockAmountNetworkConfirmations;
+                                                                                        blockObjectUpdated.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+                                                                                        blockObjectUpdated.TotalTransaction = blockObject.BlockTransactions.Count;
+                                                                                        blockObjectUpdated.TotalCoinConfirmed = 0;
+                                                                                        blockObjectUpdated.TotalFee = 0;
+                                                                                        blockObjectUpdated.TotalCoinPending = 0;
+                                                                                        blockObjectUpdated.TotalTransactionConfirmed = 0;
 
                                                                                         // Update block cached confirmed retrieved.
-                                                                                        foreach (var txHash in blockObject.BlockTransactions.Keys)
+                                                                                        foreach (var txHash in blockObjectUpdated.BlockTransactions.Keys)
                                                                                         {
-                                                                                            if (blockObject.BlockTransactions[txHash].TransactionStatus)
+                                                                                            if (blockObjectUpdated.BlockTransactions[txHash].TransactionStatus)
                                                                                             {
-                                                                                                long totalConfirmationsToReach = blockObject.BlockTransactions[txHash].TransactionBlockHeightTarget - blockObject.BlockTransactions[txHash].TransactionBlockHeightInsert;
+                                                                                                long totalConfirmationsToReach = blockObjectUpdated.BlockTransactions[txHash].TransactionBlockHeightTarget - blockObjectUpdated.BlockTransactions[txHash].TransactionBlockHeightInsert;
 
-                                                                                                if (blockObject.BlockTransactions[txHash].TransactionTotalConfirmation >= totalConfirmationsToReach)
+                                                                                                if (blockObjectUpdated.BlockTransactions[txHash].TransactionTotalConfirmation >= totalConfirmationsToReach)
                                                                                                 {
-                                                                                                    blockObject.TotalCoinConfirmed += blockObject.BlockTransactions[txHash].TransactionObject.Amount - blockObject.BlockTransactions[txHash].TotalSpend;
-                                                                                                    blockObject.TotalTransactionConfirmed++;
+                                                                                                    blockObjectUpdated.TotalCoinConfirmed += blockObjectUpdated.BlockTransactions[txHash].TransactionObject.Amount - blockObjectUpdated.BlockTransactions[txHash].TotalSpend;
+                                                                                                    blockObjectUpdated.TotalTransactionConfirmed++;
                                                                                                 }
                                                                                                 else
-                                                                                                    blockObject.TotalCoinPending += blockObject.BlockTransactions[txHash].TransactionObject.Amount;
+                                                                                                    blockObjectUpdated.TotalCoinPending += blockObjectUpdated.BlockTransactions[txHash].TransactionObject.Amount;
 
 
-                                                                                                if (blockObject.BlockTransactions[txHash].TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
-                                                                                                    blockObject.BlockTransactions[txHash].TransactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
+                                                                                                if (blockObjectUpdated.BlockTransactions[txHash].TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
+                                                                                                    blockObjectUpdated.BlockTransactions[txHash].TransactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
                                                                                                 {
-                                                                                                    blockObject.TotalFee += blockObject.BlockTransactions[txHash].TransactionObject.Fee;
+                                                                                                    blockObjectUpdated.TotalFee += blockObject.BlockTransactions[txHash].TransactionObject.Fee;
                                                                                                 }
                                                                                             }
                                                                                         }
 
                                                                                         if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].Content != null)
-                                                                                            _dictionaryBlockObjectMemory[blockObject.BlockHeight].Content = blockObject;
+                                                                                            _dictionaryBlockObjectMemory[blockObject.BlockHeight].Content = blockObjectUpdated;
 
                                                                                         changeDone = true;
 
 
                                                                                         if (blockObject.BlockHeight >= lastBlockHeightCheckpoint + BlockchainSetting.TaskVirtualBlockCheckpoint)
                                                                                         {
-                                                                                            ClassBlockchainDatabase.InsertCheckpoint(ClassCheckpointEnumType.BLOCK_HEIGHT_TRANSACTION_CHECKPOINT, blockObject.BlockHeight, string.Empty, 0, 0);
-                                                                                            lastBlockHeightCheckpoint = blockObject.BlockHeight;
+                                                                                            ClassBlockchainDatabase.InsertCheckpoint(ClassCheckpointEnumType.BLOCK_HEIGHT_TRANSACTION_CHECKPOINT, blockObjectUpdated.BlockHeight, string.Empty, 0, 0);
+                                                                                            lastBlockHeightCheckpoint = blockObjectUpdated.BlockHeight;
                                                                                         }
 
-                                                                                        previousBlockObject = blockObject.DirectCloneBlockObject();
+                                                                                        previousBlockObject = blockObjectUpdated.DirectCloneBlockObject();
                                                                                         previousBlockHeight = blockHeight;
                                                                                         totalBlockTravel++;
-                                                                                        listBlockObjectUpdated.Add(blockObject.BlockHeight, blockObject);
+                                                                                        listBlockObjectUpdated.Add(blockObject.BlockHeight, blockObjectUpdated);
                                                                                     }
                                                                                     else
                                                                                     {
@@ -3348,9 +3336,14 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                         if (blockHeight > lastBlockHeightWalletCheckpoint && blockHeight <= maxBlockHeightTarget)
                         {
-                            var listTxFromCacheOrMemory = listBlockObjectUpdated.ContainsKey(blockHeight) ? listBlockObjectUpdated[blockHeight].BlockTransactions.Values : (await GetTransactionListFromBlockHeightTargetFromMemoryDataCache(blockHeight, false, cancellation))?.Values.ToArray();
+                            DisposableList<ClassBlockTransaction> listTxFromCacheOrMemory;
 
-                            foreach (ClassBlockTransaction blockTransaction in listTxFromCacheOrMemory.OrderBy(x => x.TransactionObject.TimestampSend))
+                            if (listBlockObjectUpdated != null)
+                                listTxFromCacheOrMemory = listBlockObjectUpdated.ContainsKey(blockHeight) ? new DisposableList<ClassBlockTransaction>(false, 0, listBlockObjectUpdated[blockHeight].BlockTransactions.Values.ToArray()) : new DisposableList<ClassBlockTransaction>(false, 0, (await GetTransactionListFromBlockHeightTargetFromMemoryDataCache(blockHeight, false, cancellation))?.Values.ToArray());
+                            else
+                                listTxFromCacheOrMemory = new DisposableList<ClassBlockTransaction>(false, 0, (await GetTransactionListFromBlockHeightTargetFromMemoryDataCache(blockHeight, false, cancellation))?.Values.ToArray());
+
+                            foreach (ClassBlockTransaction blockTransaction in listTxFromCacheOrMemory.GetList.OrderBy(x => x.TransactionObject.TimestampSend))
                             {
                                 cancellation?.Token.ThrowIfCancellationRequested();
 
@@ -3418,6 +3411,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                 }
                             }
 
+                            listTxFromCacheOrMemory.Dispose();
                         }
                     }
 

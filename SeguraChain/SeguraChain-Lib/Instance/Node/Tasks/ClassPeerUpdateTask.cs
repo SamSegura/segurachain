@@ -34,6 +34,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
         private const int CleanUpPeerDeadConnectionInterval = 10 * 1000;
         private const int UpdateBlockTransactionConfirmationInterval = 1 * 1000;
         private const int UpdateNodeInternalStats = 1 * 1000;
+        private const int UpdateBlockchainStatsInterval = 1 * 1000;
 
 
         /// <summary>
@@ -79,6 +80,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
             if (_nodeInstance.PeerSettingObject.PeerFirewallSettingObject.PeerEnableFirewallLink)
                 StartTaskManageApiFirewall();
 
+            StartTaskUpdateBlockchainNetworkStats();
             StartTaskUpdateNodeInternalStats();
         }
 
@@ -270,7 +272,30 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
             }
         }
 
- 
+
+
+        /// <summary>
+        /// Start a task who automatically update blockchain network stats from data synced.
+        /// </summary>
+        private void StartTaskUpdateBlockchainNetworkStats()
+        {
+            try
+            {
+                Task.Factory.StartNew(async () =>
+                {
+                    while (_nodeInstance.PeerToolStatus)
+                    {
+                        _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
+                        await ClassBlockchainStats.UpdateBlockchainNetworkStats(true, _cancellationTokenSourceUpdateTask);
+                        await Task.Delay(UpdateBlockchainStatsInterval, _cancellationTokenSourceUpdateTask.Token);
+                    }
+                }, _cancellationTokenSourceUpdateTask.Token, TaskCreationOptions.PreferFairness, TaskScheduler.Current).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignored, catch the exception once the task is cancelled.
+            }
+        }
 
         /// <summary>
         /// Start a task who automatically confirm transactions.
@@ -346,7 +371,6 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
 
                                 #endregion
 
-                                await ClassBlockchainStats.UpdateBlockchainNetworkStats(true, _cancellationTokenSourceUpdateTask);
 
                             }
 
