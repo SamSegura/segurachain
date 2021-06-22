@@ -124,14 +124,9 @@ namespace SeguraChain_Desktop_Wallet.Common
 
                 ClassDesktopWalletCommonData.LanguageDatabase.SetCurrentLanguageName(WalletSettingObject.WalletLanguageNameSelected);
 
-                using (ClassWalletSetupForm walletSetupForm = new ClassWalletSetupForm())
+                using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
                 {
-                    walletSetupForm.ShowDialog();
-
-                    using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
-                    {
-                        writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
-                    }
+                   writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
                 }
             }
             catch
