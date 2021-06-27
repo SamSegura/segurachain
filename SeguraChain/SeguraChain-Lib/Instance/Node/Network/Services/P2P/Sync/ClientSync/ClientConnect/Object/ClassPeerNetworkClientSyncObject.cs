@@ -149,13 +149,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Cli
 
                 if (!PeerConnectStatus)
                 {
-
-/* Modification non fusionnée à partir du projet 'SeguraChain-Lib (net48)'
-Avant :
-                    if (!await DoConnectionAsync(cancellation))
-Après :
-                    if (!await DoConnection(cancellation))
-*/
                     if (!DoConnection(cancellation))
                     {
                         DisconnectFromTarget();
@@ -263,12 +256,14 @@ Après :
 #if NET5_0_OR_GREATER
                     if (taskConnect.IsCompletedSuccessfully)
                     {
-                        successConnect = true;
+                        if (ClassUtility.SocketIsConnected(_peerSocketClient))
+                            successConnect = true;
                     }
 #else
                     if (taskConnect.IsCompleted)
                     {
-                        successConnect = true;  
+                        if (ClassUtility.SocketIsConnected(_peerSocketClient))
+                            successConnect = true;
                     }
 #endif
                 }
@@ -465,12 +460,14 @@ Après :
 
                                             try
                                             {
-                                                base64Packet = Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.ToArray().GetStringFromByteArrayAscii());
+                                                base64Packet = Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.GetList.ToArray().GetStringFromByteArrayAscii());
                                             }
                                             catch
                                             {
                                                 failed = true;
                                             }
+
+                                            listPacketReceived[listPacketReceived.Count - 1].Packet.Clear();
 
                                             if (!failed)
                                             {
@@ -521,7 +518,7 @@ Après :
                                         }
 
                                         // If above the max data to receive.
-                                        if (packetSizeCount >= ClassPeerPacketSetting.PacketMaxLengthReceive)
+                                        if (packetSizeCount / 1024 >= ClassPeerPacketSetting.PacketMaxLengthReceive)
                                             listPacketReceived.Clear();
                                     }
                                     else

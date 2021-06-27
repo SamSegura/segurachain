@@ -14,6 +14,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
         public string PublicKey;
         public long PeerLastTimestampSignatureWhitelist;
 
+  
         /// <summary>
         /// The peer unique id is mandatory.
         /// </summary>
@@ -40,7 +41,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
                 PublicKey = splitPacketData[5];
                 PeerLastTimestampSignatureWhitelist = long.Parse(splitPacketData[6]);
                 status = true;
-
             }
             catch 
             {
@@ -62,7 +62,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
     }
 
 
-    public class ClassPeerPacketRecvObject
+    public class ClassPeerPacketRecvObject 
     {
         public ClassPeerEnumPacketResponse PacketOrder;
         public string PacketContent; // The serialized packet encrypted.
@@ -109,7 +109,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
 
         public byte[] GetPacketData()
         {
-
             return ClassUtility.GetByteArrayFromStringAscii((int)PacketOrder + "#" +
                 PacketContent + "#" +
                 PacketHash + "#" +
@@ -117,7 +116,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet
                 PacketPeerUniqueId + "#" +
                 PublicKey + "#" +
                 PeerLastTimestampSignatureWhitelist);
-
         }
     }
 }

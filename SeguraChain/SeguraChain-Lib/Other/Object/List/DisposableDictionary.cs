@@ -75,6 +75,22 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public void Clear()
         {
+            try
+            {
+                if (GetList != null)
+                {
+                    foreach (V key in GetList.Keys)
+                    {
+                        GetList[key] = default(T);
+                        GetList.Remove(key);
+                    }
+                }
+            }
+            catch
+            {
+                // Ignored.
+            }
+
             GetList?.Clear();
 
 #if NET5_0_OR_GREATER

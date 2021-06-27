@@ -163,10 +163,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                         }
                     }
                     else
-                    {
                         await _dictionaryCacheIoIndexObject[ioFileName].PurgeIoBlockDataMemory(false, cancellation, 0, false);
-                        totalTaskDone++;
-                    }
                 }
 
                 if (_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableMultiTask)
@@ -184,13 +181,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                     }
                 }
 
-                long totalIoCacheMemoryUsage = GetIoCacheSystemMemoryConsumption(cancellation);
+                long totalIoCacheMemoryUsage = GetIoCacheSystemMemoryConsumption(cancellation, out int totalBlockKeepAlive);
 
 
 #if DEBUG
-                Debug.WriteLine("Cache IO Index Object - Total Memory usage from the cache: " + ClassUtility.ConvertBytesToMegabytes(totalIoCacheMemoryUsage));
+                Debug.WriteLine("Cache IO Index Object - Total block(s) keep alive: "+totalBlockKeepAlive+" | Total Memory usage from the cache: " + ClassUtility.ConvertBytesToMegabytes(totalIoCacheMemoryUsage));
 #endif
-                ClassLog.WriteLine("Cache IO Index Object - Total Memory usage from the cache: " + ClassUtility.ConvertBytesToMegabytes(totalIoCacheMemoryUsage), ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                ClassLog.WriteLine("Cache IO Index Object - Total block(s) keep alive: " + totalBlockKeepAlive + " | Total Memory usage from the cache: " + ClassUtility.ConvertBytesToMegabytes(totalIoCacheMemoryUsage), ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             }
         }
 
@@ -273,9 +270,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreIoCacheIndexAccess.Release();
-                }
             }
         }
 
@@ -300,7 +295,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                 {
                     long restMemoryToTask = memoryAsked - totalMemoryRetrieved;
 
-                    if (GetIoCacheSystemMemoryConsumption(cancellation) + restMemoryToTask <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
+                    if (GetIoCacheSystemMemoryConsumption(cancellation, out _) + restMemoryToTask <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                         return true;
 
                     long totalMemoryFreeRetrieved = await _dictionaryCacheIoIndexObject[ioFileFileIndex].PurgeIoBlockDataMemory(false, cancellation, restMemoryToTask, true);
@@ -325,7 +320,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
         /// <param name="listBlockHeight"></param>
         /// <param name="cancellationIoCache"></param>
         /// <returns></returns>
-        public async Task<SortedList<long, ClassBlockObject>> GetIoListBlockInformationObject(HashSet<long> listBlockHeight, CancellationTokenSource cancellationIoCache)
+        public async Task<SortedList<long, ClassBlockObject>> GetIoListBlockInformationObject(DisposableList<long> listBlockHeight, CancellationTokenSource cancellationIoCache)
         {
             SortedList<long, ClassBlockObject> listBlockInformation = new SortedList<long, ClassBlockObject>();
 
@@ -335,16 +330,16 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
                 if (listBlockHeight.Count > 0)
                 {
-                    Dictionary<string, HashSet<long>> dictionaryRangeBlockHeightIoCacheFile = new Dictionary<string, HashSet<long>>();
+                    Dictionary<string, List<long>> dictionaryRangeBlockHeightIoCacheFile = new Dictionary<string, List<long>>();
 
-                    foreach (var blockHeight in listBlockHeight.ToArray())
+                    foreach (var blockHeight in listBlockHeight.GetList)
                     {
                         string ioFileName = GetIoFileNameFromBlockHeight(blockHeight);
 
                         if (_dictionaryCacheIoIndexObject.ContainsKey(ioFileName))
                         {
                             if (!dictionaryRangeBlockHeightIoCacheFile.ContainsKey(ioFileName))
-                                dictionaryRangeBlockHeightIoCacheFile.Add(ioFileName, new HashSet<long>());
+                                dictionaryRangeBlockHeightIoCacheFile.Add(ioFileName, new List<long>());
 
                             dictionaryRangeBlockHeightIoCacheFile[ioFileName].Add(blockHeight);
                         }
@@ -367,6 +362,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                                     if (cancellationIoCache.IsCancellationRequested)
                                         break;
                                 }
+
                                 if (blockObject != null)
                                     listBlockInformation.Add(blockObject.BlockHeight, blockObject);
                             }
@@ -1035,8 +1031,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
         /// Return the total memory usage from the io cache system.
         /// </summary>
         /// <returns></returns>
-        public long GetIoCacheSystemMemoryConsumption(CancellationTokenSource cancellation)
+        public long GetIoCacheSystemMemoryConsumption(CancellationTokenSource cancellation, out int totalBlockKeepAlive)
         {
+            totalBlockKeepAlive = 0; // Default.
+
             if (_dictionaryCacheIoIndexObject.Count > 0)
             {
                 long totalMemoryUsagePendingCalculation = 0;
@@ -1046,7 +1044,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                     if (cancellation != null)
                         cancellation.Token.ThrowIfCancellationRequested();
 
-                    totalMemoryUsagePendingCalculation += _dictionaryCacheIoIndexObject[ioFileName].GetIoMemoryUsage(cancellation);
+                    totalMemoryUsagePendingCalculation += _dictionaryCacheIoIndexObject[ioFileName].GetIoMemoryUsage(cancellation, out int indexTotalBlockKeepAlive);
+                    totalBlockKeepAlive += indexTotalBlockKeepAlive;
                 }
 
                 _totalIoCacheSystemMemoryUsage = totalMemoryUsagePendingCalculation;

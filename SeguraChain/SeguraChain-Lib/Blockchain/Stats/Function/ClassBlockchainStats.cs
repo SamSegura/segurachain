@@ -57,9 +57,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
             {
 
                 if (semaphoreUsed)
-                {
                     SemaphoreUpdateBlockchainNetworkStats.Release();
-                }
             }
         }
 
@@ -74,9 +72,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
                 ClassBlockObject blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(blockHeight, cancellation);
 
                 if (blockObjectInformations != null)
-                {
                     return BigInteger.Divide(blockObjectInformations.BlockDifficulty, BlockchainSetting.BlockTime);
-                }
             }
             return 0;
         }
@@ -88,9 +84,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         public static void UpdateLastNetworkBlockHeight(long lastNetworkBlockHeight)
         {
             if (GetBlockchainNetworkStatsObject != null)
-            {
                 GetBlockchainNetworkStatsObject.LastNetworkBlockHeight = lastNetworkBlockHeight;
-            }
         }
 
         /// <summary>
@@ -150,7 +144,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <returns></returns>
         public static async Task<long> GetLastBlockHeightNetworkConfirmationChecked(CancellationTokenSource cancellation)
         {
-            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeightConfirmationNetworkChecked(BlockchainSetting.BlockAmountNetworkConfirmations, cancellation);
+            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeightConfirmationNetworkChecked(cancellation);
         }
 
         /// <summary>
@@ -180,9 +174,9 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// Get the list of blocks unconfirmed.
         /// </summary>
         /// <returns></returns>
-        public static async Task<DisposableList<long>> GetListBlockNetworkUnconfirmed(int blockAmountNetworkConfirmations, CancellationTokenSource cancellation)
+        public static async Task<DisposableList<long>> GetListBlockNetworkUnconfirmed(CancellationTokenSource cancellation)
         {
-            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockNetworkUnconfirmed(blockAmountNetworkConfirmations, cancellation);
+            return await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockNetworkUnconfirmed(cancellation);
         }
 
         /// <summary>

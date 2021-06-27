@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Security.Cryptography;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Utility;
@@ -29,9 +28,7 @@ namespace SeguraChain_Lib.Algorithm
         public static byte[] GenerateIv(byte[] key, int iteration = IterationCount)
         {
             using (Rfc2898DeriveBytes passwordDeriveBytes = new Rfc2898DeriveBytes(key, BlockchainSetting.BlockchainMarkKey, iteration))
-            {
                 return passwordDeriveBytes.GetBytes(IvSize);
-            }
         }
 
         /// <summary>
@@ -46,9 +43,7 @@ namespace SeguraChain_Lib.Algorithm
             key = new byte[EncryptionKeyByteArraySize];
 
             if (data.Length < EncryptionKeyByteArraySize)
-            {
                 useSha = true;
-            }
 
             if (useSha)
             {
@@ -56,8 +51,8 @@ namespace SeguraChain_Lib.Algorithm
                 data = ClassUtility.GenerateSha512ByteArrayFromByteArray(data);
             }
 
-
             Array.Copy(data, 0, key, 0, EncryptionKeyByteArraySize);
+
             return true;
         }
 
@@ -71,8 +66,10 @@ namespace SeguraChain_Lib.Algorithm
         /// <returns></returns>
         public static bool EncryptionProcess(byte[] content, byte[] key, byte[] iv, out byte[] result)
         {
+#if DEBUG
             try
             {
+#endif
                 if (content != null)
                 {
                     using (RijndaelManaged aesObject = new RijndaelManaged())
@@ -85,39 +82,21 @@ namespace SeguraChain_Lib.Algorithm
                         aesObject.Padding = PaddingMode.None;
                         using (ICryptoTransform encryptCryptoTransform = aesObject.CreateEncryptor(key, iv))
                         {
-                            int packetLength = content.Length;
-                            int paddingSizeRequired = 16 - packetLength % 16;
-                            byte[] paddedBytes = new byte[packetLength + paddingSizeRequired];
-
-                            Buffer.BlockCopy(content, 0, paddedBytes, 0, packetLength);
-
-                            for (int i = 0; i < paddingSizeRequired; i++)
-                            {
-                                paddedBytes[packetLength + i] = (byte)paddingSizeRequired;
-                            }
-
+                            byte[] paddedBytes = ClassUtility.DoPacketPadding(content);
                             result = encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);
                             return true;
                         }
                     }
-                }
-                else
-                {
-                    result = null;
-                    return false;
                 }
             }
 #if DEBUG
             catch (Exception error)
             {
                 Debug.WriteLine("Error on encrypt content. Exception: " + error.Message);
-#else
-            catch
-            {
-#endif
-                result = null;
-                return false;
             }
+#endif
+            result = null;
+            return false;
         }
 
         /// <summary>
@@ -130,8 +109,10 @@ namespace SeguraChain_Lib.Algorithm
         /// <returns></returns>
         public static bool DecryptionProcess(byte[] content, byte[] key, byte[] iv, out byte[] result)
         {
+#if DEBUG
             try
             {
+#endif
                 if (content != null)
                 {
                     using (RijndaelManaged aesObject = new RijndaelManaged())
@@ -145,29 +126,21 @@ namespace SeguraChain_Lib.Algorithm
                         using (ICryptoTransform decryptCryptoTransform = aesObject.CreateDecryptor(key, iv))
                         {
                             byte[] decryptedPaddedBytes = decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
-                            result = new byte[decryptedPaddedBytes.Length - decryptedPaddedBytes[decryptedPaddedBytes.Length - 1]];
-                            Buffer.BlockCopy(decryptedPaddedBytes, 0, result, 0, result.Length);
+                            result = ClassUtility.UndoPacketPadding(decryptedPaddedBytes);
                             return true;
                         }
                     }
-                }
-                else
-                {
-                    result = null;
-                    return false;
                 }
             }
 #if DEBUG
             catch (Exception error)
             {
                 Debug.WriteLine("Error on decrypt content. Exception: " + error.Message);
-#else
-            catch
-            {
-#endif
-                result = null;
-                return false;
             }
+#endif
+
+            result = null;
+            return false;
         }
 
     }

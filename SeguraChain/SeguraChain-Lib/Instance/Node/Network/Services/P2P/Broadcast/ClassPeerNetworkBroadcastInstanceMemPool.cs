@@ -249,14 +249,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             {
                 if (_listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].TryConnect(_cancellation))
                 {
-
                     if (await _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].TryAskBroadcastMode())
                     {
                         _listPeerNetworkClientBroadcastMemPoolReceiver[peerIpTarget][peerUniqueIdTarget].RunBroadcastTransactionTask();
-
                         return true;
                     }
-
                 }
             }
             else
@@ -266,10 +263,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     if (await _listPeerNetworkClientBroadcastMemPoolSender[peerIpTarget][peerUniqueIdTarget].TryAskBroadcastMode())
                     {
                         _listPeerNetworkClientBroadcastMemPoolSender[peerIpTarget][peerUniqueIdTarget].RunBroadcastTransactionTask();
-
                         return true;
                     }
-
                 }
             }
 
@@ -284,9 +279,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             _peerNetworkBroadcastInstanceMemPoolStatus = false;
 
             if (!_cancellation.IsCancellationRequested)
-            {
                 _cancellation.Cancel();
-            }
 
             #region Clean client broadcast instances.
 
@@ -481,12 +474,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 #if NET5_0_OR_GREATER
                     if (taskConnect.IsCompletedSuccessfully)
                     {
-                        successConnect = true;
+                        if (ClassUtility.SocketIsConnected(_peerSocketClient))
+                            successConnect = true;
                     }
 #else
                     if (taskConnect.IsCompleted)
                     {
-                        successConnect = true;  
+                        if (ClassUtility.SocketIsConnected(_peerSocketClient))
+                            successConnect = true;
                     }
 #endif
 
@@ -583,7 +578,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                             if (containSeperator)
                                             {
-                                                ClassPeerPacketRecvObject peerPacketRecvObject = new ClassPeerPacketRecvObject(Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.ToArray().GetStringFromByteArrayAscii()), out bool status);
+                                                ClassPeerPacketRecvObject peerPacketRecvObject = new ClassPeerPacketRecvObject(Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.GetList.ToArray().GetStringFromByteArrayAscii()), out bool status);
+
+                                                listPacketReceived[listPacketReceived.Count - 1].Packet.Clear();
 
                                                 if (!status)
                                                 {
@@ -752,13 +749,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                 {
                     EnableKeepAliveTask();
                     if (!_onSendBroadcastMode)
-                    {
                         EnableReceiveBroadcastTransactionTask();
-                    }
                     else
-                    {
                         EnableSendBroadcastTransactionTask();
-                    }
                 }
                 catch
                 {
@@ -1217,30 +1210,27 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                                 try
                                                 {
-                                                    base64Packet = Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.ToArray().GetStringFromByteArrayAscii());
+                                                    base64Packet = Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.GetList.ToArray().GetStringFromByteArrayAscii());
                                                 }
                                                 catch
                                                 {
                                                     exceptionBase64 = true;
                                                 }
+
+                                                listPacketReceived[listPacketReceived.Count - 1].Packet.Clear();
+
                                                 if (!exceptionBase64)
                                                 {
                                                     peerPacketRecvObject = new ClassPeerPacketRecvObject(base64Packet, out bool status);
 
                                                     if (!status)
-                                                    {
                                                         failed = true;
-                                                    }
 
                                                     if (peerPacketRecvObject.PacketContent.IsNullOrEmpty(out _))
-                                                    {
                                                         failed = true;
-                                                    }
 
                                                     if (peerPacketRecvObject.PacketOrder != ClassPeerEnumPacketResponse.SEND_MEM_POOL_BLOCK_HEIGHT_LIST_BROADCAST_MODE)
-                                                    {
                                                         failed = true;
-                                                    }
 
                                                     ClassPeerDatabase.DictionaryPeerDataObject[_peerIpTarget][_peerUniqueIdTarget].PeerTimestampSignatureWhitelist = peerPacketRecvObject.PeerLastTimestampSignatureWhitelist;
                                                 }
@@ -1384,7 +1374,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                                                 try
                                                                 {
-                                                                    base64Data = Convert.FromBase64String(listPacketReceived[i].Packet.ToArray().GetStringFromByteArrayAscii());
+                                                                    base64Data = Convert.FromBase64String(listPacketReceived[i].Packet.GetList.ToArray().GetStringFromByteArrayAscii());
                                                                 }
                                                                 catch
                                                                 {
@@ -1392,7 +1382,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                 }
 
                                                                 listPacketReceived[i].Packet.Clear();
-                                                                listPacketReceived[i].Packet.TrimExcess();
 
                                                                 if (!exceptionBase64)
                                                                 {
@@ -1441,8 +1430,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                                                             if (checkTxResult == ClassTransactionEnumStatus.VALID_TRANSACTION || checkTxResult == ClassTransactionEnumStatus.DUPLICATE_TRANSACTION_HASH)
                                                                                                                 canInsert = true;
                                                                                                         }
-
-
 
                                                                                                         if (canInsert)
                                                                                                         {
@@ -1504,6 +1491,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                                         // Ignore formating error.
                                                                     }
                                                                 }
+
                                                             }
                                                         }
                                                         // Clean up.
@@ -1631,13 +1619,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                                 try
                                                 {
-                                                    base64Data = Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.ToArray().GetStringFromByteArrayAscii());
+                                                    base64Data = Convert.FromBase64String(listPacketReceived[listPacketReceived.Count - 1].Packet.GetList.ToArray().GetStringFromByteArrayAscii());
                                                 }
                                                 catch
                                                 {
                                                     exceptionBase64 = true;
                                                 }
 
+                                                listPacketReceived[listPacketReceived.Count - 1].Packet.Clear();
 
                                                 if (!exceptionBase64)
                                                 {

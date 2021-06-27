@@ -127,17 +127,19 @@ namespace SeguraChain_Desktop_Wallet.MainForm.Object
         }
 
         /// <summary>
-        /// Reset position to the first page and the amount of transaction showed.
+        /// Clear the transaction history content.
         /// </summary>
-        public void ResetTransactionHistoryPage()
+        public void ClearTransactionHistoryContent()
         {
-            CurrentTransactionHistoryPage = 1;
-            LastTransactionCountOnRead = 0;
-            TotalTransactionShowed = 0;
             TransactionHistoryColumnOrdering = ClassEnumTransactionHistoryColumnType.TRANSACTION_HISTORY_COLUMN_TRANSACTION_DATE;
+            DictionaryTransactionHistoryHashListed.Clear();
+            DictionaryTransactionHistoryHashListedShowed.Clear();
+            TotalTransactionShowed = 0;
+            LastTransactionCount = 0;
+            LastTransactionCountOnRead = 0;
+            CurrentTransactionHistoryPage = 1;
             EnableEventDrawPage = true;
         }
-
     }
 
     /// <summary>

@@ -102,7 +102,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int BlockDifficultyPrecision = 100000; // The precision put on the difficulty factor calculated.
         public const int GenesisBlockHeight = 1; // The genesis block height.
         public static readonly BigInteger GenesisBlockAmount = 2973370 * CoinDecimal; // The genesis block amount reward has pre-mining.
-        public const string GenesisBlockFinalTransactionHash = "C6047F9C8AD238737FB52B016392E54F63C71A627F19A0FB20E0EEA3E6287FFE92D9A68A3283FD2DA0FEA59D34E66426C4472D07678D77AFA54876786DC7FCDF"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
+        public const string GenesisBlockFinalTransactionHash = "711468EC1670569AB75CA84E74249EBCB7F97B9B5BB7CF4160E51011D50F61718ECA8814E2BEDF397982D570AF49394CCC739E5138C3C33EDBB9FBB88CF8CE23"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
         public const int GenesisBlockTransactionCount = 1; // The maximum of transaction inserted on the genesis block.
         public const int BlockAmountNetworkConfirmations = 2; // The minimum amount of network checks on blocks to do with peers, before to enable the task of confirmations on the block.
         public const int BlockAmountSlowNetworkConfirmations = 5; // This amount increment another amount of network checks, once this one is reach, the network counter increment and this one return back to 0.
@@ -192,7 +192,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerDefaultPort = 2400;
         public static readonly Dictionary<string, Dictionary<string, int>> BlockchainStaticPeerList = new Dictionary<string, Dictionary<string, int>>()
         {
-            {"178.33.136.66", new Dictionary<string, int>(){ { "F6B426571EBD02EF4B45045EFEA743F2DA75E114AC57E2DADCB8AE976BC07544D28DCA7FA6CD38FA960E19AE85C9A7828EE211F64570AD7338AC1C1B20C0D2EC", PeerDefaultPort } }}
+            {"127.0.0.1", new Dictionary<string, int>(){ { "F6B426571EBD02EF4B45045EFEA743F2DA75E114AC57E2DADCB8AE976BC07544D28DCA7FA6CD38FA960E19AE85C9A7828EE211F64570AD7338AC1C1B20C0D2EC", PeerDefaultPort } }}
         }; // This is a static peer list who can't be updated, it's usually used once a peer don't have any peer list saved.
 
 

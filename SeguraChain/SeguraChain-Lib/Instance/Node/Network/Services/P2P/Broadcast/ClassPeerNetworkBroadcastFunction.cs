@@ -237,7 +237,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                 {
                     await Task.Factory.StartNew(async () =>
                     {
-
                         ClassPeerPacketSendMiningShareVote peerPacketSendMiningShareVote = await ClassPeerNetworkBroadcastShortcutFunction.SendBroadcastPacket<ClassPeerPacketSendAskMiningShareVote, ClassPeerPacketSendMiningShareVote>(
                                                                                             peerTargetObject.PeerNetworkClientSyncObject,
                                                                                             ClassPeerEnumPacketSend.ASK_MINING_SHARE_VOTE,
@@ -466,9 +465,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                 if (totalResponseOk == peerListTarget.Count || totalTaskDone == peerListTarget.Count)
                     break;
 
-                if (onlyOneAgree)
-                    if (totalAgree > 0)
-                        break;
+                if (onlyOneAgree && totalAgree > 0)
+                    break;
 
                 // Max delay of waiting.
                 if (taskTimestampStart + (peerNetworkSetting.PeerMaxDelayConnection * 1000) < ClassUtility.GetCurrentTimestampInMillisecond())
@@ -478,7 +476,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             }
 
             #endregion
-
 
             if (!onlyOneAgree)
             {
@@ -783,9 +780,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                                             if (!listOfRankedPeerPublicKeySaved.Contains(numericPublicKeyOut))
                                                             {
                                                                 if (listOfRankedPeerPublicKeySaved.Add(numericPublicKeyOut))
-                                                                {
                                                                     peerRanked = true;
-                                                                }
                                                             }
                                                         }
                                                     }
@@ -861,15 +856,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     while (totalTaskDone < peerListTarget.Count)
                     {
                         if (totalResponseOk >= peerListTarget.Count)
-                        {
                             break;
-                        }
 
+                        // Timeout reach.
                         if (taskTimestampStart + (peerNetworkSetting.PeerMaxDelayAwaitResponse * 1000) < ClassUtility.GetCurrentTimestampInMillisecond())
-                        {
-                            // Timeout reach.
                             break;
-                        }
 
                         if (onlyOneAgree)
                         {
@@ -953,14 +944,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                         bool normVoteResult = false;
 
                         if (dictionaryMemPoolTxVoteSeedPeer.ContainsKey(transaction.TransactionHash))
-                        {
                             totalSeedVotes = dictionaryMemPoolTxVoteSeedPeer[transaction.TransactionHash][false] + dictionaryMemPoolTxVoteSeedPeer[transaction.TransactionHash][true];
-                        }
 
                         if (dictionaryMemPoolTxVoteNormPeer.ContainsKey(transaction.TransactionHash))
-                        {
                             totalNormVotes = dictionaryMemPoolTxVoteNormPeer[transaction.TransactionHash][false] + dictionaryMemPoolTxVoteNormPeer[transaction.TransactionHash][true];
-                        }
 
 
                         if (totalSeedVotes > 0)
@@ -1016,15 +1003,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                         else
                         {
                             if (percentNormAgree > 0)
-                            {
                                 result = ClassTransactionEnumStatus.VALID_TRANSACTION;
-                            }
                         }
 
                         if (!dictionaryTransactionCheckStatus.ContainsKey(transaction.TransactionHash))
-                        {
                             dictionaryTransactionCheckStatus.Add(transaction.TransactionHash, result);
-                        }
                     }
 
                     listOfRankedPeerPublicKeySaved.Clear();
@@ -1034,7 +1017,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
             }
 
             return dictionaryTransactionCheckStatus;
-
         }
 
         #endregion
@@ -1061,9 +1043,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     if (cancellation == null)
                     {
                         if (!ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(sendObject.PacketContent), ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, out packetContentEncrypted))
-                        {
                             return null;
-                        }
                     }
                     else
                     {
@@ -1072,18 +1052,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                         if (packetContentEncrypted == null)
                         {
                             if (!ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(sendObject.PacketContent), ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, out packetContentEncrypted))
-                            {
                                 return null;
-                            }
                         }
                     }
                 }
                 else
                 {
                     if (!ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(sendObject.PacketContent), ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, out packetContentEncrypted))
-                    {
                         return null;
-                    }
                 }
 
 
@@ -1094,13 +1070,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTimestampSignatureWhitelist < ClassUtility.GetCurrentTimestampInSecond() || forceSignature)
                     {
                         if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject != null && cancellation != null)
-                        {
                             sendObject.PacketSignature = ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject.DoSignatureProcess(sendObject.PacketHash, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey);
-                        }
                         else
-                        {
                             sendObject.PacketSignature = ClassWalletUtility.WalletGenerateSignature(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, sendObject.PacketHash);
-                        }
                     }
                 }
             }

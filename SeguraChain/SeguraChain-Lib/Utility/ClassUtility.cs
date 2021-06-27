@@ -834,6 +834,37 @@ namespace SeguraChain_Lib.Utility
             return listPacketDataSplitted;
         }
 
+        /// <summary>
+        /// Do the padding of the packet content before encryption
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <returns></returns>
+        public static byte[] DoPacketPadding(byte[] packet)
+        {
+            int packetLength = packet.Length;
+            int paddingSizeRequired = 16 - packetLength % 16;
+            byte[] paddedBytes = new byte[packetLength + paddingSizeRequired];
+
+            Buffer.BlockCopy(packet, 0, paddedBytes, 0, packetLength);
+
+            for (int i = 0; i < paddingSizeRequired; i++)
+                paddedBytes[packetLength + i] = (byte)paddingSizeRequired;
+
+            return paddedBytes;
+        }
+
+        /// <summary>
+        /// Remove the padding of the decrypted packet.
+        /// </summary>
+        /// <param name="decryptedPacket"></param>
+        /// <returns></returns>
+        public static byte[] UndoPacketPadding(byte[] decryptedPacket)
+        {
+            byte[] packet = new byte[decryptedPacket.Length - decryptedPacket[decryptedPacket.Length - 1]];
+            Buffer.BlockCopy(decryptedPacket, 0, packet, 0, packet.Length);
+
+            return packet;
+        }
 
         #endregion
 

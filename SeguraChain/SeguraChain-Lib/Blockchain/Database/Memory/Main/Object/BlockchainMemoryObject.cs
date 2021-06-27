@@ -68,7 +68,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
                             _content.BlockFromMemory = true;
                         }
 
-                        if (value.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                        if (value.IsChecked)
                             ContentMirror = value;
                     }
                 }
@@ -88,10 +88,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
             get => _contentMirror;
             set
             {
-                if (_contentMirror != null)
+                if (value != null)
                 {
-                    if (value?.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                    if (value.IsChecked)
                     {
+                        if (_contentMirror == null)
+                            _contentMirror = new ClassBlockObject(value.BlockHeight, value.BlockDifficulty, value.BlockHash, value.TimestampCreate, value.TimestampFound, value.BlockStatus, value.BlockUnlockValid, value.BlockTransactionConfirmationCheckTaskDone);
+
                         _contentMirror.BlockHeight = value.BlockHeight;
                         _contentMirror.BlockDifficulty = value.BlockDifficulty;
                         _contentMirror.BlockHash = value.BlockHash;
@@ -120,12 +123,8 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
 
                         if (_contentMirror.BlockTransactions != null)
                             _contentMirror.BlockTransactions.Clear();
+
                     }
-                }
-                else
-                {
-                    if (value?.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                        value?.DeepCloneBlockObject(false, out _contentMirror);
                 }
             }
         }

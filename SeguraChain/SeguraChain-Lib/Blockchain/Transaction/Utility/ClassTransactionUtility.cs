@@ -258,7 +258,6 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                     ClassBlockObject blockObjectInformations;
                     if (!fromBroadcastInstance)
                     {
-
                         blockObjectInformations = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockInformationDataStrategy(blockHeightSend, cancellation);
                         if (blockObjectInformations == null)
                             return ClassTransactionEnumStatus.INVALID_BLOCK_HEIGHT;
@@ -389,64 +388,71 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             if (lastBlockHeightUnlocked > BlockchainSetting.GenesisBlockHeight)
             {
                 // List of block heights to travel.
-                HashSet<long> listBlockHeightRange = new HashSet<long>();
-
-                // Initialize the block to start to travel.
-                long blockHeightToTravel = lastBlockHeightUnlocked - BlockchainSetting.BlockExpectedPerDay;
-
-                // Ensure the block height of start.
-                if (blockHeightToTravel < BlockchainSetting.GenesisBlockHeight)
-                    blockHeightToTravel = BlockchainSetting.GenesisBlockHeight;
-
-                // Insert each block height to travel.
-                for (long i = 0; i < BlockchainSetting.BlockExpectedPerDay; i++)
+                using (DisposableList<long> listBlockHeightRange = new DisposableList<long>())
                 {
-                    if (blockHeightToTravel < lastBlockHeight)
-                        listBlockHeightRange.Add(blockHeightToTravel);
 
-                    blockHeightToTravel++;
-                    if (blockHeightToTravel > lastBlockHeightUnlocked)
-                        break;
-                }
+                    // Initialize the block to start to travel.
+                    long blockHeightToTravel = lastBlockHeightUnlocked - BlockchainSetting.BlockExpectedPerDay;
 
-                // This one store the timespend.
-                double totalBlockTimeSpend = 0;
+                    // Ensure the block height of start.
+                    if (blockHeightToTravel < BlockchainSetting.GenesisBlockHeight)
+                        blockHeightToTravel = BlockchainSetting.GenesisBlockHeight;
 
-                // Calculate the amount of timespend expected.
-                double totalBlockTimeExpected = BlockchainSetting.BlockTime * listBlockHeightRange.Count;
-
-                // Travel each blocks informations listed.
-                foreach (ClassBlockObject blockInformationObject in await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockInformationDataFromListBlockHeightStrategy(listBlockHeightRange, cancellation))
-                {
-                    // Do not calculate the fee cost if the block returned is empty.
-                    if (blockInformationObject == null)
+                    // Insert each block height to travel.
+                    for (long i = 0; i < BlockchainSetting.BlockExpectedPerDay; i++)
                     {
-                        calculationStatus = false;
-                        break;
+                        if (blockHeightToTravel < lastBlockHeight)
+                            listBlockHeightRange.Add(blockHeightToTravel);
+
+                        blockHeightToTravel++;
+                        if (blockHeightToTravel > lastBlockHeightUnlocked)
+                            break;
                     }
 
-                    if (blockInformationObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                    // This one store the timespend.
+                    double totalBlockTimeSpend = 0;
+
+                    // Calculate the amount of timespend expected.
+                    double totalBlockTimeExpected = BlockchainSetting.BlockTime * listBlockHeightRange.Count;
+
+                    // Travel each blocks informations listed.
+                    foreach (ClassBlockObject blockInformationObject in await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockInformationDataFromListBlockHeightStrategy(listBlockHeightRange, cancellation))
                     {
-                        // Ignore last block, this one was locked on the sending transaction process.
-                        if (blockInformationObject.BlockHeight < lastBlockHeight)
-                            totalBlockTimeSpend += (blockInformationObject.TimestampFound - blockInformationObject.TimestampCreate);
+                        if (cancellation.IsCancellationRequested)
+                        {
+                            calculationStatus = false;
+                            break;
+                        }
+
+                        // Do not calculate the fee cost if the block returned is empty.
+                        if (blockInformationObject == null)
+                        {
+                            calculationStatus = false;
+                            break;
+                        }
+
+                        if (blockInformationObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
+                        {
+                            // Ignore last block, this one was locked on the sending transaction process.
+                            if (blockInformationObject.BlockHeight < lastBlockHeight)
+                                totalBlockTimeSpend += (blockInformationObject.TimestampFound - blockInformationObject.TimestampCreate);
+                        }
+                    }
+
+                    if (calculationStatus)
+                    {
+                        double blockTimespendFactor = (totalBlockTimeSpend / totalBlockTimeExpected) * 100d;
+
+                        double blockTimeFactor = (BlockchainSetting.BlockTime * blockTimespendFactor) / 100d;
+
+                        long blockHeightStartConfirmationsIncrement = BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation + (long)(BlockchainSetting.BlockTime / blockTimeFactor);
+
+                        if (blockHeightStartConfirmationsIncrement < BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation)
+                            blockHeightStartConfirmationsIncrement = BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation;
+
+                        return lastBlockHeight + blockHeightStartConfirmationsIncrement;
                     }
                 }
-
-                if (calculationStatus)
-                {
-                    double blockTimespendFactor = (totalBlockTimeSpend / totalBlockTimeExpected) * 100d;
-
-                    double blockTimeFactor = (BlockchainSetting.BlockTime * blockTimespendFactor) / 100d;
-
-                    long blockHeightStartConfirmationsIncrement = BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation + (long)(BlockchainSetting.BlockTime / blockTimeFactor);
-
-                    if (blockHeightStartConfirmationsIncrement < BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation)
-                        blockHeightStartConfirmationsIncrement = BlockchainSetting.TransactionMandatoryMinBlockHeightStartConfirmation;
-
-                    return lastBlockHeight + blockHeightStartConfirmationsIncrement;
-                }
-
             }
 
             return 0;
@@ -541,10 +547,11 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             if (lastBlockHeightUnlocked > BlockchainSetting.GenesisBlockHeight)
             {
                 // List of block heights to travel.
-                HashSet<long> listBlockHeightRange = new HashSet<long>();
+                using (DisposableList<long> listBlockHeightRange = new DisposableList<long>())
+                { 
 
-                // Initialize the block to start to travel.
-                long blockHeightToTravel = lastBlockHeightUnlocked - BlockchainSetting.BlockExpectedPerDay;
+                    // Initialize the block to start to travel.
+                    long blockHeightToTravel = lastBlockHeightUnlocked - BlockchainSetting.BlockExpectedPerDay;
 
                 // Ensure the block height of start.
                 if (blockHeightToTravel < BlockchainSetting.GenesisBlockHeight)
@@ -563,75 +570,74 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                     }
                 }
 
-                if (listBlockHeightRange.Count > 0)
-                {
-                    // This one store the amount of transactions in blocks to travel.
-                    double totalTransactionFromBlocks = 0;
-
-                    // This one store the amount of timespend of mining in blocks to travel;
-                    double totalTimespendMiningFromBlocks = 0;
-
-                    // Calculate the amount of transactions expected on the range of block heights to travel.
-                    double totalMaxTransactionExpected = BlockchainSetting.MaxTransactionPerBlock * listBlockHeightRange.Count;
-
-                    // Calculate the amount of time expected to unlock those blocks.
-                    double totalTimespendMiningExpected = BlockchainSetting.BlockTime * listBlockHeightRange.Count;
-
-                    bool failed = false;
-
-                    // Travel each blocks informations listed.
-                    foreach (ClassBlockObject blockInformationObject in await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockInformationDataFromListBlockHeightStrategy(listBlockHeightRange, cancellation))
+                    if (listBlockHeightRange.Count > 0)
                     {
-                        // Do not calculate the fee cost if the block returned is empty.
-                        if (blockInformationObject == null)
+                        // This one store the amount of transactions in blocks to travel.
+                        double totalTransactionFromBlocks = 0;
+
+                        // This one store the amount of timespend of mining in blocks to travel;
+                        double totalTimespendMiningFromBlocks = 0;
+
+                        // Calculate the amount of transactions expected on the range of block heights to travel.
+                        double totalMaxTransactionExpected = BlockchainSetting.MaxTransactionPerBlock * listBlockHeightRange.Count;
+
+                        // Calculate the amount of time expected to unlock those blocks.
+                        double totalTimespendMiningExpected = BlockchainSetting.BlockTime * listBlockHeightRange.Count;
+
+                        bool failed = false;
+
+                        // Travel each blocks informations listed.
+                        foreach (ClassBlockObject blockInformationObject in await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockInformationDataFromListBlockHeightStrategy(listBlockHeightRange, cancellation))
                         {
-                            failed = true;
-                            break;
+                            // Do not calculate the fee cost if the block returned is empty.
+                            if (blockInformationObject == null)
+                            {
+                                failed = true;
+                                break;
+                            }
+
+                            if (blockInformationObject.BlockStatus == ClassBlockEnumStatus.LOCKED)
+                            {
+                                failed = true;
+                                break;
+                            }
+
+                            totalTransactionFromBlocks += blockInformationObject.TotalTransaction;
+
+                            totalTimespendMiningFromBlocks += (blockInformationObject.TimestampFound - blockInformationObject.TimestampCreate);
                         }
 
-                        if (blockInformationObject.BlockStatus == ClassBlockEnumStatus.LOCKED)
+
+                        // Continue the calculation if the collect of blocks informations is done propertly.
+                        if (!failed)
                         {
-                            failed = true;
-                            break;
+                            // Set the calculation status has valid.
+                            calculationStatus = true;
+
+                            // First, calculate the transaction factor from the amount of transactions inside those blocks and the amount of transactions expected.
+                            double transactionFactor = (totalTransactionFromBlocks / totalMaxTransactionExpected) * 100d;
+
+                            // Secondly, calculate the confirmation factor from the height target and the block height confirmation target.
+                            double confirmationFactor = ((double)blockHeightTransactionTarget / blockHeightTransactionConfirmationTarget) * 100d;
+
+                            // Third, calculate the fee cost factor from the amount of confirmations.
+                            double confirmationCostFactor = (((double)BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations / (blockHeightTransactionConfirmationTarget - blockHeightTransactionTarget)) * confirmationFactor);
+
+                            // Fourth, calculate the transaction cost factor from the confirmation cost with the transaction factor.
+                            double transactionCostFactor = (confirmationCostFactor * transactionFactor) / 100d;
+
+                            // Five, calculate the mining cost factor from the timespend from blocks mined and the timespend of mining expected.
+                            // More the timespend is lower than the expected, more the fee cost will increase.
+                            double miningCostFactor = ((totalTimespendMiningExpected / totalTimespendMiningFromBlocks) * 100d);
+
+                            // Finally, calculate the fee cost, from the default fee cost scheduled on the chain and the transaction cost factor.
+                            feeCost = BlockchainSetting.MinFeeTransaction + (BigInteger)Math.Round(((BlockchainSetting.MinFeeTransaction * transactionCostFactor) * miningCostFactor) / 100d, BlockchainSetting.CoinDecimalNumber);
+
+
+                            // Just in case, do not allow negative or equal of 0 fee cost.
+                            if (feeCost <= 0)
+                                feeCost = BlockchainSetting.MinFeeTransaction;
                         }
-
-                        totalTransactionFromBlocks += blockInformationObject.TotalTransaction;
-
-                        totalTimespendMiningFromBlocks += (blockInformationObject.TimestampFound - blockInformationObject.TimestampCreate);
-                    }
-
-                    // Clean up the list of block heights retrieved.
-                    listBlockHeightRange.Clear();
-
-                    // Continue the calculation if the collect of blocks informations is done propertly.
-                    if (!failed)
-                    {
-                        // Set the calculation status has valid.
-                        calculationStatus = true;
-
-                        // First, calculate the transaction factor from the amount of transactions inside those blocks and the amount of transactions expected.
-                        double transactionFactor = (totalTransactionFromBlocks / totalMaxTransactionExpected) * 100d;
-
-                        // Secondly, calculate the confirmation factor from the height target and the block height confirmation target.
-                        double confirmationFactor = ((double)blockHeightTransactionTarget / blockHeightTransactionConfirmationTarget) * 100d;
-
-                        // Third, calculate the fee cost factor from the amount of confirmations.
-                        double confirmationCostFactor = (((double)BlockchainSetting.TransactionMandatoryMinBlockTransactionConfirmations / (blockHeightTransactionConfirmationTarget - blockHeightTransactionTarget)) * confirmationFactor);
-
-                        // Fourth, calculate the transaction cost factor from the confirmation cost with the transaction factor.
-                        double transactionCostFactor = (confirmationCostFactor * transactionFactor) / 100d;
-
-                        // Five, calculate the mining cost factor from the timespend from blocks mined and the timespend of mining expected.
-                        // More the timespend is lower than the expected, more the fee cost will increase.
-                        double miningCostFactor = ((totalTimespendMiningExpected / totalTimespendMiningFromBlocks) * 100d);
-
-                        // Finally, calculate the fee cost, from the default fee cost scheduled on the chain and the transaction cost factor.
-                        feeCost = BlockchainSetting.MinFeeTransaction + (BigInteger)Math.Round(((BlockchainSetting.MinFeeTransaction * transactionCostFactor) * miningCostFactor) / 100d, BlockchainSetting.CoinDecimalNumber);
-
-
-                        // Just in case, do not allow negative or equal of 0 fee cost.
-                        if (feeCost <= 0)
-                            feeCost = BlockchainSetting.MinFeeTransaction;
                     }
                 }
             }

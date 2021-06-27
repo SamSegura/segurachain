@@ -67,7 +67,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         private void InitializeAesAndEcdsaSign(byte[] key, byte[] iv, string publicKey, string privateKey, bool fromInitialization, CancellationTokenSource cancellation)
         {
             bool semaphoreUsed = false;
-            int countInit = 0;
             try
             {
                 _semaphoreUpdateCryptoStream.Wait(cancellation.Token);
@@ -77,7 +76,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                 try
                 {
                     if (fromInitialization || _aesManaged == null)
-                    {
                         _aesManaged = new RijndaelManaged()
                         {
                             KeySize = ClassAes.EncryptionKeySize,
@@ -87,8 +85,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             Mode = CipherMode.CFB,
                             Padding = PaddingMode.None
                         };
-                        countInit++;
-                    }
                     else
                     {
 
@@ -110,15 +106,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             Mode = CipherMode.CFB,
                             Padding = PaddingMode.None
                         };
-
-                        countInit++;
                     }
 
                     if (fromInitialization || _encryptCryptoTransform == null)
-                    {
                         _encryptCryptoTransform = _aesManaged.CreateEncryptor(key, iv);
-                        countInit++;
-                    }
                     else
                     {
 
@@ -132,15 +123,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                         }
 
                         _encryptCryptoTransform = _aesManaged.CreateEncryptor(key, iv);
-                        countInit++;
-
                     }
 
                     if (fromInitialization || _decryptCryptoTransform == null)
-                    {
                         _decryptCryptoTransform = _aesManaged.CreateDecryptor(key, iv);
-                        countInit++;
-                    }
                     else
                     {
 
@@ -153,33 +139,28 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                             // Ignored.
                         }
                         _decryptCryptoTransform = _aesManaged.CreateDecryptor(key, iv);
-                        countInit++;
 
                     }
+
                     if (!publicKey.IsNullOrEmpty(out _) && !privateKey.IsNullOrEmpty(out _))
                     {
                         _ecPrivateKeyParameters = new ECPrivateKeyParameters(new BigInteger(ClassBase58.DecodeWithCheckSum(privateKey, true)), ClassWalletUtility.ECDomain);
                         _ecPublicKeyParameters = new ECPublicKeyParameters(ClassWalletUtility.ECParameters.Curve.DecodePoint(ClassBase58.DecodeWithCheckSum(publicKey, false)), ClassWalletUtility.ECDomain);
-                        countInit++;
                     }
                 }
                 catch
                 {
                     // Ignored.
                 }
+
+                _initialized = true;
             }
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreUpdateCryptoStream.Release();
-                }
             }
 
-            if (countInit >= 3)
-            {
-                _initialized = true;
-            }
         }
 
         /// <summary>
@@ -198,18 +179,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                 {
                     if (content.Length > 0)
                     {
-                        int packetLength = content.Length;
-                        int paddingSizeRequired = 16 - packetLength % 16;
-                        byte[] paddedBytes = new byte[packetLength + paddingSizeRequired];
+                        byte[] packetPadded = ClassUtility.DoPacketPadding(content);
 
-                        Buffer.BlockCopy(content, 0, paddedBytes, 0, packetLength);
-
-                        for (int i = 0; i < paddingSizeRequired; i++)
-                        {
-                            paddedBytes[packetLength + i] = (byte)paddingSizeRequired;
-                        }
-
-                        result = _encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);
+                        result = _encryptCryptoTransform.TransformFinalBlock(packetPadded, 0, packetPadded.Length);
                     }
                 }
                 catch
@@ -238,20 +210,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
                 {
                     if (content.Length > 0)
                     {
-                        byte[] decryptedPaddedBytes = _decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
-                        result = new byte[decryptedPaddedBytes.Length - decryptedPaddedBytes[decryptedPaddedBytes.Length - 1]];
-                        Buffer.BlockCopy(decryptedPaddedBytes, 0, result, 0, result.Length);
+                        byte[] decryptedPaddedPacket = _decryptCryptoTransform.TransformFinalBlock(content, 0, content.Length);
+                        result = ClassUtility.UndoPacketPadding(decryptedPaddedPacket);
 
                         if (result.Length > 0)
-                        {
                             decryptStatus = true;
-                        }
                     }
                 }
                 catch
                 {
                     result = null;
-                    decryptStatus = false;
                 }
 
             }

@@ -217,7 +217,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// <param name="listBlockHeight"></param>
         /// <param name="cancellationIoCache"></param>
         /// <returns></returns>
-        public async Task<List<ClassBlockObject>> GetIoListBlockDataInformationFromListBlockHeight(HashSet<long> listBlockHeight, CancellationTokenSource cancellationIoCache)
+        public async Task<List<ClassBlockObject>> GetIoListBlockDataInformationFromListBlockHeight(List<long> listBlockHeight, CancellationTokenSource cancellationIoCache)
         {
             List<ClassBlockObject> listBlockInformation = new List<ClassBlockObject>();
 
@@ -376,10 +376,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     {
                         blockObject = await ReadAndGetIoBlockDataFromBlockHeightOnIoStreamFile(blockHeight, cancellation, blockInformationsOnly);
 
-                        if (!blockInformationsOnly)
-                            // Update the io cache file and remove the data updated from the active memory
-                            if (blockObject != null && keepAlive)
-                                await InsertInActiveMemory(blockObject, keepAlive, true, cancellation);
+                        // Update the io cache file and remove the data updated from the active memory
+                        if (blockObject != null && keepAlive && !blockInformationsOnly)
+                            await InsertInActiveMemory(blockObject, keepAlive, true, cancellation);
                     }
                 }
             }
@@ -1088,7 +1087,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                             if (totalMemoryAsked <= totalAvailableMemoryRetrieved)
                                 break;
 
-                            if (_ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellation) + (totalMemoryAsked - totalAvailableMemoryRetrieved) <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
+                            if (_ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellation, out _) + (totalMemoryAsked - totalAvailableMemoryRetrieved) <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                             {
                                 totalAvailableMemoryRetrieved = totalMemoryAsked;
                                 break;
@@ -1201,79 +1200,60 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     }
                     else
                     {
-                        long previousMemorySize = _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory;
-                        long newMemorySize = ClassBlockUtility.GetIoBlockSizeOnMemory(blockObject);
+                        long blockMemorySize = _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory == 0 ? ClassBlockUtility.GetIoBlockSizeOnMemory(blockObject) : _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory;
 
-                        if (newMemorySize <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
+                        _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = blockMemorySize;
+
+                        if (blockMemorySize <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                         {
-                            long totalMemoryToAsk;
 
-                            if (previousMemorySize >= newMemorySize)
-                                totalMemoryToAsk = previousMemorySize - newMemorySize;
-                            else
-                                totalMemoryToAsk = newMemorySize - previousMemorySize;
-
-                            long totalMemoryConsumption = _ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellationIoCache);
+                            long totalMemoryConsumption = _ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellationIoCache, out _);
 
                             // Try to push the block updated in memory.
-                            if (totalMemoryConsumption + totalMemoryToAsk <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
+                            if (totalMemoryConsumption + blockMemorySize <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                             {
                                 _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
-                                _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
+                                _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = blockMemorySize;
                                 insertInMemory = true;
                             }
                             else
                             {
                                 // Do an internal purge of the active memory on this io cache file.
-                                long totalMemoryRetrieved = await PurgeIoBlockDataMemory(true, cancellationIoCache, totalMemoryToAsk, true);
+                                long totalMemoryRetrieved = await PurgeIoBlockDataMemory(true, cancellationIoCache, blockMemorySize, true);
 
-                                if (totalMemoryRetrieved >= totalMemoryToAsk)
+                                if (totalMemoryRetrieved >= blockMemorySize)
                                 {
                                     _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
-                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
+                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = blockMemorySize;
                                     insertInMemory = true;
                                 }
-                                else if (_ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellationIoCache) + (totalMemoryToAsk - totalMemoryRetrieved) <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
+                                else if (_ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellationIoCache, out _) + (blockMemorySize - totalMemoryRetrieved) <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
                                 {
                                     _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
-                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
+                                    _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = blockMemorySize;
                                     insertInMemory = true;
                                 }
                                 else
                                 {
                                     // Do a purge on other io cache files indexed.
-                                    if (await _ioCacheSystem.DoPurgeFromIoCacheIndex(_ioDataStructureFilename, newMemorySize, cancellationIoCache))
+                                    if (await _ioCacheSystem.DoPurgeFromIoCacheIndex(_ioDataStructureFilename, blockMemorySize, cancellationIoCache))
                                     {
                                         _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
-                                        _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = newMemorySize;
+                                        _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnMemory = blockMemorySize;
                                         insertInMemory = true;
                                     }
-                                }
-
-                                if (!insertInMemory && !_ioStructureObjectsDictionary[blockObject.BlockHeight].IsNull && !fromReading)
-                                {
-                                    if (_ioStructureObjectsDictionary[blockObject.BlockHeight].IsUpdated)
-                                    {
-                                        if (await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache))
-                                            _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = null;
-                                    }
-                                    else
-                                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = null;
                                 }
                             }
                         }
                     }
                 }
 
-                if (!insertInMemory)
+                if (!insertInMemory && !fromReading)
                 {
-                    if (!fromReading)
-                    {
-                        if (!_ioStructureObjectsDictionary[blockObject.BlockHeight].IsNull)
-                            _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
-                        else
-                            await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache);
-                    }
+                    if (!_ioStructureObjectsDictionary[blockObject.BlockHeight].IsNull)
+                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
+                    else
+                        await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache);
                 }
             }
         }
@@ -1282,16 +1262,24 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// Return the memory usage of active memory from the io cache file index.
         /// </summary>
         /// <returns></returns>
-        public long GetIoMemoryUsage(CancellationTokenSource cancellation)
+        public long GetIoMemoryUsage(CancellationTokenSource cancellation, out int totalBlockKeepAlive)
         {
             long memoryUsage = 0;
+            totalBlockKeepAlive = 0;
 
             foreach (long blockHeight in _ioStructureObjectsDictionary.Keys.ToArray())
             {
                 if (cancellation != null)
-                    cancellation.Token.ThrowIfCancellationRequested();
+                {
+                    if (cancellation.IsCancellationRequested)
+                        break;
+                }
 
-                memoryUsage += _ioStructureObjectsDictionary[blockHeight].IoDataSizeOnMemory;
+                if (!_ioStructureObjectsDictionary[blockHeight].IsNull)
+                {
+                    memoryUsage += _ioStructureObjectsDictionary[blockHeight].IoDataSizeOnMemory;
+                    totalBlockKeepAlive++;
+                }
             }
             return memoryUsage;
         }

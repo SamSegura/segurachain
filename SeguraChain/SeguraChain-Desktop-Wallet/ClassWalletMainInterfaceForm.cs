@@ -128,7 +128,7 @@ namespace SeguraChain_Desktop_Wallet
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.DoubleBuffer, true);
-
+            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
         }
 
         protected override CreateParams CreateParams
@@ -1478,6 +1478,8 @@ namespace SeguraChain_Desktop_Wallet
 
         #region Transaction history panel events & functions.
 
+        private bool _onDrawingTransactionHistory;
+
         /// <summary>
         /// Draw the bitmap of the transaction history virtually generated.
         /// </summary>
@@ -1487,30 +1489,38 @@ namespace SeguraChain_Desktop_Wallet
         {
             if (tabControlWallet.SelectedTab == tabPageTransactionHistory)
             {
+                _onDrawingTransactionHistory = true;
+
                 if (_walletTransactionHistorySystemInstance != null)
                 {
-                    if (_walletTransactionHistorySystemInstance.ContainsTransactionHistoryToWalletFileOpened(_currentWalletFilename))
+                    try
                     {
-
-                        if (!_walletTransactionHistorySystemInstance.GetLoadStatus(_currentWalletFilename, out double percentProgress))
+                        if (_walletTransactionHistorySystemInstance.ContainsTransactionHistoryToWalletFileOpened(_currentWalletFilename))
                         {
-                            Bitmap bitmapTransactionHistory = _walletTransactionHistorySystemInstance[_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations];
-                            if (bitmapTransactionHistory != null)
+
+                            if (!_walletTransactionHistorySystemInstance.GetLoadStatus(_currentWalletFilename, out double percentProgress))
                             {
-                                if (bitmapTransactionHistory.RawFormat != null)
-                                {
 
-                                    e.Graphics.DrawImageUnscaled(bitmapTransactionHistory, 0, 0);
+                                Bitmap transactionHistoryBitmap = _walletTransactionHistorySystemInstance[_currentWalletFilename, _cancellationTokenTaskUpdateWalletContentInformations];
 
-                                    _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, true);
-                                    _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, false);
-                                }
+                                if (transactionHistoryBitmap != null)
+                                    e.Graphics.DrawImageUnscaled(transactionHistoryBitmap, 0, 0);
+
+                                _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, false);
+                                _walletTransactionHistorySystemInstance.PaintTransactionHoverToTransactionHistory(_currentWalletFilename, e.Graphics, true);
+
                             }
+                            else
+                                _walletTransactionHistorySystemInstance.PaintTransactionLoadingAnimationToTransactionHistory(_currentWalletFilename, _walletMainFormLanguageObject.PANEL_TRANSACTION_HISTORY_ON_LOAD_TEXT, percentProgress, e.Graphics, panelTransactionHistory, _cancellationTokenTaskUpdateWalletContentInformations);
                         }
-                        else
-                            _walletTransactionHistorySystemInstance.PaintTransactionLoadingAnimationToTransactionHistory(_currentWalletFilename, _walletMainFormLanguageObject.PANEL_TRANSACTION_HISTORY_ON_LOAD_TEXT, percentProgress, e.Graphics, panelTransactionHistory, _cancellationTokenTaskUpdateWalletContentInformations);
+                    }
+                    catch
+                    {
+                        e.Graphics.Clear(ClassWalletDefaultSetting.DefaultPanelTransactionHistoryBackgroundColorOnClear);
                     }
                 }
+
+                _onDrawingTransactionHistory = false;
             }
         }
 
@@ -1715,9 +1725,13 @@ namespace SeguraChain_Desktop_Wallet
         /// <param name="e"></param>
         private void timerRefreshTransactionHistory_Tick(object sender, EventArgs e)
         {
-            if (tabControlWallet.SelectedTab == tabPageTransactionHistory)
-                panelTransactionHistory.Refresh();
+            if (tabControlWallet.SelectedTab == tabPageTransactionHistory && !_onDrawingTransactionHistory)
+            {
+                panelTransactionHistory.Invalidate(false);
+                panelTransactionHistory.Update();
+            }
         }
+
 
         /// <summary>
         /// Try to export the transaction history.
@@ -1768,6 +1782,7 @@ namespace SeguraChain_Desktop_Wallet
 
         #region Recent transaction history panel events & functions.
 
+
         /// <summary>
         /// Draw recent transactions.
         /// </summary>
@@ -1780,23 +1795,20 @@ namespace SeguraChain_Desktop_Wallet
 
                 if (tabControlWallet.SelectedTab == tabPageOverview)
                 {
-                    Bitmap bitmapRecentTransactions = _walletRecentTransactionHistorySystemInstance.GetRecentTransactionHistoryBitmap(_cancellationTokenTaskUpdateWalletContentInformations);
+                    e.Graphics.DrawImageUnscaled(_walletRecentTransactionHistorySystemInstance.GetRecentTransactionHistoryBitmap(_cancellationTokenTaskUpdateWalletContentInformations), 0, 0);
 
-                    if (bitmapRecentTransactions != null)
+                    Point point = panelInternalRecentTransactions.PointToClient(Cursor.Position);
+
+                    foreach (var showedRecentTransactionHistoryObject in _walletRecentTransactionHistorySystemInstance.DictionaryRecentTransactionHistoryObjects.Values.ToArray())
                     {
-                        e.Graphics.DrawImageUnscaled(bitmapRecentTransactions, 0, 0);
+                        _cancellationTokenTaskUpdateWalletContentInformations.Token.ThrowIfCancellationRequested();
 
-                        Point point = panelInternalRecentTransactions.PointToClient(Cursor.Position);
-
-                        foreach (var showedRecentTransactionHistoryObject in _walletRecentTransactionHistorySystemInstance.DictionaryRecentTransactionHistoryObjects.Values.ToArray())
+                        if (showedRecentTransactionHistoryObject?.TransactionDrawRectangle != null)
                         {
-                            if (showedRecentTransactionHistoryObject?.TransactionDrawRectangle != null)
+                            if (showedRecentTransactionHistoryObject.TransactionDrawRectangle.Contains(point))
                             {
-                                if (showedRecentTransactionHistoryObject.TransactionDrawRectangle.Contains(point))
-                                {
-                                    e.Graphics.DrawRectangle(new Pen(ClassWalletDefaultSetting.DefaultPictureBoxTransactionBorderColor, 1.0f), showedRecentTransactionHistoryObject.TransactionDrawRectangle.X, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Y, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Width - 2, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Height - 2);
-                                    break;
-                                }
+                                e.Graphics.DrawRectangle(new Pen(ClassWalletDefaultSetting.DefaultPictureBoxTransactionBorderColor, 1.0f), showedRecentTransactionHistoryObject.TransactionDrawRectangle.X, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Y, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Width - 2, showedRecentTransactionHistoryObject.TransactionDrawRectangle.Height - 2);
+                                break;
                             }
                         }
                     }
@@ -1873,9 +1885,7 @@ namespace SeguraChain_Desktop_Wallet
             if (_walletRecentTransactionHistorySystemInstance != null)
             {
                 if (!_walletRecentTransactionHistorySystemInstance.UpdateLastMousePosition(panelInternalRecentTransactions.PointToClient(Cursor.Position)))
-                {
                     panelInternalRecentTransactions.Refresh();
-                }
             }
         }
 

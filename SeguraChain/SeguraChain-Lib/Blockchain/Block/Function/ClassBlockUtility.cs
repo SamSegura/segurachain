@@ -15,6 +15,7 @@ using SeguraChain_Lib.Blockchain.Mining.Function;
 using SeguraChain_Lib.Blockchain.Mining.Object;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Stats.Function;
+using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
@@ -272,58 +273,47 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 int totalTravel = 0;
                 long startHeight = (previousBlockHeight - BlockchainSetting.BlockDifficultyRangeCalculation);
                 if (startHeight <= 0)
-                {
                     startHeight = BlockchainSetting.GenesisBlockHeight;
-                }
 
-                
-                HashSet<long> listBlockHeight = new HashSet<long>();
-
-                for (long k = startHeight; k < previousBlockHeight; k++)
+                using (DisposableList<long> listBlockHeight = new DisposableList<long>())
                 {
-                    if (k >= BlockchainSetting.GenesisBlockHeight && k < previousBlockHeight)
-                    {
-                        listBlockHeight.Add(k);
 
+                    for (long k = startHeight; k < previousBlockHeight; k++)
+                    {
+                        if (k >= BlockchainSetting.GenesisBlockHeight && k < previousBlockHeight)
+                            listBlockHeight.Add(k);
                     }
-                }
 
-                foreach (ClassBlockObject blockObject in await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockInformationDataFromListBlockHeightStrategy(listBlockHeight, cancellation))
-                {
-                    if(blockObject != null)
+                    foreach (ClassBlockObject blockObject in await ClassBlockchainDatabase.BlockchainMemoryManagement.GetListBlockInformationDataFromListBlockHeightStrategy(listBlockHeight, cancellation))
                     {
-                        if (blockObject.BlockHeight >= BlockchainSetting.GenesisBlockHeight)
+                        if (blockObject != null)
                         {
+                            if (blockObject.BlockHeight >= BlockchainSetting.GenesisBlockHeight)
+                            {
 
-                            long timeSpend = blockObject.TimestampFound - blockObject.TimestampCreate;
-                            averageTotalTimespend += timeSpend;
-                            averageTimespendExpected += BlockchainSetting.BlockTime;
-                            sumDifficulty += blockObject.BlockDifficulty;
-                            totalTravel++;
+                                long timeSpend = blockObject.TimestampFound - blockObject.TimestampCreate;
+                                averageTotalTimespend += timeSpend;
+                                averageTimespendExpected += BlockchainSetting.BlockTime;
+                                sumDifficulty += blockObject.BlockDifficulty;
+                                totalTravel++;
 
+                            }
                         }
                     }
-                }
 
-                // Clean up.
-                listBlockHeight.Clear();
-                
+                }
 
 
                 #region Ensure to have any value lower than 1.
 
                 if (averageTotalTimespend <= 0d)
-                {
                     averageTotalTimespend = 1;
-                }
+
                 if (averageTimespendExpected <= 0d)
-                {
                     averageTimespendExpected = 1;
-                }
+                
                 if (sumDifficulty < 1)
-                {
                     sumDifficulty = 1;
-                }
 
                 #endregion
 
@@ -332,36 +322,16 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 // Divide the sum of difficulty by the number of blocks travel.
                 sumDifficulty = BigInteger.Divide(sumDifficulty, totalTravel);
 
-                /*
-#if DEBUG
-                Debug.WriteLine("Sum of difficulty: " + sumDifficulty + " divided by " + totalTravel + " block(s) travel.");
-#endif
-                */
                 // Calculate the difficulty factor.
                 BigInteger difficultyFactor = (BigInteger)((averageTimespendExpected / averageTotalTimespend) * BlockchainSetting.BlockDifficultyPrecision);
 
-            
-                /*
-#if DEBUG
-                Debug.WriteLine("Difficulty factor: " + difficultyFactor);
-#endif
-                */
-
                 // Calculate the new block difficulty.
                 var newBlockDifficulty = ((sumDifficulty * difficultyFactor) / BlockchainSetting.BlockDifficultyPrecision);
-                
-                /*
-#if DEBUG
-                Debug.WriteLine("New difficulty: "+newBlockDifficulty+" | Previous difficulty: "+previousBlockDifficulty);
-#endif
-                */
-
+               
                 #region Do not let the next block difficulty lower than the min difficulty accepted by the chain.
 
                 if (newBlockDifficulty < BlockchainSetting.MiningMinDifficulty)
-                {
                     newBlockDifficulty = BlockchainSetting.MiningMinDifficulty;
-                }
 
                 #endregion
 
@@ -386,72 +356,48 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
         public static async Task<bool> CheckBlockDataObject(ClassBlockObject blockObject, long blockHeightTarget, bool refuseLockedBlock, CancellationTokenSource cancellation)
         {
             if (blockObject == null)
-            {
                 return false;
-            }
 
             if (blockObject.BlockHash.Length != BlockchainSetting.BlockHashHexSize)
-            {
                 return false;
-            }
 
             if (blockObject.BlockHeight != blockHeightTarget)
-            {
                 return false;
-            }
 
             if (blockObject.BlockHeight < BlockchainSetting.GenesisBlockHeight)
-            {
                 return false;
-            }
 
             if (blockObject.BlockDifficulty < BlockchainSetting.MiningMinDifficulty)
-            {
                 return false;
-            }
 
             // The genesis block is always unlocked and not contain a mining share.
             if (blockObject.BlockHeight == BlockchainSetting.GenesisBlockHeight)
             {
                 if (blockObject.BlockWalletAddressWinner != BlockchainSetting.WalletAddressDev(0))
-                {
                     return false;
-                }
 
                 if (blockObject.BlockFinalHashTransaction != BlockchainSetting.GenesisBlockFinalTransactionHash)
-                {
                     return false;
-                }
 
                 if (blockObject.BlockStatus != ClassBlockEnumStatus.UNLOCKED)
-                {
                     return false;
-                }
             }
 
             if (!GetBlockTemplateFromBlockHash(blockObject.BlockHash, out ClassBlockTemplateObject blockTemplateObject))
-            {
                 return false;
-            }
 
             if (blockTemplateObject == null)
-            {
                 return false;
-            }
 
             if (blockObject.BlockHeight > BlockchainSetting.GenesisBlockHeight)
             {
                 if (CheckBlockHash(blockObject.BlockHash, blockHeightTarget, blockObject.BlockDifficulty, blockTemplateObject.BlockPreviousTransactionCount, blockTemplateObject.BlockPreviousFinalTransactionHash) != ClassBlockEnumCheckStatus.VALID_BLOCK_HASH)
-                {
                     return false;
-                }
             }
             else
             {
                 if (CheckBlockHash(blockObject.BlockHash, blockHeightTarget, blockObject.BlockDifficulty, blockTemplateObject.BlockPreviousTransactionCount, BlockchainSetting.GenesisBlockFinalTransactionHash) != ClassBlockEnumCheckStatus.VALID_BLOCK_HASH)
-                {
                     return false;
-                }
             }
 
             if (blockTemplateObject.BlockHeight != blockObject.BlockHeight ||
@@ -475,22 +421,16 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                         if (previousBlockObjectInformation.BlockStatus != ClassBlockEnumStatus.LOCKED)
                         {
                             if (previousBlockObjectInformation.BlockFinalHashTransaction != blockTemplateObject.BlockPreviousFinalTransactionHash)
-                            {
                                 return false;
-                            }
 
                             if (previousBlockObjectInformation.TimestampFound != blockObject.TimestampCreate)
-                            {
                                 return false;
-                            }
                         }
 
                         if (refuseLockedBlock)
                         {
                             if (blockObject.BlockMiningPowShareUnlockObject == null)
-                            {
                                 return false;
-                            }
                         }
 
                         if (previousBlockObjectInformation.BlockStatus != ClassBlockEnumStatus.LOCKED)
@@ -499,15 +439,11 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                             int previousBlockTransactionCount = previousBlockObjectInformation.TotalTransaction;
 
                             if (previousBlockTransactionCount != blockTemplateObject.BlockPreviousTransactionCount)
-                            {
                                 return false;
-                            }
 
 
                             if (previousBlockObjectInformation.BlockWalletAddressWinner != blockTemplateObject.BlockPreviousWalletAddressWinner)
-                            {
                                 return false;
-                            }
 
 
                             if (await GenerateNextBlockDifficulty(previousBlockHeight, previousBlockObjectInformation.TimestampCreate, previousBlockObjectInformation.TimestampFound, previousBlockObjectInformation.BlockDifficulty, cancellation)
@@ -519,45 +455,31 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                         }
                     }
                     else
-                    {
                         return false;
-                    }
                 }
             }
 
             if (refuseLockedBlock)
             {
                 if (blockObject.BlockStatus == ClassBlockEnumStatus.LOCKED)
-                {
                     return false;
-                }
 
                 if (blockObject.BlockWalletAddressWinner.IsNullOrEmpty(out _))
-                {
                     return false;
-                }
 
                 if (blockObject.BlockWalletAddressWinner.Length < BlockchainSetting.WalletAddressWifLengthMin || blockObject.BlockWalletAddressWinner.Length > BlockchainSetting.WalletAddressWifLengthMax)
-                {
                     return false;
-                }
 
                 if (blockObject.BlockHeight > BlockchainSetting.GenesisBlockHeight)
                 {
                     if (blockObject.BlockMiningPowShareUnlockObject == null)
-                    {
                         return false;
-                    }
 
                     if (blockObject.BlockWalletAddressWinner != blockObject.BlockMiningPowShareUnlockObject.WalletAddress)
-                    {
                         return false;
-                    }
 
                     if (blockObject.BlockMiningPowShareUnlockObject.Timestamp != blockObject.TimestampFound)
-                    {
                         return false;
-                    }
 
                     if (ClassMiningPoWaCUtility.CheckPoWaCShare(BlockchainSetting.CurrentMiningPoWaCSettingObject(blockObject.BlockHeight),
                         blockObject.BlockMiningPowShareUnlockObject,
@@ -572,70 +494,126 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
 
                     if (jobDifficulty != blockObject.BlockMiningPowShareUnlockObject.PoWaCShareDifficulty)
-                    {
                         return false;
-                    }
 
                     if (jobCompatibilityValue != blockTemplateObject.BlockPreviousTransactionCount)
-                    {
                         return false;
-                    }
                 }
 
                 if (ClassBase58.DecodeWithCheckSum(blockObject.BlockWalletAddressWinner, true) == null)
-                {
                     return false;
-                }
 
                 if (blockObject.BlockFinalHashTransaction.IsNullOrEmpty(out _))
-                {
                     return false;
-                }
-
             }
             else
             {
                 if (blockObject.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                {
                     return false;
-                }
 
                 if (!blockObject.BlockFinalHashTransaction.IsNullOrEmpty(out _))
-                {
                     return false;
-                }
 
                 if (!blockObject.BlockWalletAddressWinner.IsNullOrEmpty(out _))
-                {
                     return false;
-                }
 
                 if (blockObject.BlockMiningPowShareUnlockObject != null)
-                {
                     return false;
-                }
 
                 if (blockObject.TimestampFound > 0)
-                {
                     return false;
-                }
 
                 if (blockObject.BlockTransactionFullyConfirmed)
-                {
                     return false;
-                }
 
                 if (blockObject.BlockTransactions != null)
                 {
                     if (blockObject.BlockTransactions.Count > 0)
-                    {
                         return false;
-                    }
                 }
             }
 
             return true;
         }
+
+
+
+        /// <summary>
+        /// Check the block object content for the task of block transaction confirmation.
+        /// </summary>
+        /// <param name="previousBlockObject"></param>
+        /// <returns></returns>
+        public static bool DoCheckBlockTransactionConfirmation(ClassBlockObject blockObject, ClassBlockObject previousBlockObject)
+        {
+            if (!blockObject.IsConfirmedByNetwork)
+                return false;
+
+            if (blockObject.BlockTransactionConfirmationCheckTaskDone)
+                return true;
+
+            if (blockObject.BlockHeight > BlockchainSetting.GenesisBlockHeight)
+            {
+                if (previousBlockObject == null)
+                    return false;
+
+                ClassBlockEnumCheckStatus blockCheckStatus = CheckBlockHash(blockObject.BlockHash, blockObject.BlockHeight, blockObject.BlockDifficulty, previousBlockObject.TotalTransaction, previousBlockObject.BlockFinalHashTransaction);
+
+                if (blockCheckStatus != ClassBlockEnumCheckStatus.VALID_BLOCK_HASH)
+                    return false;
+
+                if (blockObject.BlockStatus != ClassBlockEnumStatus.UNLOCKED)
+                    return false;
+
+                if (blockObject.BlockMiningPowShareUnlockObject == null)
+                    return false;
+
+                string blockHash = blockObject.BlockHash;
+                BigInteger blockDifficulty = blockObject.BlockDifficulty;
+                string walletAddressWinner = blockObject.BlockWalletAddressWinner;
+                ClassMiningPoWaCShareObject miningPocShareObject = blockObject.BlockMiningPowShareUnlockObject;
+
+                if (walletAddressWinner != miningPocShareObject.WalletAddress)
+                    return false;
+
+                string previousFinalBlockTransactionHash = previousBlockObject.BlockFinalHashTransaction;
+
+                int previousBlockTransactionCount = previousBlockObject.TotalTransaction;
+
+                var resultShare = ClassMiningPoWaCUtility.CheckPoWaCShare(BlockchainSetting.CurrentMiningPoWaCSettingObject(blockObject.BlockHeight), miningPocShareObject, blockObject.BlockHeight, blockHash, blockDifficulty, previousBlockTransactionCount, previousFinalBlockTransactionHash, out BigInteger jobDifficulty, out int jobCompabilityValue);
+
+                if (resultShare != ClassMiningPoWaCEnumStatus.VALID_UNLOCK_BLOCK_SHARE)
+                    return false;
+
+                if (jobDifficulty != miningPocShareObject.PoWaCShareDifficulty || jobCompabilityValue != previousBlockTransactionCount)
+                    return false;
+            }
+            else
+            {
+                if (blockObject.BlockStatus != ClassBlockEnumStatus.UNLOCKED)
+                    return false;
+
+                if (blockObject.BlockWalletAddressWinner != BlockchainSetting.WalletAddressDev(0))
+                    return false;
+
+                if (blockObject.BlockTransactions.Count != BlockchainSetting.GenesisBlockTransactionCount)
+                    return false;
+
+                foreach (var tx in blockObject.BlockTransactions)
+                {
+                    if (tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                        return false;
+
+                    if (tx.Value.TransactionObject.WalletAddressReceiver != BlockchainSetting.WalletAddressDev(0))
+                        return false;
+
+                    if (tx.Value.TransactionObject.Amount != BlockchainSetting.GenesisBlockAmount)
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
 
         #endregion
 

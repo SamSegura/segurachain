@@ -64,6 +64,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                             _blockObject.BlockIsUpdated = false;
                             _blockObject.Disposed = false;
                         }
+
+                        if (_ioDataSizeOnMemory == 0)
+                            _ioDataSizeOnMemory = ClassBlockUtility.GetIoBlockSizeOnMemory(_blockObject);
                     }
                     LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
@@ -74,7 +77,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     {
                         _blockObject?.Dispose();
                         _blockObject = null;
-                        _ioDataSizeOnMemory = 0;
                         IsUpdated = false;
                     }
                 }

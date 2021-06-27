@@ -159,9 +159,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     if (_cancellationTokenServiceSync != null)
                     {
                         if (!_cancellationTokenServiceSync.IsCancellationRequested)
-                        {
                             _cancellationTokenServiceSync.Cancel();
-                        }
                     }
                 }
                 catch
@@ -188,9 +186,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             int totalPeerInitialized = await StartInitializePeersNotInitialized();
 
             if (totalDeadPeerRestored > 0 || totalPeerInitialized > 0)
-            {
                 return true;
-            }
 
             ClassLog.WriteLine("Any peers checked retrieved back alive. Try to contact default peers.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_HIGH_PRIORITY);
 
@@ -214,9 +210,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         int peerPort = BlockchainSetting.BlockchainStaticPeerList[peerIp][peerUniqueId];
 
                         if (!await SendAskAuthPeerKeys(new ClassPeerNetworkClientSyncObject(peerIp, peerPort, peerUniqueId, _cancellationTokenServiceSync, _peerNetworkSettingObject, _peerFirewallSettingObject), _cancellationTokenServiceSync, true))
-                        {
                             ClassLog.WriteLine("Can't send auth keys to default peer: " + peerIp + ":" + peerPort + " | Peer Unique ID: " + peerUniqueId, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
-                        }
                         else
                         {
                             if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(peerIp))
@@ -224,9 +218,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
                                 {
                                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
-                                    {
                                         ClassPeerCheckManager.InputPeerClientValidPacket(peerIp, peerUniqueId, _peerNetworkSettingObject);
-                                    }
                                 }
                             }
                         }
@@ -259,20 +251,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                 if (ClassPeerCheckManager.CheckPeerClientStatus(peerIp, peerUniqueId, false, _peerNetworkSettingObject, _peerFirewallSettingObject))
                                 {
                                     if (!ClassPeerCheckManager.CheckPeerClientInitializationStatus(peerIp, peerUniqueId))
-                                    {
                                         peerListToInitialize.Add(new Tuple<string, string>(peerIp, peerUniqueId));
-                                    }
                                 }
                                 else
                                 {
                                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_BANNED && ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerBanDate + _peerNetworkSettingObject.PeerBanDelay < ClassUtility.GetCurrentTimestampInSecond())
-                                    {
                                         peerListToInitialize.Add(new Tuple<string, string>(peerIp, peerUniqueId));
-                                    }
                                     else if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_DEAD && ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerBanDate + _peerNetworkSettingObject.PeerDeadDelay < ClassUtility.GetCurrentTimestampInSecond())
-                                    {
                                         peerListToInitialize.Add(new Tuple<string, string>(peerIp, peerUniqueId));
-                                    }
                                 }
                             }
                         }
@@ -322,9 +308,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                     {
                                                         totalPeerRemoved++;
                                                         if (ClassPeerDatabase.DictionaryPeerDataObject[peerListToInitialize[i1].Item1].Count == 0)
-                                                        {
                                                             ClassPeerDatabase.DictionaryPeerDataObject.Remove(peerListToInitialize[i1].Item1);
-                                                        }
                                                     }
                                                 }
                                             }
@@ -347,20 +331,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                     while (totalTaskComplete < totalTaskCount)
                     {
+                        // Timeout reach.
                         if (startTaskTimestamp + _peerNetworkSettingObject.PeerMaxDelayAwaitResponse < ClassUtility.GetCurrentTimestampInSecond())
-                        {
-                            // Timeout reach.
                             break;
-                        }
+
                         await Task.Delay(100);
                     }
 
                     try
                     {
                         if (!cancellationTokenSourceTaskSync.IsCancellationRequested)
-                        {
                             cancellationTokenSourceTaskSync.Cancel();
-                        }
                     }
                     catch
                     {
@@ -374,9 +355,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             }
             else
-            {
                 ClassLog.WriteLine("No peer(s) available to initialize", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
-            }
 
             peerList.Clear();
             peerListToInitialize.Clear();
@@ -406,9 +385,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                 if (ClassPeerDatabase.DictionaryPeerDataObject[peer][peerUniqueId].PeerStatus == ClassPeerEnumStatus.PEER_DEAD)
                                 {
                                     if (!peer.IsNullOrEmpty(out _))
-                                    {
                                         peerListToCheck.Add(new Tuple<string, string>(peer, peerUniqueId));
-                                    }
                                 }
                             }
                         }
@@ -457,9 +434,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                     {
                                                         totalPeerRemoved++;
                                                         if (ClassPeerDatabase.DictionaryPeerDataObject[peerListToCheck[i1].Item1].Count == 0)
-                                                        {
                                                             ClassPeerDatabase.DictionaryPeerDataObject.Remove(peerListToCheck[i1].Item1);
-                                                        }
                                                     }
                                                 }
                                             }
@@ -482,20 +457,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                     while (totalTaskComplete < totalTaskCount)
                     {
+                        // Timeout reach.
                         if (startTaskTimestamp + _peerNetworkSettingObject.PeerMaxDelayAwaitResponse < ClassUtility.GetCurrentTimestampInSecond())
-                        {
-                            // Timeout reach.
                             break;
-                        }
+                        
                         await Task.Delay(100);
                     }
 
                     try
                     {
                         if (!cancellationTokenSourceTaskSync.IsCancellationRequested)
-                        {
                             cancellationTokenSourceTaskSync.Cancel();
-                        }
                     }
                     catch
                     {
@@ -844,7 +816,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                 {
                                                     if (listBlockMissed.Count == 0)
                                                     {
-                                                        using (DisposableList<long> listBlockNetworkUnconfirmed = await ClassBlockchainStats.GetListBlockNetworkUnconfirmed(BlockchainSetting.BlockAmountNetworkConfirmations, _cancellationTokenServiceSync))
+                                                        using (DisposableList<long> listBlockNetworkUnconfirmed = await ClassBlockchainStats.GetListBlockNetworkUnconfirmed(_cancellationTokenServiceSync))
                                                         {
                                                             if (listBlockNetworkUnconfirmed.Count > 0)
                                                             {
@@ -854,7 +826,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                 {
 
                                                                     ClassBlockObject blockObjectInformationsToCheck = await ClassBlockchainStats.GetBlockInformationData(blockHeightToCheck, _cancellationTokenServiceSync);
-
                                                                     ClassLog.WriteLine("Start to check the block height: " + blockHeightToCheck + " with other peers..", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
 
                                                                     switch (await StartCheckBlockDataUnlockedFromListPeerTarget(peerTargetList, blockHeightToCheck, blockObjectInformationsToCheck))
@@ -908,9 +879,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                                 }
                                                                                             }
                                                                                             else
-                                                                                            {
                                                                                                 error = true;
-                                                                                            }
 
                                                                                             if (error)
                                                                                             {
@@ -933,7 +902,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                             break;
                                                                         case ClassPeerNetworkSyncServiceEnumCheckBlockDataUnlockedResult.VALID_BLOCK:
                                                                             {
-                                                                                ClassBlockObject blockObjectToCheck = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockDataStrategy(blockHeightToCheck, false, false, _cancellationTokenServiceSync);
+                                                                                ClassBlockObject blockObjectToCheck = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockDataStrategy(blockHeightToCheck, false, true, _cancellationTokenServiceSync);
                                                                                 blockObjectToCheck.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
 
                                                                                 ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. Amount of confirmations: " + blockObjectToCheck.BlockNetworkAmountConfirmations + "/" + BlockchainSetting.BlockAmountNetworkConfirmations, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
@@ -948,10 +917,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                         ClassLog.WriteLine("The block height: " + blockHeightToCheck + " is totally valid. The node can start to confirm tx's of this block.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkCyan);
                                                                                         blockObjectToCheck.BlockUnlockValid = true;
                                                                                     }
-                                                                                    if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, true, _cancellationTokenServiceSync))
-                                                                                    {
+                                                                                    if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, _cancellationTokenServiceSync))
                                                                                         ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. But can't push updated data into the database.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
-                                                                                    }
                                                                                 }
                                                                                 else
                                                                                 {
@@ -962,10 +929,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                         blockObjectToCheck.BlockSlowNetworkAmountConfirmations = 0;
                                                                                     }
                                                                                     else
-                                                                                    {
                                                                                         blockObjectToCheck.BlockSlowNetworkAmountConfirmations++;
 
-                                                                                    }
 
                                                                                     if (blockObjectToCheck.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
                                                                                     {
@@ -973,36 +938,27 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                         blockObjectToCheck.BlockUnlockValid = true;
                                                                                     }
 
-                                                                                    if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, true, _cancellationTokenServiceSync))
-                                                                                    {
+                                                                                    if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, _cancellationTokenServiceSync))
                                                                                         ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. But can't push updated data into the database.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
-
-                                                                                    }
                                                                                 }
                                                                             }
                                                                             break;
                                                                     }
 
+
                                                                     if (cancelCheck)
-                                                                    {
                                                                         break;
-                                                                    }
 
                                                                     totalBlockChecked++;
 
                                                                     if (totalBlockChecked >= _peerNetworkSettingObject.PeerMaxRangeBlockToSyncPerRequest)
-                                                                    {
                                                                         break;
-                                                                    }
                                                                 }
                                                             }
                                                         }
                                                     }
                                                     else
-                                                    {
                                                         ClassLog.WriteLine("Increment block check network confirmations canceled. Their is " + listBlockMissed.Count + " block(s) missed to sync.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
-
-                                                    }
                                                 }
 
                                                 ClassLog.WriteLine("Increment block check network confirmations done..", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
@@ -1059,7 +1015,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                             if (ClassPeerDatabase.DictionaryPeerDataObject.Count > 0)
                             {
-                                peerTargetList = GenerateOrUpdatePeerTargetList (peerTargetList);
+                                peerTargetList = GenerateOrUpdatePeerTargetList(peerTargetList);
                                 // If true, run every peer check tasks functions.
                                 if (peerTargetList.Count > 0)
                                 {
@@ -1174,9 +1130,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                     }
                                                                                 }
                                                                                 else
-                                                                                {
                                                                                     ClassLog.WriteLine("Attempt to check if the block height: " + lastBlockHeight + " is already unlocked.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                                }
                                                                             }
                                                                             else
                                                                             {
@@ -1202,13 +1156,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                                 {
                                                                                                     ClassLog.WriteLine("The block height: " + lastBlockHeight + " checked provide a blocktemplate who is wrong. Replace it by the data synced from the network.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
-                                                                                                    await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, true, _cancellationTokenServiceSync);
+                                                                                                    await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, _cancellationTokenServiceSync);
                                                                                                 }
                                                                                             }
                                                                                             else
                                                                                             {
                                                                                                 ClassLog.WriteLine("The block height: " + lastBlockHeight + " checked provide a blocktemplate fully wrong. Replace it by the data synced from the network.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                                                await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, true, _cancellationTokenServiceSync);
+                                                                                                await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, _cancellationTokenServiceSync);
                                                                                             }
 
                                                                                         }
@@ -1243,21 +1197,21 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                             if (needCorrection)
                                                                             {
                                                                                 ClassLog.WriteLine("The block height: " + lastBlockHeight + " checked provide a blocktemplate who is wrong. Replace it by the data synced from the network.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                                await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, true, _cancellationTokenServiceSync);
+                                                                                await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, _cancellationTokenServiceSync);
                                                                             }
                                                                             else
                                                                             {
                                                                                 if (currentBlockObjectInformations.BlockHash != blockObject.BlockHash)
                                                                                 {
                                                                                     ClassLog.WriteLine("The block height: " + lastBlockHeight + " checked is wrong by comparing it with the data from the majority. Replace it by the data synced from the network.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                                    await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, true, _cancellationTokenServiceSync);
+                                                                                    await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, _cancellationTokenServiceSync);
                                                                                 }
                                                                             }
                                                                         }
                                                                         else
                                                                         {
                                                                             ClassLog.WriteLine("The block height: " + lastBlockHeight + " checked provide a blocktemplate fully wrong. Replace it by the data synced from the network.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                                                            await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, true, _cancellationTokenServiceSync);
+                                                                            await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, _cancellationTokenServiceSync);
                                                                         }
 
                                                                     }
@@ -2665,7 +2619,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
                     if (!_listPeerNetworkInformationStats.ContainsKey(peerListTarget[i].PeerIpTarget))
                         taskCanceled = true;
-                    else if(!_listPeerNetworkInformationStats[peerListTarget[i].PeerIpTarget].ContainsKey(peerListTarget[i].PeerUniqueIdTarget))
+                    else if (!_listPeerNetworkInformationStats[peerListTarget[i].PeerIpTarget].ContainsKey(peerListTarget[i].PeerUniqueIdTarget))
                         taskCanceled = true;
                     else if (blockHeightTarget > _listPeerNetworkInformationStats[peerListTarget[i].PeerIpTarget][peerListTarget[i].PeerUniqueIdTarget].LastBlockHeightUnlocked)
                         taskCanceled = true;
@@ -2701,8 +2655,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                             {
                                                                 if (ClassPeerCheckManager.CheckPeerSeedNumericPacketSignature(ClassUtility.SerializeData(result.Item2.ObjectReturned), result.Item2.PacketNumericHash, result.Item2.PacketNumericSignature, numericPublicKeyOut, cancellationTokenSourceTaskSync))
                                                                 {
-                                                                            // Do not allow multiple seed votes from the same numeric public key.
-                                                                            peerRanked = !listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut) ? listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0) : false;
+                                                                    // Do not allow multiple seed votes from the same numeric public key.
+                                                                    peerRanked = !listOfRankedPeerPublicKeySaved.ContainsKey(numericPublicKeyOut) ? listOfRankedPeerPublicKeySaved.TryAdd(numericPublicKeyOut, 0) : false;
                                                                 }
                                                             }
 
@@ -2744,8 +2698,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                     }
                                     catch
                                     {
-                                                // Ignored.
-                                            }
+                                        // Ignored.
+                                    }
                                 }
                                 finally
                                 {
@@ -3292,7 +3246,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
 
             bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_AUTH_KEYS, true, false);
 
-            
+
 
             if (!packetSendStatus)
             {
@@ -3408,7 +3362,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_PEER_LIST, true, false);
 
-                
+
 
                 if (!packetSendStatus)
                 {
@@ -3534,7 +3488,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_LIST_SOVEREIGN_UPDATE, true, false);
 
-               
+
                 if (!packetSendStatus)
                 {
                     ClassLog.WriteLine(peerIp + ":" + peerPort + " packet request failed.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_LOWEST_PRIORITY);
@@ -3620,7 +3574,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_SOVEREIGN_UPDATE_FROM_HASH, true, false);
 
-                
+
 
                 if (!packetSendStatus)
                 {
@@ -3712,7 +3666,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_NETWORK_INFORMATION, true, false);
 
-                
+
 
                 if (!packetSendStatus)
                 {
@@ -3814,7 +3768,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_DATA, true, false);
 
-                
+
 
                 if (!packetSendStatus)
                 {
@@ -3919,7 +3873,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA, true, false);
 
-                
+
 
                 if (!packetSendStatus)
                 {
@@ -4027,7 +3981,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
             {
                 bool packetSendStatus = await peerNetworkClientSyncObject.TrySendPacketToPeerTarget(sendObject.GetPacketData(), cancellation, ClassPeerEnumPacketResponse.SEND_BLOCK_TRANSACTION_DATA_BY_RANGE, true, false);
 
-                
+
 
                 if (!packetSendStatus)
                 {
@@ -4113,7 +4067,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                     ClassLog.WriteLine("A block object target synced is invalid, the mining share is empty, retry again later.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                     return false;
                 }
-            
+
 
             // Reset the work of transaction confirmations done from other peers.
             blockObject.BlockTransactionFullyConfirmed = false;
@@ -4336,7 +4290,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         {
                             bool failed = true;
 
-                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, true, cancellation))
+                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, cancellation))
                             {
                                 failed = false;
 
@@ -4353,7 +4307,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                         }
                         else
                         {
-                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT,  cancellation))
+                            if (await ClassBlockchainDatabase.BlockchainMemoryManagement.Add(blockObject.BlockHeight, blockObject, CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, cancellation))
                             {
                                 // Insert new tx's in wallet index.
                                 foreach (var tx in blockObject.BlockTransactions)
@@ -4415,8 +4369,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                 try
                 {
 
-                        semaphoreUsed = await _semaphoreUpdateAuthKeysFromError.WaitAsync(_peerNetworkSettingObject.PeerTaskSyncDelay, cancellation.Token);
-                    
+                    semaphoreUsed = await _semaphoreUpdateAuthKeysFromError.WaitAsync(_peerNetworkSettingObject.PeerTaskSyncDelay, cancellation.Token);
+
 
 
                     if (semaphoreUsed)

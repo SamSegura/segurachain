@@ -4,42 +4,10 @@
     {
         public ClassPeerNetworkClientSyncObject PeerNetworkClientSyncObject;
 
-        public string PeerIpTarget
-        {
-            get
-            {
-                if (PeerNetworkClientSyncObject != null)
-                {
-                    return PeerNetworkClientSyncObject.PeerIpTarget;
-                }
-                return string.Empty;
-            }
-        }
+        public string PeerIpTarget => PeerNetworkClientSyncObject != null ? PeerNetworkClientSyncObject.PeerIpTarget : string.Empty;
 
-        public int PeerPortTarget
-        {
-            get
-            {
-                if (PeerNetworkClientSyncObject != null)
-                {
-                    return PeerNetworkClientSyncObject.PeerPortTarget;
-                }
+        public int PeerPortTarget => PeerNetworkClientSyncObject != null ? PeerNetworkClientSyncObject.PeerPortTarget : 0;
 
-                return 0;
-            }
-        }
-
-        public string PeerUniqueIdTarget
-        {
-            get
-            {
-                if (PeerNetworkClientSyncObject != null)
-                {
-                    return PeerNetworkClientSyncObject.PeerUniqueIdTarget;
-                }
-
-                return string.Empty;
-            }
-        }
+        public string PeerUniqueIdTarget => PeerNetworkClientSyncObject != null ? PeerNetworkClientSyncObject.PeerUniqueIdTarget : string.Empty;
     }
 }

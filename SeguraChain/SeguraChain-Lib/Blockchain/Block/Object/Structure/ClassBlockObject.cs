@@ -6,8 +6,11 @@ using System.Threading;
 using Newtonsoft.Json;
 using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Function;
+using SeguraChain_Lib.Blockchain.Mining.Enum;
+using SeguraChain_Lib.Blockchain.Mining.Function;
 using SeguraChain_Lib.Blockchain.Mining.Object;
 using SeguraChain_Lib.Blockchain.Setting;
+using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Utility;
 
@@ -107,6 +110,10 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
                 return blockTransaction;
             }
+            set
+            {
+                _blockTransactions = value;
+            }
         }
 
         private SortedList<string, ClassBlockTransaction> _blockTransactions; // Contains transactions hash has index of key with their associated BlockTransaction.
@@ -154,6 +161,11 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public bool IsConfirmedByNetwork => BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations &&
                 BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED;
 
+        [JsonIgnore]
+        public bool IsChecked => IsConfirmedByNetwork && BlockTransactionConfirmationCheckTaskDone;
+
+
+
         #endregion
 
         /// <summary>
@@ -177,7 +189,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             TotalTransactionConfirmed = 0;
         }
 
- 
 
         #region Clone functions.
 
@@ -217,23 +228,11 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
                     TotalCoinConfirmed = TotalCoinConfirmed,
                     TotalCoinPending = TotalCoinPending,
                     TotalFee = TotalFee,
-                    TotalTransaction = _blockTransactions == null ? 0 :  _blockTransactions.Count,
+                    TotalTransaction = _blockTransactions == null ? 0 : _blockTransactions.Count,
                     TotalTransactionConfirmed = TotalTransactionConfirmed,
+                    BlockCloned = true,
+                    BlockTransactions = retrieveTx ? new SortedList<string, ClassBlockTransaction>(_blockTransactions.ToDictionary(x => x.Key, x => x.Value)) : new SortedList<string, ClassBlockTransaction>()
                 };
-
-                // Retrieve the count of tx's of the block source.
-                if (retrieveTx)
-                {
-                    if (_blockTransactions?.Count > 0)
-                    {
-                        lock (_blockTransactions)
-                        {
-                            foreach(var blockTransactionPair in _blockTransactions.ToArray())
-                                blockObjectCopy.BlockTransactions.Add(blockTransactionPair.Key, blockTransactionPair.Value);
-                        }
-                    }
-                }
-                blockObjectCopy.BlockCloned = true;
             }
             catch
             {

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using SeguraChain_Lib.Other.Object.List;
 
 namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet.Model
 {
@@ -7,11 +7,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet.Model
     /// </summary>
     public class ClassReadPacketSplitted
     {
-        public List<byte> Packet;
+        public DisposableList<byte> Packet;
         public bool Complete;
+
         public ClassReadPacketSplitted()
         {
-            Packet = new List<byte>();
+            Packet = new DisposableList<byte>(false, 8192);
         }
     }
 }

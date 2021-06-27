@@ -145,9 +145,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                 {
 
                     if (!ClientPeerConnectionStatus)
-                    {
                         break;
-                    }
 
                     if (!_onSendingPacketResponse)
                     {
@@ -156,24 +154,18 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         {
                             // On this case, insert invalid attempt of connection.
                             if (!_clientPeerPacketReceivedStatus)
-                            {
                                 ClassPeerCheckManager.InputPeerClientNoPacketConnectionOpened(_peerClientIp, _peerUniqueId, _peerNetworkSettingObject, _peerFirewallSettingObject);
-                            }
                             break;
                         }
                     }
 
                     if (!ClassUtility.TcpClientIsConnected(_tcpClientPeer))
-                    {
                         break;
-                    }
 
                     if (_peerFirewallSettingObject.PeerEnableFirewallLink)
                     {
                         if (!ClassPeerFirewallManager.CheckClientIpStatus(_peerClientIp))
-                        {
                             break;
-                        }
                     }
 
                     try
@@ -184,10 +176,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                     {
                         break;
                     }
+
                     if (_cancellationTokenClientCheckConnectionPeer.Token.IsCancellationRequested)
-                    {
                         break;
-                    }
                 }
                 catch
                 {
@@ -216,9 +207,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                     if (_cancellationTokenListenPeerPacket != null)
                     {
                         if (!_cancellationTokenListenPeerPacket.IsCancellationRequested)
-                        {
                             _cancellationTokenListenPeerPacket.Cancel();
-                        }
                     }
                 }
                 catch
@@ -233,9 +222,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                         if (_cancellationTokenClientCheckConnectionPeer != null)
                         {
                             if (!_cancellationTokenClientCheckConnectionPeer.IsCancellationRequested)
-                            {
                                 _cancellationTokenClientCheckConnectionPeer.Cancel();
-                            }
                         }
                     }
                     catch
@@ -260,9 +247,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                 if (_tcpClientPeer?.Client != null)
                                 {
                                     if (_tcpClientPeer.Client.Connected)
-                                    {
                                         _tcpClientPeer.Client.Close();
-                                    }
                                 }
                             }
                         }
@@ -364,7 +349,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                                 {
                                                     if (listPacketReceived[i].Complete && listPacketReceived[i].Packet.Count > 0)
                                                     {
-                                                        string packet = listPacketReceived[i].Packet.ToArray().GetStringFromByteArrayAscii();
+                                                        string packet = listPacketReceived[i].Packet.GetList.ToArray().GetStringFromByteArrayAscii();
+
+                                                        listPacketReceived[i].Packet.GetList.Clear();
 
                                                         if (!packet.IsNullOrEmpty(out _))
                                                         {
@@ -380,9 +367,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                                             {
                                                                 failed = true;
                                                             }
-
-                                                            listPacketReceived[i].Packet.Clear();
-                                                            listPacketReceived[i].Packet.TrimExcess();
 
                                                             if (!failed && base64Packet.Length > 0)
                                                             {
@@ -429,7 +413,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                             }
 
                                             // If above the max data to receive.
-                                            if (packetSizeCount >= ClassPeerPacketSetting.PacketMaxLengthReceive)
+                                            if (packetSizeCount / 1024 >= ClassPeerPacketSetting.PacketMaxLengthReceive)
                                                 listPacketReceived.Clear();
 
                                         }

@@ -61,24 +61,45 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         {
             get
             {
+                bool semaphoreUsed = false;
+                bool lockedGraphics = false;
+                bool lockedBitmap = false;
 
-                if (_dictionaryTransactionHistory.ContainsKey(walletFileOpened))
-                    if (_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory != null && _dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory != null)
+                try
+                {
+                    try
                     {
-                        bool semaphoreUsed = false;
-                        try
-                        {
-                            _semaphoreTransactionHistoryAccess.Wait(cancellation.Token);
-                            semaphoreUsed = true;
+                        semaphoreUsed = _semaphoreTransactionHistoryAccess.Wait(100, cancellation.Token);
 
-                            return _dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory;
-                        }
-                        finally
+                        if (semaphoreUsed)
                         {
-                            if (semaphoreUsed)
-                                _semaphoreTransactionHistoryAccess.Release();
+                            lockedGraphics = Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
+
+                            if (lockedGraphics)
+                            {
+                                lockedBitmap = Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
+                                if (lockedBitmap)
+                                    return _dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory;
+                            }
                         }
                     }
+                    catch
+                    {
+                        // Ignored, catch the exception once the cancellation token is cancelled.
+                    }
+                }
+                finally
+                {
+                    if (lockedGraphics)
+                        Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
+
+                    if (lockedBitmap)
+                        Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
+
+                    if (semaphoreUsed)
+                        _semaphoreTransactionHistoryAccess.Release();
+                }
+
 
                 return null;
             }
@@ -94,8 +115,11 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             bool doClean = false;
             bool updated = false;
             bool changed = false;
+            bool exception = false;
 
             bool semaphoreUsed = false;
+            bool isLockedGraphic = false;
+            bool isLockedBitmap = false;
 
             try
             {
@@ -103,9 +127,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                 semaphoreUsed = true;
 
                 if (!_dictionaryTransactionHistory.ContainsKey(walletFileOpened))
-                {
                     RemoveTransactionHistoryFromWalletFileOpenedTarget(walletFileOpened);
-                }
                 else
                 {
                     try
@@ -113,7 +135,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                         if (_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory == null || _dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory == null)
                         {
                             _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
-                            _dictionaryTransactionHistory[walletFileOpened].ResetTransactionHistoryPage();
+                            _dictionaryTransactionHistory[walletFileOpened].ClearTransactionHistoryContent();
                         }
 
                         ClassWalletDataObject walletDataObject = ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileOpened];
@@ -128,7 +150,6 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                     if (walletDataObject.WalletLastBlockHeightSynced >= BlockchainSetting.GenesisBlockHeight)
                                     {
-                                        bool exception = false;
 
                                         long lastBlockHeightProgress = _dictionaryTransactionHistory[walletFileOpened].LastBlockHeight;
                                         long walletLastBlockHeightSync = walletDataObject.WalletLastBlockHeightSynced;
@@ -178,7 +199,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                             // Travel transactions synced push on blocks unlocked.
                                             if (ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(walletAddress))
                                             {
-                                                using (var listBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].BlockHeightKeys())
+                                                using (var listBlockHeight = ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[walletAddress].BlockHeightKeys)
                                                 {
                                                     foreach (long blockHeight in listBlockHeight.GetList.OrderBy(x => x))
                                                     {
@@ -246,15 +267,16 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                                     var tupleBlockTransaction = await ClassDesktopWalletCommonData.WalletSyncSystem.GetTransactionObjectFromSync(walletAddress, transactionShowed, 0, false, cancellation);
 
-                                                    if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].IsMemPool)
+                                                    if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].IsMemPool && !tupleBlockTransaction.Item1)
+                                                        requireUpdate = true;
+                                                    else
                                                     {
-                                                        if (!tupleBlockTransaction.Item1)
+                                                        if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction.TransactionStatus != tupleBlockTransaction.Item2.TransactionStatus)
                                                             requireUpdate = true;
                                                     }
-                                                    if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction.TransactionStatus != tupleBlockTransaction.Item2.TransactionStatus)
-                                                        requireUpdate = true;
 
-                                                    _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction = tupleBlockTransaction.Item2;
+                                                    if (requireUpdate)
+                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed[transactionShowed].BlockTransaction = tupleBlockTransaction.Item2;
 
                                                 }
                                                 catch (Exception error)
@@ -274,160 +296,140 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                         if (_dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage || requireUpdate || _dictionaryTransactionHistory[walletFileOpened].OnLoad)
                                         {
-                                            bool isLockedGraphic = false;
-                                            bool isLockedBitmap = false;
 
                                             try
                                             {
-                                                if (Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory))
+                                                isLockedGraphic = Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
+
+                                                if (isLockedGraphic)
                                                 {
-                                                    isLockedGraphic = true;
-                                                    if (Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory))
+                                                    isLockedBitmap = Monitor.TryEnter(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
+
+                                                    if (isLockedBitmap)
                                                     {
-                                                        isLockedBitmap = true;
-                                                        try
+
+                                                        _dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory.Clear(ClassWalletDefaultSetting.DefaultPanelTransactionHistoryBackgroundColorOnClear);
+                                                        _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed.Clear();
+                                                        _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed = 0;
+
+                                                        int totalTransactionToShow = _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage * ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage;
+
+                                                        if (totalTransactionToShow > 0)
                                                         {
 
-                                                            _dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory.Clear(ClassWalletDefaultSetting.DefaultPanelTransactionHistoryBackgroundColorOnClear);
-                                                            _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed.Clear();
-                                                            _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed = 0;
+                                                            int totalToSkip = ((_dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage - 1) * ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage);
 
-                                                            int totalTransactionToShow = _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage * ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage;
+                                                            int totalToTake = (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Count - totalToSkip);
 
-                                                            if (totalTransactionToShow > 0)
+
+                                                            if (totalToTake > 0)
                                                             {
+                                                                if (totalToTake > ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage)
+                                                                    totalToTake = ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage;
 
-                                                                int totalToSkip = ((_dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage - 1) * ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage);
-
-                                                                int totalToTake = (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Count - totalToSkip);
-
-
-                                                                if (totalToTake > 0)
+                                                                if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Count >= totalToSkip + totalToTake)
                                                                 {
-                                                                    if (totalToTake > ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage)
+
+                                                                    _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
+
+                                                                    int totalTransactionShowedVirtually = 0;
+
+                                                                    foreach (TransactionHistoryInformationObject transactionHistoryInformationObject in GetTransactionHistoryInformationObjectOrdered(walletFileOpened, totalToSkip, totalToTake))
                                                                     {
-                                                                        totalToTake = ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage;
-                                                                    }
+                                                                        cancellation.Token.ThrowIfCancellationRequested();
 
-                                                                    if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Count >= totalToSkip + totalToTake)
-                                                                    {
+                                                                        ClassBlockTransaction blockTransaction = null;
 
-                                                                        _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
-
-                                                                        int totalTransactionShowedVirtually = 0;
-
-                                                                        foreach (TransactionHistoryInformationObject transactionHistoryInformationObject in GetTransactionHistoryInformationObjectOrdered(walletFileOpened, totalToSkip, totalToTake))
+                                                                        if (transactionHistoryInformationObject.IsMemPool)
                                                                         {
-                                                                            cancellation.Token.ThrowIfCancellationRequested();
-
-                                                                            ClassBlockTransaction blockTransaction = null;
-
-                                                                            if (transactionHistoryInformationObject.IsMemPool)
+                                                                            if (!walletDataObject.WalletMemPoolTransactionList.Contains(transactionHistoryInformationObject.TransactionHash))
                                                                             {
-                                                                                if (!walletDataObject.WalletMemPoolTransactionList.Contains(transactionHistoryInformationObject.TransactionHash))
+                                                                                int countRemoved = _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x.TransactionHash == transactionHistoryInformationObject.TransactionHash && x.IsMemPool);
+                                                                                if (countRemoved > 0)
                                                                                 {
-                                                                                    int countRemoved = _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x.TransactionHash == transactionHistoryInformationObject.TransactionHash && x.IsMemPool);
-                                                                                    if (countRemoved > 0)
-                                                                                    {
-                                                                                        _dictionaryTransactionHistory[walletFileOpened].LastTransactionCount -= countRemoved;
-                                                                                        doClean = true;
-                                                                                        break;
-                                                                                    }
+                                                                                    _dictionaryTransactionHistory[walletFileOpened].LastTransactionCount -= countRemoved;
+                                                                                    doClean = true;
+                                                                                    break;
                                                                                 }
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                var memPoolTransactionObject = await ClassDesktopWalletCommonData.WalletSyncSystem.GetMemPoolTransactionObjectFromSync(walletAddress, transactionHistoryInformationObject.TransactionHash, false, cancellation);
+
+                                                                                if (memPoolTransactionObject != null)
+                                                                                    blockTransaction = new ClassBlockTransaction(0, memPoolTransactionObject)
+                                                                                    {
+                                                                                        TransactionStatus = true,
+                                                                                    };
                                                                                 else
                                                                                 {
-                                                                                    var memPoolTransactionObject = await ClassDesktopWalletCommonData.WalletSyncSystem.GetMemPoolTransactionObjectFromSync(walletAddress, transactionHistoryInformationObject.TransactionHash, false, cancellation);
-
-                                                                                    if (memPoolTransactionObject != null)
-                                                                                        blockTransaction = new ClassBlockTransaction(0, memPoolTransactionObject)
-                                                                                        {
-                                                                                            TransactionStatus = true,
-                                                                                        };
-                                                                                    else
-                                                                                    {
-                                                                                        doClean = true;
-                                                                                        break;
-                                                                                    }
+                                                                                    doClean = true;
+                                                                                    break;
                                                                                 }
                                                                             }
-                                                                            else
-                                                                            {
-                                                                                var tupleBlockTransaction = await ClassDesktopWalletCommonData.WalletSyncSystem.GetTransactionObjectFromSync(walletAddress, transactionHistoryInformationObject.TransactionHash, ClassTransactionUtility.GetBlockHeightFromTransactionHash(transactionHistoryInformationObject.TransactionHash), false, cancellation);
-                                                                                blockTransaction = tupleBlockTransaction.Item2;
-                                                                            }
-
-
-                                                                            if (blockTransaction == null)
-                                                                            {
-                                                                                _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x?.TransactionHash == transactionHistoryInformationObject.TransactionHash);
-#if DEBUG
-                                                                                Debug.WriteLine("empty transaction for hash: " + transactionHistoryInformationObject.TransactionHash);
-#endif
-                                                                                doClean = true;
-                                                                                break;
-                                                                            }
-
-                                                                            if (PaintTransactionObjectToTransactionHistory(walletFileOpened, transactionHistoryInformationObject, totalTransactionShowedVirtually, blockTransaction))
-                                                                            {
-                                                                                updated = true;
-                                                                                totalTransactionShowedVirtually++;
-                                                                                _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed++;
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                doClean = true;
-                                                                            }
-
-                                                                            if (totalTransactionShowedVirtually >= ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage ||
-                                                                                _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed >= _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Count ||
-                                                                                doClean)
-                                                                            {
-                                                                                break;
-                                                                            }
                                                                         }
-
-
-                                                                        if (doClean)
+                                                                        else
                                                                         {
-                                                                            // Reset last progress drawed.
-                                                                            _dictionaryTransactionHistory[walletFileOpened].InitializeOrClearPanelTransactionHistoryGraphicsContent();
-                                                                            _dictionaryTransactionHistory[walletFileOpened].ResetTransactionHistoryPage();
+                                                                            var tupleBlockTransaction = await ClassDesktopWalletCommonData.WalletSyncSystem.GetTransactionObjectFromSync(walletAddress, transactionHistoryInformationObject.TransactionHash, ClassTransactionUtility.GetBlockHeightFromTransactionHash(transactionHistoryInformationObject.TransactionHash), false, cancellation);
+                                                                            blockTransaction = tupleBlockTransaction.Item2;
                                                                         }
 
 
+                                                                        if (blockTransaction == null)
+                                                                        {
+                                                                            _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.RemoveAll(x => x?.TransactionHash == transactionHistoryInformationObject.TransactionHash);
+#if DEBUG
+                                                                            Debug.WriteLine("empty transaction for hash: " + transactionHistoryInformationObject.TransactionHash);
+#endif
+                                                                            doClean = true;
+                                                                            break;
+                                                                        }
+
+                                                                        if (PaintTransactionObjectToTransactionHistory(walletFileOpened, transactionHistoryInformationObject, totalTransactionShowedVirtually, blockTransaction))
+                                                                        {
+                                                                            updated = true;
+                                                                            totalTransactionShowedVirtually++;
+                                                                            _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed++;
+                                                                        }
+                                                                        else
+                                                                            doClean = true;
+
+                                                                        if (totalTransactionShowedVirtually >= ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage ||
+                                                                            _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed >= _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.Count ||
+                                                                            doClean)
+                                                                            break;
                                                                     }
+
+                                                                    if (doClean)
+                                                                        _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = true;
+
+
+                                                                    Monitor.PulseAll(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
+                                                                    Monitor.PulseAll(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
+
+                                                                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
+                                                                    isLockedGraphic = false;
+
+                                                                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
+                                                                    isLockedBitmap = false;
                                                                 }
                                                             }
-
-                                                            _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = false;
-
-                                                        }
-                                                        catch (Exception error)
-                                                        {
-#if DEBUG
-                                                            Debug.WriteLine("1. Error on drawing transaction history. Exception: " + error.Message);
-#endif
-                                                            exception = true;
-                                                            _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = true;
                                                         }
 
-                                                        Monitor.PulseAll(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
-                                                        Monitor.PulseAll(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
+                                                        _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = false;
+
                                                     }
                                                 }
                                             }
-                                            finally
+                                            catch (Exception error)
                                             {
-                                                if (isLockedGraphic)
-                                                {
-                                                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
-                                                }
-
-                                                if (isLockedBitmap)
-                                                {
-                                                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
-                                                }
+#if DEBUG
+                                                Debug.WriteLine("1. Error on drawing transaction history. Exception: " + error.Message);
+#endif
+                                                exception = true;
+                                                _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = true;
                                             }
+
                                         }
                                         else
                                         {
@@ -479,20 +481,17 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
 
                                         #endregion
 
-                                        if (!exception)
-                                        {
-                                            if (doClean || updated)
-                                            {
-                                                _dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListed.TrimExcess();
-                                            }
+
+                                        if (doClean || exception)
+                                            _dictionaryTransactionHistory[walletFileOpened].ClearTransactionHistoryContent();
+                                        else
                                             _dictionaryTransactionHistory[walletFileOpened].OnLoad = false;
-                                        }
+
                                     }
                                 }
+
                                 if (walletDataObject.WalletLastBlockHeightSynced == 0 || (walletDataObject.WalletTotalMemPoolTransaction == 0 && walletDataObject.WalletTotalTransaction == 0))
-                                {
                                     _dictionaryTransactionHistory[walletFileOpened].OnLoad = false;
-                                }
                             }
                         }
                     }
@@ -504,9 +503,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                         try
                         {
                             if (_dictionaryTransactionHistory.ContainsKey(walletFileOpened))
-                            {
                                 _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = true;
-                            }
                         }
                         catch
                         {
@@ -518,16 +515,18 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             finally
             {
                 if (semaphoreUsed)
-                {
                     _semaphoreTransactionHistoryAccess.Release();
-                }
+
+                if (isLockedGraphic)
+                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
+
+                if (isLockedBitmap)
+                    Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
             }
 
 
-            if (doClean || updated)
-            {
+            if (doClean || updated || exception)
                 changed = true;
-            }
 
             return changed;
         }
@@ -556,13 +555,9 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             if (!walletFileOpened.IsNullOrEmpty(out _))
             {
                 if (_dictionaryTransactionHistory.ContainsKey(walletFileOpened))
-                {
                     exist = true;
-                }
                 else
-                {
                     RemoveTransactionHistoryFromWalletFileOpenedTarget(walletFileOpened);
-                }
             }
 
             return exist;
@@ -576,9 +571,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         public void ClearTransactionHistoryOfWalletFileOpened(string walletFileOpened)
         {
             if (!walletFileOpened.IsNullOrEmpty(out _))
-            {
                 RemoveTransactionHistoryFromWalletFileOpenedTarget(walletFileOpened);
-            }
         }
 
         /// <summary>
@@ -591,9 +584,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
         public void InsertTransactionHistoryToWalletFileOpened(string walletFileOpened, int width, int height)
         {
             if (!_dictionaryTransactionHistory.TryAdd(walletFileOpened, new ClassTransactionHistoryObject(width, height)))
-            {
                 RemoveTransactionHistoryFromWalletFileOpenedTarget(walletFileOpened);
-            }
             else
             {
                 _dictionaryTransactionHistory[walletFileOpened].OnLoad = true;
@@ -642,13 +633,10 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                         finally
                         {
                             if (isLockedGraphic)
-                            {
                                 Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].GraphicsTransactionHistory);
-                            }
+
                             if (isLockedBitmap)
-                            {
                                 Monitor.Exit(_dictionaryTransactionHistory[walletFileOpened].BitmapTransactionHistory);
-                            }
                         }
                     }
                     _dictionaryTransactionHistory.TryRemove(walletFileOpened, out _);
@@ -736,9 +724,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                 finally
                 {
                     if (useSemaphore)
-                    {
                         _semaphoreTransactionHistoryAccess.Release();
-                    }
                 }
             }
         }
@@ -781,23 +767,17 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                     _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = true;
                                 }
                                 else
-                                {
                                     currentPage = maxPage;
-                                }
                             }
                         }
                         else
-                        {
                             currentPage = _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage;
-                        }
                     }
                 }
                 finally
                 {
                     if (useSemaphore)
-                    {
                         _semaphoreTransactionHistoryAccess.Release();
-                    }
                 }
             }
         }
@@ -837,22 +817,16 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                 _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = true;
                             }
                             else
-                            {
                                 currentPage = _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage;
-                            }
                         }
                         else
-                        {
                             currentPage = _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage;
-                        }
                     }
                 }
                 finally
                 {
                     if (useSemaphore)
-                    {
                         _semaphoreTransactionHistoryAccess.Release();
-                    }
                 }
             }
         }
@@ -876,17 +850,12 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                     useSemaphore = true;
 
                     if (_dictionaryTransactionHistory.ContainsKey(walletFileOpened))
-                    {
-
                         currentPage = _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage;
-                    }
                 }
                 finally
                 {
                     if (useSemaphore)
-                    {
                         _semaphoreTransactionHistoryAccess.Release();
-                    }
                 }
             }
             return currentPage;
@@ -921,9 +890,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                 finally
                 {
                     if (useSemaphore)
-                    {
                         _semaphoreTransactionHistoryAccess.Release();
-                    }
                 }
             }
             return maxPage;
@@ -974,9 +941,8 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             finally
             {
                 if (useSemaphore)
-                {
                     _semaphoreTransactionHistoryAccess.Release();
-                }
+                
             }
             return containsPosition;
         }
@@ -1025,9 +991,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             finally
             {
                 if (useSemaphore)
-                {
                     _semaphoreTransactionHistoryAccess.Release();
-                }
             }
 
             return containsPosition;
@@ -1042,9 +1006,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             try
             {
                 if (_dictionaryTransactionHistory[walletFileOpened].DictionaryTransactionHistoryHashListedShowed.Count > 0)
-                {
                     _dictionaryTransactionHistory[walletFileOpened].TransactionInformationSelectedByPosition = string.Empty;
-                }
             }
             catch
             {
@@ -1762,9 +1724,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
             Pen penBorderSelected = ClassWalletDefaultSetting.DefaultPanelTransactionHistoryColumnLinesPen;
 
             if (_dictionaryTransactionHistory[walletFileOpened].TransactionInformationSelectedByClick == _dictionaryTransactionHistory[walletFileOpened].TransactionInformationSelectedByPosition)
-            {
                 byClick = true;
-            }
 
             if (byClick)
             {

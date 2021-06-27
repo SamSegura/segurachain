@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
-using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Other.Object.List
 {
@@ -21,7 +20,6 @@ namespace SeguraChain_Lib.Other.Object.List
                         var typeOfData = typeof(V);
                         if (typeof(ClassBlockObject) != typeOfData && typeof(byte) != typeOfData && typeof(byte[]) != typeOfData && typeof(string[]) != typeOfData)
                             Sort();
-                        
                     }
                     fromCopy = true;
                 }
@@ -94,6 +92,21 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public void Clear()
         {
+            try
+            {
+                if (GetList != null)
+                {
+                    for (int i = 0; i < GetList.Count; i++)
+                    {
+                        GetList[i] = default(V);
+                        GetList.RemoveAt(i);
+                    }
+                }
+            }
+            catch
+            {
+                // Ignored.
+            }
             GetList?.Clear();
             GetList?.TrimExcess();
         }

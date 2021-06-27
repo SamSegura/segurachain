@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Newtonsoft.Json;
 using SeguraChain_Lib.Blockchain.Transaction.Enum;
 using SeguraChain_Lib.Blockchain.Transaction.Object;
 using SeguraChain_Lib.Blockchain.Transaction.Utility;
@@ -13,7 +14,9 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public long TransactionBlockHeightInsert;
         public long TransactionBlockHeightTarget;
         public long TransactionTotalConfirmation;
+        [JsonIgnore]
         private ClassTransactionObject _transactionObject;
+
         public ClassTransactionObject TransactionObject
         {
             get
@@ -52,9 +55,14 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             TransactionSize = ClassTransactionUtility.GetTransactionMemorySize(_transactionObject, false);
         }
 
+        [JsonIgnore]
         public bool NeedUpdateAmountTransactionSource => TransactionTotalConfirmation == 0 &&
                                                                     (TransactionObject.TransactionType == ClassTransactionEnumType.NORMAL_TRANSACTION ||
                                                                     TransactionObject.TransactionType == ClassTransactionEnumType.TRANSFER_TRANSACTION);
+
+        [JsonIgnore]
+        public bool IsConfirmed => TransactionTotalConfirmation >= (TransactionObject.BlockHeightTransactionConfirmationTarget - TransactionObject.BlockHeightTransaction);
+
         public ClassBlockTransaction Clone()
         {
             ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(this), out ClassBlockTransaction blockTransaction);

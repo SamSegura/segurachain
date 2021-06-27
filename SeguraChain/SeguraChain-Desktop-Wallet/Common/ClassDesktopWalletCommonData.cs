@@ -126,7 +126,7 @@ namespace SeguraChain_Desktop_Wallet.Common
 
                 using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
                 {
-                   writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
+                    writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
                 }
             }
             catch
