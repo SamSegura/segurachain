@@ -763,7 +763,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                             else
                                                 _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockTransactions.Add(transactionHash, listBlockTransaction[i]);
                                             _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockIsUpdated = true;
-
+                                            _ioStructureObjectsDictionary[blockHeight].BlockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                                             result = true;
                                         }
                                     }
@@ -781,9 +781,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                                 blockObject.BlockTransactions.Add(transactionHash, listBlockTransaction[i]);
 
                                             blockObject.BlockIsUpdated = true;
+                                            blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
                                             // Update the io cache file and remove the data updated from the active memory
-                                            await InsertInActiveMemory(blockObject, keepAlive, false, cancellationIoCache);
+                                            await InsertInActiveMemory(blockObject, keepAlive, true, cancellationIoCache);
 
                                             result = true;
                                         }
@@ -1248,11 +1249,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     }
                 }
 
-                if (!insertInMemory && !fromReading)
+                if (!insertInMemory)
                 {
-                    if (!_ioStructureObjectsDictionary[blockObject.BlockHeight].IsNull)
-                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
-                    else
+                    if (blockObject.BlockIsUpdated || !fromReading)
                         await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache);
                 }
             }

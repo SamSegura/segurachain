@@ -1,7 +1,7 @@
 ﻿using SeguraChain_Lib.Utility;
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 
 namespace SeguraChain_Lib.Other.Object.List
 {
@@ -79,10 +79,13 @@ namespace SeguraChain_Lib.Other.Object.List
             {
                 if (GetList != null)
                 {
-                    foreach (V key in GetList.Keys)
+                    if (GetList.Count > 0)
                     {
-                        GetList[key] = default(T);
-                        GetList.Remove(key);
+                        foreach (V key in GetList.Keys.ToArray())
+                        {
+                            GetList[key] = default(T);
+                            GetList.Remove(key);
+                        }
                     }
                 }
             }

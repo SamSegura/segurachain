@@ -96,10 +96,10 @@ namespace SeguraChain_Lib.Other.Object.List
             {
                 if (GetList != null)
                 {
-                    for (int i = 0; i < GetList.Count; i++)
+                    if (GetList.Count > 0)
                     {
-                        GetList[i] = default(V);
-                        GetList.RemoveAt(i);
+                        for (int i = 0; i < GetList.Count; i++)
+                            GetList[i] = default(V);
                     }
                 }
             }

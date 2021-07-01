@@ -903,43 +903,46 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                         case ClassPeerNetworkSyncServiceEnumCheckBlockDataUnlockedResult.VALID_BLOCK:
                                                                             {
                                                                                 ClassBlockObject blockObjectToCheck = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockDataStrategy(blockHeightToCheck, false, true, _cancellationTokenServiceSync);
-                                                                                blockObjectToCheck.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-
-                                                                                ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. Amount of confirmations: " + blockObjectToCheck.BlockNetworkAmountConfirmations + "/" + BlockchainSetting.BlockAmountNetworkConfirmations, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
-
-                                                                                // Faster network confirmations.
-                                                                                if (blockHeightToCheck + blockObjectToCheck.BlockNetworkAmountConfirmations < lastBlockHeight)
+                                                                                if (blockObjectToCheck.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                                                                                 {
-                                                                                    blockObjectToCheck.BlockNetworkAmountConfirmations++;
+                                                                                    blockObjectToCheck.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
 
-                                                                                    if (blockObjectToCheck.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
-                                                                                    {
-                                                                                        ClassLog.WriteLine("The block height: " + blockHeightToCheck + " is totally valid. The node can start to confirm tx's of this block.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkCyan);
-                                                                                        blockObjectToCheck.BlockUnlockValid = true;
-                                                                                    }
-                                                                                    if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, _cancellationTokenServiceSync))
-                                                                                        ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. But can't push updated data into the database.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
-                                                                                }
-                                                                                else
-                                                                                {
-                                                                                    // Increment slowly network confirmations.
-                                                                                    if (blockObjectToCheck.BlockSlowNetworkAmountConfirmations >= BlockchainSetting.BlockAmountSlowNetworkConfirmations)
+                                                                                    ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. Amount of confirmations: " + blockObjectToCheck.BlockNetworkAmountConfirmations + "/" + BlockchainSetting.BlockAmountNetworkConfirmations, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+
+                                                                                    // Faster network confirmations.
+                                                                                    if (blockHeightToCheck + blockObjectToCheck.BlockNetworkAmountConfirmations < lastBlockHeight)
                                                                                     {
                                                                                         blockObjectToCheck.BlockNetworkAmountConfirmations++;
-                                                                                        blockObjectToCheck.BlockSlowNetworkAmountConfirmations = 0;
+
+                                                                                        if (blockObjectToCheck.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
+                                                                                        {
+                                                                                            ClassLog.WriteLine("The block height: " + blockHeightToCheck + " is totally valid. The node can start to confirm tx's of this block.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkCyan);
+                                                                                            blockObjectToCheck.BlockUnlockValid = true;
+                                                                                        }
+                                                                                        if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, _cancellationTokenServiceSync))
+                                                                                            ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. But can't push updated data into the database.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
                                                                                     }
                                                                                     else
-                                                                                        blockObjectToCheck.BlockSlowNetworkAmountConfirmations++;
-
-
-                                                                                    if (blockObjectToCheck.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
                                                                                     {
-                                                                                        ClassLog.WriteLine("The block height: " + blockHeightToCheck + " is totally valid. The node can start to confirm tx's of this block.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkCyan);
-                                                                                        blockObjectToCheck.BlockUnlockValid = true;
-                                                                                    }
+                                                                                        // Increment slowly network confirmations.
+                                                                                        if (blockObjectToCheck.BlockSlowNetworkAmountConfirmations >= BlockchainSetting.BlockAmountSlowNetworkConfirmations)
+                                                                                        {
+                                                                                            blockObjectToCheck.BlockNetworkAmountConfirmations++;
+                                                                                            blockObjectToCheck.BlockSlowNetworkAmountConfirmations = 0;
+                                                                                        }
+                                                                                        else
+                                                                                            blockObjectToCheck.BlockSlowNetworkAmountConfirmations++;
 
-                                                                                    if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, _cancellationTokenServiceSync))
-                                                                                        ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. But can't push updated data into the database.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+
+                                                                                        if (blockObjectToCheck.BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations)
+                                                                                        {
+                                                                                            ClassLog.WriteLine("The block height: " + blockHeightToCheck + " is totally valid. The node can start to confirm tx's of this block.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkCyan);
+                                                                                            blockObjectToCheck.BlockUnlockValid = true;
+                                                                                        }
+
+                                                                                        if (!await ClassBlockchainDatabase.BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObjectToCheck, true, _cancellationTokenServiceSync))
+                                                                                            ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. But can't push updated data into the database.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+                                                                                    }
                                                                                 }
                                                                             }
                                                                             break;
@@ -1077,15 +1080,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                     {
                                                         #region Check if the last block to mine has been mined on other nodes of the network.
 
-                                                        /*
-                                                        await _semaphoreSyncData.WaitAsync(_cancellationTokenServiceSync.Token);
-                                                        useSemaphore = true;
-                                                        */
                                                         ClassLog.WriteLine("Attempt to check if the block height: " + lastBlockHeight + " locked has been mined.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
-                                                        using (DisposableList<long> blockListToSync = new DisposableList<long>())
+                                                        using (DisposableList<long> blockListToSync = new DisposableList<long>(false, 0, new List<long>() { lastBlockHeight }))
                                                         {
-                                                            blockListToSync.Add(lastBlockHeight);
                                                             var syncBlockResult = await StartAskBlockObjectFromListPeerTarget(peerTargetList, blockListToSync, true, lastBlockHeight);
 
                                                             if (syncBlockResult?.Item1?.Count > 0)
@@ -1244,19 +1242,14 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                     ClearPeerTargetList(peerTargetList);
                                 }
                                 else // On this case, launch an attempt to check "dead" a peers.
-                                {
                                     ClassLog.WriteLine("No enough public peers alive available to check block's and tx's.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
-                                }
                             }
                             else
-                            {
                                 ClassLog.WriteLine("No enough public peers alive available to check block's and tx's.", ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MEDIUM_PRIORITY);
-                            }
                         }
                         catch (Exception error)
                         {
                             ClassLog.WriteLine("[WARNING] Error pending to check the last block synced. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-
                         }
 
                         await Task.Delay(_peerNetworkSettingObject.PeerTaskSyncDelay);

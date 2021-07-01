@@ -305,31 +305,21 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     }
 
                     ioDataLineTransaction += ClassTransactionUtility.SplitBlockTransactionObject(blockObjectBlockTransaction.Value) + IoDataCharacterSeperator;
+
                     totalIoTransactionDataInLine++;
-                    if (totalIoTransactionDataInLine >= blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxTransactionPerLineOnBlockStringToWrite)
+                    if (totalIoTransactionDataInLine >= blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxTransactionPerLineOnBlockStringToWrite || 
+                        ioDataLineTransaction.Length >= blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxTransactionSizePerLine)
                     {
-                        if (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData)
-                        {
-                            yield return Convert.ToBase64String(ClassUtility.CompressDataLz4(Utf8Encoding.GetBytes(ioDataLineTransaction))) + Environment.NewLine;
-                        }
-                        else
-                        {
-                            yield return ioDataLineTransaction + Environment.NewLine;
-                        }
+                        yield return (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData ?
+                            Convert.ToBase64String(ClassUtility.CompressDataLz4(Utf8Encoding.GetBytes(ioDataLineTransaction))) : ioDataLineTransaction) + Environment.NewLine;
 
                         totalIoTransactionDataInLine = 0;
                         ioDataLineTransaction.Clear();
                     }
                 }
 
-                if (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData)
-                {
-                    yield return Convert.ToBase64String(ClassUtility.CompressDataLz4(Utf8Encoding.GetBytes(ioDataLineTransaction))) + Environment.NewLine;
-                }
-                else
-                {
-                    yield return ioDataLineTransaction + Environment.NewLine;
-                }
+                yield return (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData ?
+                    Convert.ToBase64String(ClassUtility.CompressDataLz4(Utf8Encoding.GetBytes(ioDataLineTransaction))) : ioDataLineTransaction) + Environment.NewLine;
 
                 ioDataLineTransaction.Clear();
 

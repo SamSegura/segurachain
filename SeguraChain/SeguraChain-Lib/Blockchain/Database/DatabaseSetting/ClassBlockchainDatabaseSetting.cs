@@ -43,6 +43,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         /// IO Disk default cache settings.
         /// </summary>
         public const long DefaultIoDiskCacheMaxBlockPerFile = 100; // Maximum of blocks per io cache file.
+        public const long DefaultIoCacheDiskTransactionSizePerLine = 1_000_000_000;
         public const int DefaultIoCacheDiskMaxTransactionPerLineOnBlockStringToWrite = 1000; // A maximum of 1000 transactions per line per block. Example, 100 000 tx's are stored on a block, the result return 100 lines who contains 1000 transactions on each.
         public const int DefaultIoCacheDiskGetCallBackToMemoryInterval = 10000; // Retrieve back data to the active memory from a IO cache file after multiple gets faster or equals of 30000ms
         public const int DefaultIoCacheDiskMaxKeepAliveDataInMemoryTimeLimit = 10 * 1000; // Maximum of time to keep data in the active memory.
@@ -145,6 +146,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
 
                 // IO cache disk settings.
                 IoCacheDiskMaxBlockPerFile = ClassBlockchainDatabaseDefaultSetting.DefaultIoDiskCacheMaxBlockPerFile,
+                IoCacheDiskMaxTransactionSizePerLine = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskTransactionSizePerLine,
                 IoCacheDiskMaxTransactionPerLineOnBlockStringToWrite = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskMaxTransactionPerLineOnBlockStringToWrite,
                 IoCacheDiskGetCallBackToMemoryInterval = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskGetCallBackToMemoryInterval,
                 IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskMaxKeepAliveDataInMemoryTimeLimit,
@@ -253,6 +255,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
             /// IO Cache settings.
             /// </summary>
             public long IoCacheDiskMaxBlockPerFile;
+            public long IoCacheDiskMaxTransactionSizePerLine;
             public int IoCacheDiskMaxTransactionPerLineOnBlockStringToWrite;
             public int IoCacheDiskGetCallBackToMemoryInterval; 
             public int IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit;

@@ -533,8 +533,9 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     availableBalance = DatabaseSyncCache[walletAddress].AvailableBalance;
                     if (DatabaseSyncCache[walletAddress].PendingBalance < 0)
                         availableBalance += DatabaseSyncCache[walletAddress].PendingBalance;
+
+                    totalBalance = DatabaseSyncCache[walletAddress].AvailableBalance + DatabaseSyncCache[walletAddress].PendingBalance;
                     pendingBalance = DatabaseSyncCache[walletAddress].PendingBalance;
-                    totalBalance = DatabaseSyncCache[walletAddress].TotalBalance;
                 }
             }
 
