@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
-using Newtonsoft.Json;
 using SeguraChain_Lib.Algorithm;
 using SeguraChain_Lib.Blockchain.Mining.Enum;
 using SeguraChain_Lib.Blockchain.Mining.Object;
@@ -66,15 +64,13 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                         pocShareIv = GetNonceIvXorData(pocShareIv);
                         break;
                     case ClassMiningPoWaCEnumInstructions.DO_NONCE_IV_EASY_SQUARE_MATH:
-                        long newNonce = GetNonceIvComplexArithmetic(currentMiningSetting, pocShareIv, previousFinalBlockTransactionHashKey, blockHeight, blockDifficulty);
+                        {
+                            long newNonce = GetNonceIvComplexArithmetic(currentMiningSetting, pocShareIv, previousFinalBlockTransactionHashKey, blockHeight, blockDifficulty);
 
-                        if (newNonce >= currentMiningSetting.PocShareNonceMin && newNonce <= currentMiningSetting.PocShareNonceMax)
-                        {
-                            pocShareIv = BitConverter.GetBytes(newNonce);
-                        }
-                        else
-                        {
-                            return null;
+                            if (newNonce >= currentMiningSetting.PocShareNonceMin && newNonce <= currentMiningSetting.PocShareNonceMax)
+                                pocShareIv = BitConverter.GetBytes(newNonce);
+                            else
+                                return null;
                         }
                         break;
                     case ClassMiningPoWaCEnumInstructions.DO_LZ4_COMPRESS_NONCE_IV:
@@ -91,9 +87,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
             string pocShare = ClassUtility.GetHexStringFromByteArray(pocShareData);
 
-
             BigInteger pocShareDifficulty = CalculateDifficultyShare(pocShareData, blockDifficulty);
-
 
             // Clean up.
             Array.Clear(pocShareData, 0, pocShareData.Length);
@@ -109,7 +103,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                 NonceComputedHexString = ClassUtility.GetHexStringFromByteArray(pocShareIv),
                 Timestamp = timestampShare
             };
-
         }
 
 
@@ -348,9 +341,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                             long newNonce = GetNonceIvComplexArithmetic(currentMiningSetting, pocShareIv, finalBlockTransactionHashMiningKey, blockHeight, blockDifficulty);
 
                             if (newNonce >= currentMiningSetting.PocShareNonceMin && newNonce <= currentMiningSetting.PocShareNonceMax)
-                            {
                                 pocShareIv = BitConverter.GetBytes(newNonce);
-                            }
                             else
                             {
                                 jobCompatibilityValue = -1;
@@ -377,7 +368,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                                 return ClassMiningPoWaCEnumStatus.INVALID_NONCE_SHARE;
                             }
 
-
                             pocShareDecryptedBytes = DoDecryptionPocShare(currentMiningSetting, pocShareDecryptedBytes, finalBlockTransactionHashMiningKey, pocShareIv, out result);
 
                             if (!result)
@@ -391,7 +381,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                                 jobCompatibilityValue = -1;
                                 return ClassMiningPoWaCEnumStatus.INVALID_SHARE_ENCRYPTION;
                             }
-
                         }
                         break;
                 }
@@ -403,10 +392,8 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
             // Check Random PoC data size.
             if (pocShareDecryptedBytes.Length != currentMiningSetting.RandomDataShareSize)
-            {
                 // On this case we resize the share random data decrypted.
                 Array.Resize(ref pocShareDecryptedBytes, currentMiningSetting.RandomDataShareSize);
-            }
 
             #endregion
 
@@ -433,9 +420,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             }
 
             if (CheckPoc(currentMiningSetting, numberOne, numberTwo, previousBlockTransactionCount, out jobCompatibilityValue))
-            {
                 validCompatibility = true;
-            }
 
             #endregion
 
@@ -464,17 +449,13 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             if (validDifficulty)
             {
                 if (validCompatibility)
-                {
                     return ClassMiningPoWaCEnumStatus.VALID_UNLOCK_BLOCK_SHARE;
-                }
 
                 return ClassMiningPoWaCEnumStatus.INVALID_SHARE_COMPATIBILITY;
             }
 
             if (validCompatibility)
-            {
                 return ClassMiningPoWaCEnumStatus.VALID_SHARE;
-            }
 
             #endregion
 
@@ -633,7 +614,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             {
                 while (totalRetry < currentMiningSetting.PocShareNonceMaxSquareRetry)
                 {
-
                     byte[] pocShareWorkToDoBytes = new byte[pocShareIv.Length + previousBlockFinalTransactionHash.Length + blockHeightBytes.Length + blockDifficultyBytes.Length];
 
                     // Merge some block informations and the previous work done on the nonce.
@@ -701,9 +681,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                     }
 
                     if (newNonceGenerated)
-                    {
                         break;
-                    }
 
                     // Clean up.
                     Array.Clear(pocShareWorkToDoBytes, 0, pocShareWorkToDoBytes.Length);
@@ -726,7 +704,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
                     Array.Resize(ref pocShareIv, newNonce.Length);
                     Array.Copy(pocShareIv, 0, newNonce, 0, newNonce.Length);
-
                 }
             }
 
@@ -748,7 +725,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             Buffer.BlockCopy(BitConverter.GetBytes(timestampShare), 0, pocRandomData, currentMiningSetting.RandomDataShareTimestampSize, currentMiningSetting.RandomDataShareTimestampSize);
             Buffer.BlockCopy(BitConverter.GetBytes(blockHeight), 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize, currentMiningSetting.RandomDataShareBlockHeightSize);
             Buffer.BlockCopy(BitConverter.GetBytes(nonce), 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize + currentMiningSetting.RandomDataShareBlockHeightSize, currentMiningSetting.RandomDataShareNumberSize);
-
 
             return pocRandomData;
         }
@@ -823,6 +799,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                 pocTxCount = 0;
                 return false;
             }
+
             foreach (var mathOperator in currentMiningSetting.MathOperatorList)
             {
                 switch (mathOperator)
@@ -830,17 +807,12 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                     case MathOperatorPlus:
                         pocTxCount = numberOne + numberTwo;
                         if (pocTxCount == previousBlockTransactionCount)
-                        {
                             return true;
-                        }
                         break;
                     case MathOperatorMultiplicate:
                         pocTxCount = numberOne * numberTwo;
                         if (pocTxCount == previousBlockTransactionCount)
-                        {
-
                             return true;
-                        }
                         break;
                     case MathOperatorModulo:
 
@@ -848,18 +820,14 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                         {
                             pocTxCount = numberOne % numberTwo;
                             if (pocTxCount == previousBlockTransactionCount)
-                            {
                                 return true;
-                            }
                         }
 
                         if (numberOne > 0)
                         {
                             pocTxCount = numberTwo % numberOne;
                             if (pocTxCount == previousBlockTransactionCount)
-                            {
                                 return true;
-                            }
                         }
 
 
@@ -868,15 +836,11 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
                         pocTxCount = numberOne - numberTwo;
                         if (pocTxCount == previousBlockTransactionCount)
-                        {
                             return true;
-                        }
 
                         pocTxCount = numberTwo - numberOne;
                         if (pocTxCount == previousBlockTransactionCount)
-                        {
                             return true;
-                        }
 
                         break;
                 }
@@ -895,9 +859,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
         private static BigInteger CalculateDifficultyShare(byte[] powShareDataBytes, BigInteger blockDifficulty)
         {
             using (ClassSha3512DigestDisposable sha3512Digest = new ClassSha3512DigestDisposable())
-            {
                 return BigInteger.Divide(BigInteger.Divide(ShaPowCalculation, blockDifficulty), BigInteger.Divide(new BigInteger(sha3512Digest.Compute(powShareDataBytes)), blockDifficulty));
-            }
         }
 
         /// <summary>
@@ -909,9 +871,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
         public static bool ComparePoWaCShare(ClassMiningPoWaCShareObject pocShareObject1, ClassMiningPoWaCShareObject pocShareObject2)
         {
             if (pocShareObject2 == null || pocShareObject1 == null)
-            {
                 return false;
-            }
 
             if (pocShareObject1.BlockHeight == pocShareObject2.BlockHeight &&
                 pocShareObject1.Nonce == pocShareObject2.Nonce &&
@@ -936,9 +896,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
         public static bool CheckMiningPoWaCSetting(ClassMiningPoWaCSettingObject miningPoWaCSettingObject)
         {
             if (miningPoWaCSettingObject == null)
-            {
                 return false;
-            }
 
             if (miningPoWaCSettingObject.PowRoundAesShare <= 0 ||
                 miningPoWaCSettingObject.PocRoundShaNonce <= 0 ||
@@ -964,43 +922,31 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             if (miningPoWaCSettingObject.MathOperatorList.Count == 0 ||
                 miningPoWaCSettingObject.RandomDataShareSize != (miningPoWaCSettingObject.RandomDataShareNumberSize + miningPoWaCSettingObject.RandomDataShareTimestampSize + miningPoWaCSettingObject.RandomDataShareBlockHeightSize + miningPoWaCSettingObject.RandomDataShareChecksum + miningPoWaCSettingObject.WalletAddressDataSize + miningPoWaCSettingObject.RandomDataShareNumberSize) ||
                 miningPoWaCSettingObject.ShareHexStringSize != ClassAes.EncryptionKeySize + (32 * miningPoWaCSettingObject.PowRoundAesShare))
-            {
                 return false;
-            }
+
             if (miningPoWaCSettingObject.MiningIntructionsList.Count < BlockchainSetting.MiningMinInstructionsCount)
-            {
                 return false;
-            }
+
             if (!miningPoWaCSettingObject.MiningIntructionsList.Contains(ClassMiningPoWaCEnumInstructions.DO_NONCE_IV) || !miningPoWaCSettingObject.MiningIntructionsList.Contains(ClassMiningPoWaCEnumInstructions.DO_NONCE_IV_ITERATIONS) || !miningPoWaCSettingObject.MiningIntructionsList.Contains(ClassMiningPoWaCEnumInstructions.DO_ENCRYPTED_POC_SHARE))
-            {
                 return false;
-            }
 
             // First mandatory instruction.
             if (miningPoWaCSettingObject.MiningIntructionsList[0] != ClassMiningPoWaCEnumInstructions.DO_NONCE_IV)
-            {
                 return false;
-            }
 
             // Just behind the last mandatory instruction.
             if (miningPoWaCSettingObject.MiningIntructionsList[miningPoWaCSettingObject.MiningIntructionsList.Count - 2] != ClassMiningPoWaCEnumInstructions.DO_NONCE_IV_ITERATIONS)
-            {
                 return false;
-            }
 
             // Latest mandatory instruction.
             if (miningPoWaCSettingObject.MiningIntructionsList[miningPoWaCSettingObject.MiningIntructionsList.Count - 1] != ClassMiningPoWaCEnumInstructions.DO_ENCRYPTED_POC_SHARE)
-            {
                 return false;
-            }
 
             if (miningPoWaCSettingObject.BlockHeightStart == BlockchainSetting.GenesisBlockHeight)
             {
                 // Default mining setting.
                 if (miningPoWaCSettingObject.MiningSettingContentDevPublicKey != BlockchainSetting.DefaultWalletAddressDevPublicKey)
-                {
                     return false;
-                }
             }
 
             ClassMiningPoWaCSettingObject miningPoWaCSettingObjectCopy = new ClassMiningPoWaCSettingObject(false)
@@ -1031,15 +977,11 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             };
 
             if (ClassUtility.GenerateSha3512FromString(ClassUtility.SerializeData(miningPoWaCSettingObjectCopy)) != miningPoWaCSettingObject.MiningSettingContentHash)
-            {
                 return false;
-            }
 
             // Invalid signature.
             if (!ClassWalletUtility.WalletCheckSignature(miningPoWaCSettingObject.MiningSettingContentHash, miningPoWaCSettingObject.MiningSettingContentHashSignature, miningPoWaCSettingObject.MiningSettingContentDevPublicKey))
-            {
                 return false;
-            }
 
             return true;
         }
@@ -1075,9 +1017,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                             Buffer.BlockCopy(pocShareData, 0, paddedBytes, 0, packetLength);
 
                             for (int j = 0; j < paddingSizeRequired; j++)
-                            {
                                 paddedBytes[packetLength + j] = (byte)paddingSizeRequired;
-                            }
 
                             pocShareData = encryptCryptoTransform.TransformFinalBlock(paddedBytes, 0, paddedBytes.Length);
                         }

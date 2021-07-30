@@ -640,20 +640,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                     while (!broadcastResponsePacketStatus)
                     {
-                        if (timestampStart + (_peerNetworkSettingObject.PeerMaxDelayAwaitResponse * 1000) < ClassUtility.GetCurrentTimestampInMillisecond())
-                        {
-                            break;
-                        }
 
                         if (_peerCancellationToken.IsCancellationRequested)
-                        {
                             break;
-                        }
 
                         if (failed)
-                        {
                             break;
-                        }
+
+
+                        if (timestampStart + (_peerNetworkSettingObject.PeerMaxDelayAwaitResponse * 1000) < ClassUtility.GetCurrentTimestampInMillisecond())
+                            break;
 
                         try
                         {
@@ -669,9 +665,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                 }
 
                 if (!broadcastResponsePacketStatus)
-                {
                     IsAlive = false;
-                }
 
                 return broadcastResponsePacketStatus;
             }
@@ -715,9 +709,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                                 if (_peerSocketClient != null)
                                 {
                                     if (_peerSocketClient.Connected)
-                                    {
                                         _peerSocketClient.Close();
-                                    }
                                 }
                             }
                         }
@@ -728,6 +720,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
                     // Ignored.
                 }
 
+                // Clean up past heights received/sent.
                 _memPoolListBlockHeightTransactionReceived?.Clear();
                 _memPoolListBlockHeightTransactionSend?.Clear();
             }
@@ -932,7 +925,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast
 
                                                         if (!await TryReceiveMemPoolTransactionPacket(blockHeight, countToSync))
                                                         {
-                                                            _memPoolListBlockHeightTransactionReceived[blockHeight].Clear();
                                                             IsAlive = false;
                                                             failed = true;
                                                             break;

@@ -17,6 +17,7 @@ using SeguraChain_Lib.Instance.Node.Network.Services.API.Client.Enum;
 using SeguraChain_Lib.Instance.Node.Network.Services.API.Packet;
 using SeguraChain_Lib.Instance.Node.Network.Services.API.Packet.SubPacket.Request;
 using SeguraChain_Lib.Instance.Node.Network.Services.API.Packet.SubPacket.Response;
+using SeguraChain_Lib.Instance.Node.Network.Services.API.Utility;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Utility;
 using SeguraChain_Solo_Miner.Network.Object;
@@ -66,88 +67,54 @@ namespace SeguraChain_Solo_Miner.Network.Function
                     while (true)
                     {
 
+                        ClassApiPeerPacketSendBlockTemplate apiPeerPacketSendBlockTemplate = await ClassApiClientUtility.GetBlockTemplateFromExternalSyncMode(_minerSettingObject.SoloMinerNetworkSetting.peer_ip_target, _minerSettingObject.SoloMinerNetworkSetting.peer_api_port_target, _minerSettingObject.SoloMinerNetworkSetting.peer_api_max_connection_delay, _cancellationTokenMiningNetworkTask);
+
                         string currentBlockHash = string.Empty;
                         string currentMiningPowacSettingSerializedString = string.Empty;
-                        bool taskDone = false;
-                        long taskTimestampEnd = ClassUtility.GetCurrentTimestampInSecond() + BlockchainSetting.PeerApiMaxConnectionDelay;
-                        CancellationTokenSource cancellationTokenRequest = new CancellationTokenSource();
+
+                        if (apiPeerPacketSendBlockTemplate != null)
+                        {
+                            if (!apiPeerPacketSendBlockTemplate.CurrentBlockHash.IsNullOrEmpty(out _) && apiPeerPacketSendBlockTemplate.CurrentMiningPoWaCSetting != null)
+                            {
+                                if (apiPeerPacketSendBlockTemplate.CurrentBlockHash.Length == BlockchainSetting.BlockHashHexSize)
+                                {
+
+                                    currentBlockHash = apiPeerPacketSendBlockTemplate.CurrentBlockHash;
+
+                                    if (ClassMiningPoWaCUtility.CheckMiningPoWaCSetting(apiPeerPacketSendBlockTemplate.CurrentMiningPoWaCSetting))
+                                        currentMiningPowacSettingSerializedString = ClassUtility.SerializeData(apiPeerPacketSendBlockTemplate.CurrentMiningPoWaCSetting);
+#if DEBUG
+                                    else
+                                        Debug.WriteLine("invalid setting: " + ClassUtility.SerializeData(apiPeerPacketSendBlockTemplate.CurrentMiningPoWaCSetting));
+#endif
+                                }
+                            }
+                        }
+
+                        if (!currentMiningPowacSettingSerializedString.IsNullOrEmpty(out _))
+                        {
+                            if (ClassUtility.TryDeserialize(currentMiningPowacSettingSerializedString, out ClassMiningPoWaCSettingObject miningPoWaCSettingObject, ObjectCreationHandling.Replace))
+                            {
+                                if (miningPoWaCSettingObject != null)
+                                    _miningNetworkStatsObject.UpdateMiningPoWacSetting(miningPoWaCSettingObject);
+                            }
+
+
+                            if (ClassBlockUtility.GetBlockTemplateFromBlockHash(currentBlockHash, out ClassBlockTemplateObject blockTemplateObject))
+                            {
+                                if (blockTemplateObject != null)
+                                    _miningNetworkStatsObject.UpdateBlocktemplate(blockTemplateObject);
+                            }
+                        }
 
                         try
                         {
-                            await Task.Factory.StartNew(() =>
-                            {
-                                try
-                                {
-                                    if (SendAskBlockTemplateRequest(_minerSettingObject.SoloMinerNetworkSetting.peer_ip_target, _minerSettingObject.SoloMinerNetworkSetting.peer_api_port_target, out ClassApiPeerPacketSendNetworkStats apiPeerPacketSendNetworkStats))
-                                    {
-                                        if (apiPeerPacketSendNetworkStats != null)
-                                        {
-                                            if (!apiPeerPacketSendNetworkStats.CurrentBlockHash.IsNullOrEmpty(out _) && apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting != null)
-                                            {
-                                                if (apiPeerPacketSendNetworkStats.CurrentBlockHash.Length == BlockchainSetting.BlockHashHexSize)
-                                                {
-
-                                                    currentBlockHash = apiPeerPacketSendNetworkStats.CurrentBlockHash;
-
-
-                                                    if (ClassMiningPoWaCUtility.CheckMiningPoWaCSetting(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting))
-                                                    {
-                                                        currentMiningPowacSettingSerializedString = ClassUtility.SerializeData(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting);
-                                                    }
-                                                    else
-                                                    {
-                                                        Debug.WriteLine("invalid setting: "+ ClassUtility.SerializeData(apiPeerPacketSendNetworkStats.CurrentMiningPoWaCSetting));
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                    }
-
-                                    taskDone = true;
-                                }
-                                catch
-                                {
-                                    // Ignored.
-                                }
-                            }, cancellationTokenRequest.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+                            await Task.Delay(DelayTaskAskBlockTemplate, _cancellationTokenMiningNetworkTask.Token);
                         }
                         catch
                         {
-                            // Ignored, catch the exception once the task is cancelled.
+                            break;
                         }
-
-                        // Waiting all tasks done.
-                        while (taskTimestampEnd >= ClassUtility.GetCurrentTimestampInSecond())
-                        {
-                            if (taskDone)
-                            {
-                                break;
-                            }
-                            await Task.Delay(100, _cancellationTokenMiningNetworkTask.Token);
-                        }
-
-                        cancellationTokenRequest.Cancel();
-
-                        if (ClassUtility.TryDeserialize(currentMiningPowacSettingSerializedString, out ClassMiningPoWaCSettingObject miningPoWaCSettingObject, ObjectCreationHandling.Replace))
-                        {
-                            if (miningPoWaCSettingObject != null)
-                            {
-                                _miningNetworkStatsObject.UpdateMiningPoWacSetting(miningPoWaCSettingObject);
-                            }
-                        }
-                           
-                       
-                        if (ClassBlockUtility.GetBlockTemplateFromBlockHash(currentBlockHash, out ClassBlockTemplateObject blockTemplateObject))
-                        {
-                            if (blockTemplateObject != null)
-                            {
-                                _miningNetworkStatsObject.UpdateBlocktemplate(blockTemplateObject);
-                            }
-                        }
-
-                        
-                        await Task.Delay(DelayTaskAskBlockTemplate);
                     }
                 }, _cancellationTokenMiningNetworkTask.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
             }
@@ -161,163 +128,25 @@ namespace SeguraChain_Solo_Miner.Network.Function
 
         #region Packet API Request
 
-        /// <summary>
-        /// Send a request to retrieve back the current blocktemplate.
-        /// </summary>
-        /// <param name="peerIp"></param>
-        /// <param name="peerPort"></param>
-        /// <param name="apiPeerPacketSendNetworkStats"></param>
-        /// <returns></returns>
-        private bool SendAskBlockTemplateRequest(string peerIp, int peerPort, out ClassApiPeerPacketSendNetworkStats apiPeerPacketSendNetworkStats)
-        {
-            try
-            {
-
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(("http://" + peerIp + ":" + peerPort + "/" + ClassPeerApiEnumGetRequest.GetBlockTemplate));
-                request.AutomaticDecompression = DecompressionMethods.GZip;
-                request.ServicePoint.Expect100Continue = false;
-                request.KeepAlive = false;
-                request.Timeout = BlockchainSetting.PeerApiMaxConnectionDelay * 1000;
-                string result;
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponseAsync().Result)
-                {
-                    using (Stream stream = response.GetResponseStream())
-                    {
-                        if (stream != null)
-                        {
-                            using (StreamReader reader = new StreamReader(stream))
-                            {
-                                result = reader.ReadToEnd();
-
-                                response.Close();
-
-                                if (!result.IsNullOrEmpty(out _))
-                                {
-                                    if (ClassUtility.TryDeserialize(result, out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
-                                    {
-                                        if (apiPeerPacketObjetReceive != null)
-                                        {
-                                            if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out apiPeerPacketSendNetworkStats))
-                                            {
-                                                return true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-#if DEBUG
-            catch (System.Exception error)
-            {
-                Debug.WriteLine("Exception on sending post request to the API Server. Details: " + error.Message);
-#else
-            catch
-            {
-#endif
-            }
-            apiPeerPacketSendNetworkStats = null;
-            return false;
-        }
 
         /// <summary>
         /// Send a request who push a mining share to a peer target, then retrieve back the response from the peer.
         /// </summary>
-        /// <param name="peerIp"></param>
-        /// <param name="peerPort"></param>
         /// <param name="miningPoWaCShareObject"></param>
-        /// <param name="apiPeerPacketSendMiningShareResponse"></param>
         /// <returns></returns>
-        private bool SendMiningShareRequest(string peerIp, int peerPort, ClassMiningPoWaCShareObject miningPoWaCShareObject, out ClassApiPeerPacketSendMiningShareResponse apiPeerPacketSendMiningShareResponse)
+        private async Task<ClassMiningPoWaCEnumStatus> SendMiningShareRequest(ClassMiningPoWaCShareObject miningPoWaCShareObject, CancellationTokenSource cancellation)
         {
+            ClassMiningPoWaCEnumStatus miningShareResult = ClassMiningPoWaCEnumStatus.SUBMIT_NETWORK_ERROR;
+
             try
             {
-
-                using (HttpClient client = new HttpClient())
-                {
-                    var response = client.PostAsync("http://" + peerIp + ":" + peerPort, new StringContent(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
-                    {
-                        PacketType = ClassPeerApiEnumPacketSend.PUSH_MINING_SHARE,
-                        PacketContentObjectSerialized = ClassUtility.SerializeData(new ClassApiPeerPacketSendMiningShare()
-                        {
-                            MiningPowShareObject = miningPoWaCShareObject,
-                            PacketTimestamp = miningPoWaCShareObject.Timestamp,
-                        })
-                    }))).Result;
-
-                    response.EnsureSuccessStatusCode();
-
-                    if (ClassUtility.TryDeserialize(response.Content.ReadAsStringAsync().Result, out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
-                    {
-                        if (apiPeerPacketObjetReceive != null)
-                        {
-                            if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out apiPeerPacketSendMiningShareResponse))
-                            {
-                                return true;
-                            }
-                        }
-                    }
-
-                }
-
-
-                /*
-                byte[] packet = ClassUtility.GetByteArrayFromString(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
-                {
-                    PacketType = ClassPeerApiEnumPacketSend.PUSH_MINING_SHARE,
-                    PacketContentObjectSerialized = ClassUtility.SerializeData(new ClassApiPeerPacketSendMiningShare()
-                    {
-                        MiningPowShareObject = miningPoWaCShareObject,
-                        PacketTimestamp = miningPoWaCShareObject.Timestamp,
-                    })
-                }));
-
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(("http://" + peerIp + ":" + peerPort));
-                request.Method = "POST";
-                request.ContentLength = packet.Length;
-                request.AutomaticDecompression = DecompressionMethods.GZip;
-                request.ServicePoint.Expect100Continue = false;
-                request.KeepAlive = false;
-                request.Timeout = BlockchainSetting.PeerApiMaxConnectionDelay * 1000;
-                using (Stream inputStream = request.GetRequestStream())
-                {
-
-                    inputStream.Write(packet, 0, packet.Length);
-                }
-
-
-
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-
-                    using (StreamReader streamReader = new StreamReader(response.GetResponseStream()))
-                    {
-
-                        if (ClassUtility.TryDeserialize(streamReader.ReadToEnd(), out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
-                        {
-                            if (apiPeerPacketObjetReceive != null)
-                            {
-                                if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out apiPeerPacketSendMiningShareResponse))
-                                {
-                                    return true;
-                                }
-                            }
-                        }
-
-                    }
-                }*/
-
+                miningShareResult = await ClassApiClientUtility.SubmitSoloMiningShareFromExternalSyncMode(_minerSettingObject.SoloMinerNetworkSetting.peer_ip_target, _minerSettingObject.SoloMinerNetworkSetting.peer_api_port_target, _minerSettingObject.SoloMinerNetworkSetting.peer_api_max_connection_delay, miningPoWaCShareObject, cancellation);
             }
             catch (System.Exception error)
             {
-                ClassLog.WriteLine("Exception on sending the mining share request to the peer API Server " + peerIp + ":" + peerPort + ". Details: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-
+                ClassLog.WriteLine("Exception on sending the mining share request to the peer API Server " + _minerSettingObject.SoloMinerNetworkSetting.peer_ip_target +":"+ _minerSettingObject.SoloMinerNetworkSetting.peer_api_port_target+" | Details: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
             }
-            apiPeerPacketSendMiningShareResponse = null;
-            return false;
+            return miningShareResult;
         }
 
         #endregion
@@ -343,18 +172,11 @@ namespace SeguraChain_Solo_Miner.Network.Function
 
                     try
                     {
-                        await Task.Factory.StartNew(() =>
+                        await Task.Factory.StartNew(async () =>
                         {
                             try
                             {
-                                if (SendMiningShareRequest(_minerSettingObject.SoloMinerNetworkSetting.peer_ip_target, _minerSettingObject.SoloMinerNetworkSetting.peer_api_port_target, miningPoWaCShareObject, out ClassApiPeerPacketSendMiningShareResponse apiPeerPacketSendMiningShareResponse))
-                                {
-                                    if (apiPeerPacketSendMiningShareResponse != null)
-                                    {
-
-                                        miningShareResponse = apiPeerPacketSendMiningShareResponse.MiningPoWShareStatus;
-                                    }
-                                }
+                                miningShareResponse = await SendMiningShareRequest(miningPoWaCShareObject, cancellationTokenRequest);
                             }
                             catch
                             {
@@ -374,9 +196,8 @@ namespace SeguraChain_Solo_Miner.Network.Function
                     while (taskTimestampEnd >= ClassUtility.GetCurrentTimestampInSecond())
                     {
                         if (taskDone)
-                        {
                             break;
-                        }
+
                         await Task.Delay(100, _cancellationTokenMiningNetworkTask.Token);
                     }
 

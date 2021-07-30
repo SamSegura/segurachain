@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Numerics;
@@ -24,7 +23,6 @@ using SeguraChain_Lib.Blockchain.Wallet.Function;
 using SeguraChain_Lib.Instance.Node.Network.Database;
 using SeguraChain_Lib.Instance.Node.Network.Database.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Packet;
-using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Status;
 using SeguraChain_Lib.Instance.Node.Network.Services.Firewall.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.Packet;
@@ -1852,7 +1850,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                                             }
                                                             else
                                                             {
-                                                                ClassTransactionObject memPoolTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxFromTransactionHash(transactionObject.TransactionHash, _cancellationTokenAccessData);
+                                                                ClassTransactionObject memPoolTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxFromTransactionHash(transactionObject.TransactionHash, 0, _cancellationTokenAccessData);
 
                                                                 if (memPoolTransactionObject != null)
                                                                 {
@@ -2096,9 +2094,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                             if (packetMemPoolAskMemPoolTransactionList != null)
                             {
                                 if (!ClassUtility.CheckPacketTimestamp(packetMemPoolAskMemPoolTransactionList.PacketTimestamp, _peerNetworkSettingObject.PeerMaxTimestampDelayPacket, _peerNetworkSettingObject.PeerMaxEarlierPacketDelay))
-                                {
                                     return ClassPeerNetworkClientServerHandlePacketEnumStatus.INVALID_PACKET;
-                                }
 
                                 bool doBroadcast = false;
 
@@ -2134,9 +2130,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                                                 _listMemPoolBroadcastBlockHeight.Add(packetMemPoolAskMemPoolTransactionList.BlockHeight, 0);
 
                                                             if (currentProgress < packetMemPoolAskMemPoolTransactionList.TotalTransactionProgress)
-                                                            {
                                                                 currentProgress = packetMemPoolAskMemPoolTransactionList.TotalTransactionProgress;
-                                                            }
 
                                                             foreach (ClassTransactionObject transactionObject in listTransaction.GetAll.Skip(currentProgress))
                                                             {
@@ -2173,9 +2167,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                                                                 while (_onWaitingMemPoolTransactionConfirmationReceived)
                                                                                 {
                                                                                     if (timestampStartWaitingResponse + (_peerNetworkSettingObject.PeerMaxDelayAwaitResponse * 1000) < ClassUtility.GetCurrentTimestampInMillisecond())
-                                                                                    {
                                                                                         break;
-                                                                                    }
 
                                                                                     try
                                                                                     {
@@ -2188,9 +2180,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ServerSync.Cli
                                                                                 }
 
                                                                                 if (!_onWaitingMemPoolTransactionConfirmationReceived)
-                                                                                {
                                                                                     countMemPoolTxSent += listToSend.Count;
-                                                                                }
                                                                                 else
                                                                                 {
                                                                                     exceptionOnSending = true;

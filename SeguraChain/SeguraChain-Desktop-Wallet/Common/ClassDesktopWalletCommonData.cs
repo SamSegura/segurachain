@@ -124,9 +124,14 @@ namespace SeguraChain_Desktop_Wallet.Common
 
                 ClassDesktopWalletCommonData.LanguageDatabase.SetCurrentLanguageName(WalletSettingObject.WalletLanguageNameSelected);
 
-                using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
+                using (ClassWalletSetupForm walletSetupForm = new ClassWalletSetupForm())
                 {
-                    writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
+                    walletSetupForm.ShowDialog();
+
+                    using (StreamWriter writer = new StreamWriter(walletSettingFilePath) { AutoFlush = true })
+                    {
+                        writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
+                    }
                 }
             }
             catch
@@ -236,9 +241,7 @@ namespace SeguraChain_Desktop_Wallet.Common
             {
                 // Save wallet setting file.
                 using (StreamWriter writer = new StreamWriter(ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassWalletDefaultSetting.WalletSettingFile)) { AutoFlush = true })
-                {
                     writer.Write(ClassUtility.SerializeData(WalletSettingObject, Formatting.Indented));
-                }
 
 #if DEBUG
                 Debug.WriteLine("Wallet setting file saved.");

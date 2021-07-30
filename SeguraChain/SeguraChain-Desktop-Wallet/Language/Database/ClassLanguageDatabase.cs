@@ -69,30 +69,20 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
                         }
 
                         if (!readStatus)
-                        {
                             ClassLog.WriteLine("Language file: " + languageFilePath + " reading failed", ClassEnumLogLevelType.LOG_LEVEL_WALLET, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                        }
-
                     }
-
                 }
 
                 if (!withoutWalletSetting)
                 {
                     if (_dictionaryLanguageObjects.Count == 0)
-                    {
                         InitializeDefaultLanguage(languageDirectoryPath);
-                    }
                     else
                     {
                         if (_dictionaryLanguageObjects.ContainsKey(ClassDesktopWalletCommonData.WalletSettingObject.WalletLanguageNameSelected))
-                        {
                             _currentLanguage = ClassDesktopWalletCommonData.WalletSettingObject.WalletLanguageNameSelected;
-                        }
                         else
-                        {
                             InitializeDefaultLanguage(languageDirectoryPath);
-                        }
                     }
                 }
             }
@@ -171,6 +161,10 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
                 case ClassLanguageEnumType.LANGUAGE_TYPE_WALLET_SETUP_STEP_ONE_FORM:
                     {
                         return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSetupStepOneFormLanguage, typeof(T));
+                    }
+                case ClassLanguageEnumType.LANGUAGE_TYPE_WALLET_SETUP_STEP_FINAL_FORM:
+                    {
+                        return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSetupStepFinalFormLanguage, typeof(T));
                     }
             }
 

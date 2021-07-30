@@ -672,7 +672,7 @@ namespace SeguraChain_Test_Tool
                     {
                         if (apiPeerPacketObjetReceive != null)
                         {
-                            if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out ClassApiPeerPacketSendNetworkStats apiPeerPacketSendNetworkStats))
+                            if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out ClassApiPeerPacketSendBlockTemplate apiPeerPacketSendNetworkStats))
                             {
                                 Console.WriteLine(ClassUtility.SerializeData(apiPeerPacketSendNetworkStats));
                             }

@@ -449,27 +449,16 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
                     return false;
                 }
 
-                if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting.GlobalObjectExpirationMemoryCached <= 0)
+                if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting.GlobalBlockActiveMemoryKeepAlive <= 0)
                 {
                     ClassLog.WriteLine("Error, the global expiration memory object cached cannot be lower or equal of 0.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
                     return false;
                 }
 
-                if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting.GlobalObjectExpiredFromCache <= 0)
-                {
-                    ClassLog.WriteLine("Error, the global expiration expired from cache cannot be lower or equal of 0.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
-                    return false;
-                }
 
                 if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting.GlobalTaskManageMemoryInterval <= 0)
                 {
                     ClassLog.WriteLine("Error, the global task manage memory interval cannot be lower or equal of 0.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
-                    return false;
-                }
-
-                if (peerSettingObject.PeerBlockchainDatabaseSettingObject.BlockchainCacheSetting.IoCacheDiskGetCallBackToMemoryInterval <= 0)
-                {
-                    ClassLog.WriteLine("Error, the io cache disk the get call back to memory interval cannot be lower or equal of 0.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
                     return false;
                 }
 

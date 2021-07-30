@@ -105,6 +105,8 @@ namespace SeguraChain_Desktop_Wallet
             this.labelWalletReceiveTransactionQrCodeText = new System.Windows.Forms.Label();
             this.panelQrCodeWalletAddress = new SeguraChain_Desktop_Wallet.InternalForm.Custom.Object.ClassCustomPanel();
             this.tabPageTransactionHistory = new System.Windows.Forms.TabPage();
+            this.buttonMainInterfaceSearchTransactionHistory = new System.Windows.Forms.Button();
+            this.textBoxTransactionHistorySearch = new System.Windows.Forms.TextBox();
             this.panelTransactionHistoryColumns = new SeguraChain_Desktop_Wallet.InternalForm.Custom.Object.ClassCustomPanel();
             this.textBoxMainInterfaceMaxPageTransactionHistory = new System.Windows.Forms.TextBox();
             this.textBoxMainInterfaceCurrentPageTransactionHistory = new System.Windows.Forms.TextBox();
@@ -999,7 +1001,7 @@ namespace SeguraChain_Desktop_Wallet
             // 
             this.labelWalletReceiveTransactionQrCodeText.AutoSize = true;
             this.labelWalletReceiveTransactionQrCodeText.ForeColor = System.Drawing.Color.Ivory;
-            this.labelWalletReceiveTransactionQrCodeText.Location = new System.Drawing.Point(426, 45);
+            this.labelWalletReceiveTransactionQrCodeText.Location = new System.Drawing.Point(455, 36);
             this.labelWalletReceiveTransactionQrCodeText.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.labelWalletReceiveTransactionQrCodeText.Name = "labelWalletReceiveTransactionQrCodeText";
             this.labelWalletReceiveTransactionQrCodeText.Size = new System.Drawing.Size(441, 16);
@@ -1022,6 +1024,8 @@ namespace SeguraChain_Desktop_Wallet
             // tabPageTransactionHistory
             // 
             this.tabPageTransactionHistory.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(77)))), ((int)(((byte)(104)))), ((int)(((byte)(145)))));
+            this.tabPageTransactionHistory.Controls.Add(this.buttonMainInterfaceSearchTransactionHistory);
+            this.tabPageTransactionHistory.Controls.Add(this.textBoxTransactionHistorySearch);
             this.tabPageTransactionHistory.Controls.Add(this.panelTransactionHistoryColumns);
             this.tabPageTransactionHistory.Controls.Add(this.textBoxMainInterfaceMaxPageTransactionHistory);
             this.tabPageTransactionHistory.Controls.Add(this.textBoxMainInterfaceCurrentPageTransactionHistory);
@@ -1036,6 +1040,29 @@ namespace SeguraChain_Desktop_Wallet
             this.tabPageTransactionHistory.TabIndex = 2;
             this.tabPageTransactionHistory.Text = "TABPAGE_TRANSACTION_HISTORY_TEXT";
             this.tabPageTransactionHistory.Paint += new System.Windows.Forms.PaintEventHandler(this.tabPageTransactionHistory_Paint);
+            // 
+            // buttonMainInterfaceSearchTransactionHistory
+            // 
+            this.buttonMainInterfaceSearchTransactionHistory.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(247)))), ((int)(((byte)(229)))), ((int)(((byte)(72)))));
+            this.buttonMainInterfaceSearchTransactionHistory.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonMainInterfaceSearchTransactionHistory.ForeColor = System.Drawing.Color.Black;
+            this.buttonMainInterfaceSearchTransactionHistory.Location = new System.Drawing.Point(930, 508);
+            this.buttonMainInterfaceSearchTransactionHistory.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.buttonMainInterfaceSearchTransactionHistory.Name = "buttonMainInterfaceSearchTransactionHistory";
+            this.buttonMainInterfaceSearchTransactionHistory.Size = new System.Drawing.Size(177, 25);
+            this.buttonMainInterfaceSearchTransactionHistory.TabIndex = 13;
+            this.buttonMainInterfaceSearchTransactionHistory.Text = "BUTTON_MAIN_INTERFACE_SEARCH_TRANSACTION_HISTORY_TEXT";
+            this.buttonMainInterfaceSearchTransactionHistory.UseVisualStyleBackColor = false;
+            this.buttonMainInterfaceSearchTransactionHistory.Click += new System.EventHandler(this.buttonMainInterfaceSearchTransactionHistory_Click);
+            // 
+            // textBoxTransactionHistorySearch
+            // 
+            this.textBoxTransactionHistorySearch.Location = new System.Drawing.Point(600, 510);
+            this.textBoxTransactionHistorySearch.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.textBoxTransactionHistorySearch.Name = "textBoxTransactionHistorySearch";
+            this.textBoxTransactionHistorySearch.Size = new System.Drawing.Size(318, 22);
+            this.textBoxTransactionHistorySearch.TabIndex = 12;
+            this.textBoxTransactionHistorySearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBoxTransactionHistorySearch_KeyDown);
             // 
             // panelTransactionHistoryColumns
             // 
@@ -1144,7 +1171,7 @@ namespace SeguraChain_Desktop_Wallet
             this.labelWalletAddressReceiveTransactionTitle.AutoSize = true;
             this.labelWalletAddressReceiveTransactionTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.labelWalletAddressReceiveTransactionTitle.ForeColor = System.Drawing.Color.Ivory;
-            this.labelWalletAddressReceiveTransactionTitle.Location = new System.Drawing.Point(454, 111);
+            this.labelWalletAddressReceiveTransactionTitle.Location = new System.Drawing.Point(477, 113);
             this.labelWalletAddressReceiveTransactionTitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.labelWalletAddressReceiveTransactionTitle.Name = "labelWalletAddressReceiveTransactionTitle";
             this.labelWalletAddressReceiveTransactionTitle.Size = new System.Drawing.Size(423, 13);
@@ -1179,7 +1206,6 @@ namespace SeguraChain_Desktop_Wallet
             // 
             // ClassWalletMainInterfaceForm
             // 
-
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(49)))), ((int)(((byte)(55)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(1377, 781);
             this.Controls.Add(this.labelMainInterfaceSyncProgress);
@@ -1315,6 +1341,8 @@ namespace SeguraChain_Desktop_Wallet
         private System.Windows.Forms.Label labelWalletAddressReceiveTransaction;
         private System.Windows.Forms.ToolStripMenuItem importWalletPrivateKeytoolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem languageToolStripMenuItem;
+        private System.Windows.Forms.Button buttonMainInterfaceSearchTransactionHistory;
+        private System.Windows.Forms.TextBox textBoxTransactionHistorySearch;
     }
 }
 

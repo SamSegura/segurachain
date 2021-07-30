@@ -21,7 +21,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.Object
         public long LastBlockHeight;
         public long LastTransactionCount;
         public long LastTransactionCountOnRead;
-        public List<TransactionHistoryInformationObject> DictionaryTransactionHistoryHashListed;
+        public Dictionary<string, TransactionHistoryInformationObject> DictionaryTransactionHistoryHashListed;
         public ConcurrentDictionary<string, TransactionHistoryInformationShowedObject> DictionaryTransactionHistoryHashListedShowed;
         public long LastBlockTransactionShowTimestampUpdate;
 
@@ -68,7 +68,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.Object
             ColumnHashMaxWidth = ColumnDateMaxWidth * 4;
             ColumnAmountMaxWidth = ColumnDateMaxWidth * 5;
             OnLoad = true;
-            DictionaryTransactionHistoryHashListed = new List<TransactionHistoryInformationObject>();
+            DictionaryTransactionHistoryHashListed = new Dictionary<string ,TransactionHistoryInformationObject>();
             DictionaryTransactionHistoryHashListedShowed = new ConcurrentDictionary<string, TransactionHistoryInformationShowedObject>();
             CurrentTransactionHistoryPage = 1;
             TransactionHistoryColumnOrdering = ClassEnumTransactionHistoryColumnType.TRANSACTION_HISTORY_COLUMN_TRANSACTION_DATE;
@@ -133,10 +133,15 @@ namespace SeguraChain_Desktop_Wallet.MainForm.Object
         {
             TransactionHistoryColumnOrdering = ClassEnumTransactionHistoryColumnType.TRANSACTION_HISTORY_COLUMN_TRANSACTION_DATE;
             DictionaryTransactionHistoryHashListed.Clear();
+#if NET5_0_OR_GREATER
+            DictionaryTransactionHistoryHashListed.TrimExcess();
+#endif
             DictionaryTransactionHistoryHashListedShowed.Clear();
+
             TotalTransactionShowed = 0;
             LastTransactionCount = 0;
             LastTransactionCountOnRead = 0;
+            LastBlockHeight = 0;
             CurrentTransactionHistoryPage = 1;
             EnableEventDrawPage = true;
         }

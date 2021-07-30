@@ -19,6 +19,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public ClassWalletImportPrivateKeyFormLanguage WalletImportPrivateKeyFormLanguage;
         public ClassWalletSetupFormLanguage WalletSetupFormLanguage;
         public ClassWalletSetupStepOneFormLanguage WalletSetupStepOneFormLanguage;
+        public ClassWalletSetupStepFinalFormLanguage WalletSetupStepFinalFormLanguage;
 
         /// <summary>
         /// Default initialization.
@@ -36,6 +37,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
             WalletImportPrivateKeyFormLanguage = new ClassWalletImportPrivateKeyFormLanguage();
             WalletSetupFormLanguage = new ClassWalletSetupFormLanguage();
             WalletSetupStepOneFormLanguage = new ClassWalletSetupStepOneFormLanguage();
+            WalletSetupStepFinalFormLanguage = new ClassWalletSetupStepFinalFormLanguage();
         }
     }
 
@@ -176,6 +178,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string BUTTON_MAIN_INTERFACE_BACK_PAGE_TRANSACTION_HISTORY_TEXT = "Back";
         public string BUTTON_MAIN_INTERFACE_NEXT_PAGE_TRANSACTION_HISTORY_TEXT = "Next";
         public string BUTTON_MAIN_INTERFACE_EXPORT_TRANSACTION_HISTORY_TEXT = "Export";
+        public string BUTTON_MAIN_INTERFACE_SEARCH_TRANSACTION_HISTORY_TEXT = "Search";
 
         public string PANEL_TRANSACTION_HISTORY_ON_LOAD_TEXT = "On loading data of the transaction history, please wait a moment: ";
 
@@ -185,6 +188,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_ALL_NOTICE_TEXT = "All transactions of the history are going to be exported, do you want to continue?";
         public string MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_DONE_TEXT = "Transaction export successfully done.";
         public string MESSAGEBOX_TRANSACTION_HISTORY_EXPORT_FAILED_TEXT = "Transaction export failed, please try again later.";
+        public string MESSAGEBOX_TRANSACTION_HISTORY_SEARCH_NOTHING_FOUND_TEXT = "Nothing related of \"%s\" has been found inside of the transaction history.";
 
         #endregion
     }
@@ -317,6 +321,9 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string MESSAGEBOX_SEND_TRANSACTION_UNLOCK_WALLET_ERROR_TITLE_TEXT = "Invalid wallet file.";
     }
 
+    /// <summary>
+    /// Send transaction confirmation form.
+    /// </summary>
     public class ClassWalletSendTransactionConfirmationFormLanguage
     {
         public string FORM_SEND_TRANSACTION_CONFIRMATION_TITLE_TEXT = " - Confirm your request";
@@ -328,11 +335,17 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string BUTTON_SEND_TRANSACTION_CONFIRMATION_CANCEL_TEXT = "Cancel";
     }
 
+    /// <summary>
+    /// Send transaction waiting request from.
+    /// </summary>
     public class ClassWalletSendTransactionWaitRequestFormLanguage
     {
         public string LABEL_SEND_TRANSACTION_WAIT_REQUEST_TEXT = "Broadcasting your transaction to peers, please wait a moment..";
     }
 
+    /// <summary>
+    /// Import private key form.
+    /// </summary>
     public class ClassWalletImportPrivateKeyFormLanguage
     {
         public string FORM_IMPORT_WALLET_PRIVATE_KEY_TITLE_TEXT = " - Import wallet private key";
@@ -342,15 +355,21 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string MESSAGEBOX_IMPORT_WALLET_PRIVATE_KEY_ERROR_TEXT = "The input private key format is invalid, please input a valid private key";
     }
 
+    /// <summary>
+    /// Wallet setup form.
+    /// </summary>
     public class ClassWalletSetupFormLanguage
     {
         public string FORM_WALLET_SETUP_TITLE_TEXT = " - Setup your desktop wallet";
-        public string LABEL_WALLET_SETUP_DESCRIPTION_TEXT = "Welcome, this menu help your to setup your desktop wallet, steps should be different depending of the sync mode selected.";
+        public string LABEL_WALLET_SETUP_DESCRIPTION_TEXT = "Welcome, this menu help you to setup your desktop wallet, steps should be different depending of the sync mode selected.";
         public string BUTTON_WALLET_SETUP_PREV_TEXT = "Back";
         public string BUTTON_WALLET_SETUP_NEXT_TEXT = "Next";
         public string BUTTON_WALLET_SETUP_SAVE_TEXT = "Save and continue";
     }
 
+    /// <summary>
+    /// Wallet setup step one form.
+    /// </summary>
     public class ClassWalletSetupStepOneFormLanguage
     {
         public string LABEL_SELECT_LANGUAGE = "Select your language";
@@ -361,4 +380,16 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string LABEL_SYNC_EXTERNAL_MODE_HOST = "Node IP/Hostname:";
         public string LABEL_SYNC_EXTERNAL_MODE_PORT = "Node API Port:";
     }
+
+    /// <summary>
+    /// Wallet setup step final form.
+    /// </summary>
+    public class ClassWalletSetupStepFinalFormLanguage
+    {
+        public string LABEL_DONATION = "Your wallet has been setup successfully.\nPlease do not hesitate to donate";
+        public string LABEL_COPY_ADDRESS_EVENT = "copied.";
+        public string TEXT_SPACE = " ";
+    }
+
+
 }

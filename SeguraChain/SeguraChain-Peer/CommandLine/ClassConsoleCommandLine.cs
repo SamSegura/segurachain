@@ -17,6 +17,7 @@ using SeguraChain_Lib.Instance.Node.Network.Database;
 using SeguraChain_Lib.Instance.Node.Network.Database.Manager;
 using SeguraChain_Lib.Instance.Node.Network.Enum.Manage;
 using SeguraChain_Lib.Log;
+using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
 using SeguraChain_Peer.Mining.Instance;
 
@@ -182,13 +183,9 @@ namespace SeguraChain_Peer.CommandLine
                                     if (blockchainNetworkStatsObjectObject != null)
                                     {
                                         if (blockchainNetworkStatsObjectObject.LastNetworkBlockHeight > 0)
-                                        {
                                             ClassLog.SimpleWriteLine("Current Last Network Block Height: " + blockchainNetworkStatsObjectObject.LastNetworkBlockHeight);
-                                        }
                                         else
-                                        {
                                             ClassLog.SimpleWriteLine("In research to get some peers to start the sync of your node..", ConsoleColor.Yellow);
-                                        }
                                     }
                                 }
 
@@ -209,29 +206,18 @@ namespace SeguraChain_Peer.CommandLine
                                         {
 
                                             if (ClassSovereignUpdateDatabase.RegisterSovereignUpdateObject(sovereignUpdateObject))
-                                            {
                                                 ClassLog.SimpleWriteLine("Sovereign Update type: " + sovereignEnumUpdateType + " is valid and has been registered.", ConsoleColor.Green);
-
-                                            }
                                             else
-                                            {
                                                 ClassLog.SimpleWriteLine("Can't save the sovereign update: " + sovereignUpdateObject.SovereignUpdateHash + " into the database, this one is already registered.", ConsoleColor.Yellow);
-                                            }
                                         }
                                         else
-                                        {
                                             ClassLog.SimpleWriteLine("The check of the sovereign update build return an error: " + sovereignUpdateCheck, ConsoleColor.Red);
-                                        }
                                     }
                                     else
-                                    {
                                         ClassLog.SimpleWriteLine("Build sovereign update failed. The object is null.", ConsoleColor.Red);
-                                    }
                                 }
                                 else
-                                {
                                     ClassLog.SimpleWriteLine("Build sovereign update failed.", ConsoleColor.Red);
-                                }
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.ShowPeerListSeedRankCommand:
@@ -240,82 +226,70 @@ namespace SeguraChain_Peer.CommandLine
                                 {
                                     ClassLog.SimpleWriteLine("Total numeric public key peer(s) with the Seed Node rank: " + ClassSovereignUpdateDatabase.DictionarySortedSovereignUpdateList[ClassSovereignEnumUpdateType.SOVEREIGN_SEED_NODE_GRANT_RANK_UPDATE].Count);
 
-                                    List<string> keyList = new List<string>(ClassPeerDatabase.DictionaryPeerDataObject.Keys);
-
-                                    foreach (var peerIp in keyList)
+                                    using (DisposableList<string> peerList = new DisposableList<string>(false, 0, ClassPeerDatabase.DictionaryPeerDataObject.Keys.ToList()))
                                     {
-                                        if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(peerIp))
+                                        if (peerList.Count > 0)
                                         {
-                                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Count > 0)
+                                            foreach (var peerIp in peerList.GetList)
                                             {
-                                                foreach (string peerUniqueId in ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Keys.ToArray())
+                                                if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(peerIp))
                                                 {
-                                                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
+                                                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Count > 0)
                                                     {
-                                                        if (ClassPeerCheckManager.PeerHasSeedRank(peerIp, peerUniqueId, out var numericPublicKey, out var timestampRankDelay))
+                                                        foreach (string peerUniqueId in ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Keys.ToArray())
                                                         {
-                                                            ClassLog.SimpleWriteLine("Peer: " + peerIp + " | Unique ID: "+peerUniqueId+" | Numeric Public Key: " + numericPublicKey + " | Rank valid until: " + ClassUtility.GetDatetimeFromTimestamp(timestampRankDelay));
+                                                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
+                                                            {
+                                                                if (ClassPeerCheckManager.PeerHasSeedRank(peerIp, peerUniqueId, out var numericPublicKey, out var timestampRankDelay))
+                                                                    ClassLog.SimpleWriteLine("Peer: " + peerIp + " | Unique ID: " + peerUniqueId + " | Numeric Public Key: " + numericPublicKey + " | Rank valid until: " + ClassUtility.GetDatetimeFromTimestamp(timestampRankDelay));
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
+                                        else
+                                            ClassLog.SimpleWriteLine("You have any peer listed.", ConsoleColor.Yellow);
                                     }
-
-                                    // Clean up.
-                                    keyList.Clear();
                                 }
                                 else
-                                {
                                     ClassLog.SimpleWriteLine("Their is any peer with the Seed Node rank.", ConsoleColor.Yellow);
-                                }
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.ShowPeerListCommand:
                             {
                                 if (ClassPeerDatabase.DictionaryPeerDataObject.Count > 0)
                                 {
-                                    List<string> keyList = new List<string>(ClassPeerDatabase.DictionaryPeerDataObject.Keys);
-
-                                    if (keyList.Count > 0)
+                                    using (DisposableList<string> peerList = new DisposableList<string>(false, 0, ClassPeerDatabase.DictionaryPeerDataObject.Keys.ToList()))
                                     {
-
-                                        foreach (var peerIp in keyList)
+                                        if (peerList.Count > 0)
                                         {
-                                            if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(peerIp))
+                                            foreach (var peerIp in peerList.GetList)
                                             {
-                                                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Count > 0)
+                                                if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(peerIp))
                                                 {
-                                                    foreach (string peerUniqueId in ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Keys.ToArray())
+                                                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Count > 0)
                                                     {
-                                                        if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
+                                                        foreach (string peerUniqueId in ClassPeerDatabase.DictionaryPeerDataObject[peerIp].Keys.ToArray())
                                                         {
-                                                            if (ClassPeerCheckManager.PeerHasSeedRank(peerIp, peerUniqueId, out _, out var timestampRankDelay))
+                                                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIsPublic)
                                                             {
-                                                                ClassLog.SimpleWriteLine("Peer: " + peerIp + ":" + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort + " | Status: " + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus + " | Rank: Seed | Rank valid until: " + ClassUtility.GetDatetimeFromTimestamp(timestampRankDelay));
-                                                            }
-                                                            else
-                                                            {
-                                                                ClassLog.SimpleWriteLine("Peer: " + peerIp + ":" + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort + " | Status: " + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus + " | Rank: Normal.");
+                                                                if (ClassPeerCheckManager.PeerHasSeedRank(peerIp, peerUniqueId, out _, out var timestampRankDelay))
+                                                                    ClassLog.SimpleWriteLine("Peer: " + peerIp + ":" + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort + " | Status: " + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus + " | Rank: Seed | Rank valid until: " + ClassUtility.GetDatetimeFromTimestamp(timestampRankDelay));
+                                                                else
+                                                                    ClassLog.SimpleWriteLine("Peer: " + peerIp + ":" + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort + " | Status: " + ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus + " | Rank: Normal.");
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
-
-                                        // Clean up.
-                                        keyList.Clear();
-                                    }
-                                    else
-                                    {
-                                        ClassLog.SimpleWriteLine("You have any peer listed.", ConsoleColor.Yellow);
+                                        else
+                                            ClassLog.SimpleWriteLine("You have any peer listed.", ConsoleColor.Yellow);
                                     }
                                 }
                                 else
-                                {
                                     ClassLog.SimpleWriteLine("Their is any peer registered.", ConsoleColor.Yellow);
-                                }
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.ShowLogLevelCommand:
@@ -328,18 +302,12 @@ namespace SeguraChain_Peer.CommandLine
                                 if (splitCommandLine.Length >= 2)
                                 {
                                     if (int.TryParse(splitCommandLine[1], out var logLevel))
-                                    {
                                         ClassLog.ChangeLogLevel(logLevel);
-                                    }
                                     else
-                                    {
-                                        ClassLog.SimpleWriteLine("Argument invalid.");
-                                    }
+                                        ClassLog.SimpleWriteLine("Argument invalid.", ConsoleColor.Red);
                                 }
                                 else
-                                {
-                                    ClassLog.SimpleWriteLine("Empty argument.");
-                                }
+                                    ClassLog.SimpleWriteLine("Not enough argument.", ConsoleColor.Red);
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.ShowLogWriteLevelCommand:
@@ -352,18 +320,12 @@ namespace SeguraChain_Peer.CommandLine
                                 if (splitCommandLine.Length >= 2)
                                 {
                                     if (int.TryParse(splitCommandLine[1], out var logWriteLevel))
-                                    {
                                         ClassLog.ChangeLogWriteLevel(logWriteLevel);
-                                    }
                                     else
-                                    {
-                                        ClassLog.SimpleWriteLine("Argument invalid.");
-                                    }
+                                        ClassLog.SimpleWriteLine("Argument invalid.", ConsoleColor.Red);
                                 }
                                 else
-                                {
-                                    ClassLog.SimpleWriteLine("Not enough argument(s).");
-                                }
+                                    ClassLog.SimpleWriteLine("Not enough argument.", ConsoleColor.Red);
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.RegisterPeerCommand:
@@ -383,43 +345,27 @@ namespace SeguraChain_Peer.CommandLine
                                                         ClassPeerEnumInsertStatus insertStatus = ClassPeerDatabase.InputPeer(splitCommandLine[1], peerPort, splitCommandLine[3]);
 
                                                         if (insertStatus == ClassPeerEnumInsertStatus.PEER_INSERT_SUCCESS)
-                                                        {
                                                             ClassLog.SimpleWriteLine("Peer " + splitCommandLine[1] + ":" + peerPort + " successfully inserted.", ConsoleColor.Green);
-                                                        }
                                                         else
-                                                        {
                                                             ClassLog.SimpleWriteLine("Insert peer failed. Result: " + insertStatus, ConsoleColor.Red);
-                                                        }
                                                     }
                                                     else
-                                                    {
                                                         ClassLog.SimpleWriteLine("Invalid Peer Unique ID argument.", ConsoleColor.Red);
-                                                    }
                                                 }
                                                 else
-                                                {
                                                     ClassLog.SimpleWriteLine("Invalid Peer Port argument.", ConsoleColor.Red);
-                                                }
                                             }
                                             else
-                                            {
                                                 ClassLog.SimpleWriteLine("Empty Peer Unique ID argument.", ConsoleColor.Red);
-                                            }
                                         }
                                         else
-                                        {
                                             ClassLog.SimpleWriteLine("Empty Peer Port argument.", ConsoleColor.Red);
-                                        }
                                     }
                                     else
-                                    {
                                         ClassLog.SimpleWriteLine("Empty Peer IP argument.", ConsoleColor.Red);
-                                    }
                                 }
                                 else
-                                {
-                                    ClassLog.SimpleWriteLine("Not enough argument(s).", ConsoleColor.Red);
-                                }
+                                    ClassLog.SimpleWriteLine("Not enough argument.", ConsoleColor.Red);
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.CloseActivePeerConnection:
@@ -444,12 +390,14 @@ namespace SeguraChain_Peer.CommandLine
                                 {
                                     if (!splitCommandLine[1].IsNullOrEmpty(out _))
                                     {
-                                        if (ClassBase58.DecodeWithCheckSum(splitCommandLine[1], true) != null)
+                                        string walletAddress = splitCommandLine[1];
+
+                                        if (ClassBase58.DecodeWithCheckSum(walletAddress, true) != null)
                                         {
                                             ClassLog.SimpleWriteLine("Calculate confirmed balance, please wait a moment..");
 
 
-                                            ClassBlockchainWalletBalanceCalculatedObject resultBalance = await ClassBlockchainStats.GetWalletBalanceFromTransactionAsync(splitCommandLine[1], ClassBlockchainStats.GetLastBlockHeight(), true, true, false, true, null);
+                                            ClassBlockchainWalletBalanceCalculatedObject resultBalance = await ClassBlockchainStats.GetWalletBalanceFromTransactionAsync(walletAddress, ClassBlockchainStats.GetLastBlockHeight(), true, false, false, true, new CancellationTokenSource());
 
                                             decimal walletBalanceDecimalsCalculated = 0;
                                             decimal walletPendingBalanceDecimalsCalculated = 0;
@@ -459,18 +407,16 @@ namespace SeguraChain_Peer.CommandLine
                                                 walletPendingBalanceDecimalsCalculated = (decimal)resultBalance.WalletPendingBalance / BlockchainSetting.CoinDecimal;
                                             }
 
-                                            ClassLog.SimpleWriteLine("Confirmed Wallet Balance of " + splitCommandLine[1] + " is: " + walletBalanceDecimalsCalculated.ToString("N" + BlockchainSetting.CoinDecimalNumber, CultureInfo.InvariantCulture) + " " + BlockchainSetting.CoinMinName + ".");
-                                            ClassLog.SimpleWriteLine("Pending Wallet Balance of " + splitCommandLine[1] + " is: " + walletPendingBalanceDecimalsCalculated.ToString("N" + BlockchainSetting.CoinDecimalNumber, CultureInfo.InvariantCulture) + " " + BlockchainSetting.CoinMinName + ".");
+                                            ClassLog.SimpleWriteLine("Confirmed Wallet Balance of " + walletAddress + " is: " + walletBalanceDecimalsCalculated.ToString("N" + BlockchainSetting.CoinDecimalNumber, CultureInfo.InvariantCulture) + " " + BlockchainSetting.CoinMinName + ".");
+                                            ClassLog.SimpleWriteLine("Pending Wallet Balance of " + walletAddress + " is: " + walletPendingBalanceDecimalsCalculated.ToString("N" + BlockchainSetting.CoinDecimalNumber, CultureInfo.InvariantCulture) + " " + BlockchainSetting.CoinMinName + ".");
                                         }
                                         else
-                                        {
-                                            ClassLog.SimpleWriteLine(splitCommandLine[1] + " is not a valid wallet address.", ConsoleColor.Red);
-                                        }
+                                            ClassLog.SimpleWriteLine(walletAddress + " is not a valid wallet address.", ConsoleColor.Red);
+
+                                        walletAddress.Clear();
                                     }
                                     else
-                                    {
                                         ClassLog.SimpleWriteLine("Empty wallet address.", ConsoleColor.Red);
-                                    }
                                 }
                             }
                             break;
@@ -499,19 +445,13 @@ namespace SeguraChain_Peer.CommandLine
                                             }
                                         }
                                         else
-                                        {
                                             ClassLog.SimpleWriteLine("Invalid wallet address argument.", ConsoleColor.Yellow);
-                                        }
                                     }
                                     else
-                                    {
                                         ClassLog.SimpleWriteLine("Invalid total threads argument.", ConsoleColor.Yellow);
-                                    }
                                 }
                                 else
-                                {
-                                    ClassLog.SimpleWriteLine("Not enough arguments.", ConsoleColor.Yellow);
-                                }
+                                    ClassLog.SimpleWriteLine("Not enough argument.", ConsoleColor.Red);
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.StopSoloMining:
@@ -524,14 +464,10 @@ namespace SeguraChain_Peer.CommandLine
                                         ClassLog.SimpleWriteLine("Solo mining stopped.", ConsoleColor.DarkRed);
                                     }
                                     else
-                                    {
                                         ClassLog.SimpleWriteLine("Solo mining already stopped.", ConsoleColor.Yellow);
-                                    }
                                 }
                                 else
-                                {
                                     ClassLog.SimpleWriteLine("No solo mining instance has been started.", ConsoleColor.Yellow);
-                                }
                             }
                             break;
                         case ClassConsoleCommandLineEnumeration.ShowMiningStats:
@@ -585,14 +521,10 @@ namespace SeguraChain_Peer.CommandLine
                     ClassLog.SimpleWriteLine("Total Hashes: " + _soloMiningInstance.GetTotalHashes);
                 }
                 else
-                {
                     ClassLog.SimpleWriteLine("Solo mining is stopped.", ConsoleColor.Yellow);
-                }
             }
             else
-            {
                 ClassLog.SimpleWriteLine("No solo mining instance has been started.", ConsoleColor.Yellow);
-            }
         }
 
         #endregion

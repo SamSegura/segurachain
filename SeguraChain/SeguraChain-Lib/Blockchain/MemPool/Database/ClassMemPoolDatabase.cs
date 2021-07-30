@@ -221,10 +221,12 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
         /// <param name="transactionHash"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        public static async Task<ClassTransactionObject> GetMemPoolTxFromTransactionHash(string transactionHash, CancellationTokenSource cancellation)
+        public static async Task<ClassTransactionObject> GetMemPoolTxFromTransactionHash(string transactionHash, long blockHeightTransaction, CancellationTokenSource cancellation)
         {
             ClassTransactionObject transactionObject = null;
-            long blockHeightTransaction = ClassTransactionUtility.GetBlockHeightFromTransactionHash(transactionHash);
+
+            if (blockHeightTransaction < BlockchainSetting.GenesisBlockHeight)
+               blockHeightTransaction = ClassTransactionUtility.GetBlockHeightFromTransactionHash(transactionHash);
 
             if (blockHeightTransaction > BlockchainSetting.GenesisBlockHeight)
             {
@@ -238,18 +240,14 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
                     if (_dictionaryMemPoolTransactionObjects.ContainsKey(blockHeightTransaction))
                     {
                         if (_dictionaryMemPoolTransactionObjects[blockHeightTransaction].ContainsKey(transactionHash))
-                        {
                             transactionObject = _dictionaryMemPoolTransactionObjects[blockHeightTransaction][transactionHash].TransactionObject;
-                        }
                     }
 
                 }
                 finally
                 {
                     if (semaphoreUsed)
-                    {
                         _semaphoreMemPoolAccess.Release();
-                    }
                 }
             }
 

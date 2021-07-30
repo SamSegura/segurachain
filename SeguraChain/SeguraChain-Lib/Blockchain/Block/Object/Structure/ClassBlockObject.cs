@@ -5,14 +5,8 @@ using System.Numerics;
 using System.Threading;
 using Newtonsoft.Json;
 using SeguraChain_Lib.Blockchain.Block.Enum;
-using SeguraChain_Lib.Blockchain.Block.Function;
-using SeguraChain_Lib.Blockchain.Mining.Enum;
-using SeguraChain_Lib.Blockchain.Mining.Function;
 using SeguraChain_Lib.Blockchain.Mining.Object;
 using SeguraChain_Lib.Blockchain.Setting;
-using SeguraChain_Lib.Blockchain.Transaction.Enum;
-using SeguraChain_Lib.Blockchain.Transaction.Utility;
-using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 {
@@ -58,6 +52,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public ClassMiningPoWaCShareObject BlockMiningPowShareUnlockObject;
         public long TimestampCreate;
         public long TimestampFound;
+
         public string BlockWalletAddressWinner
         {
             get

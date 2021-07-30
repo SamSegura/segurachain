@@ -1,4 +1,5 @@
-﻿using System;using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 using System.Threading;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;

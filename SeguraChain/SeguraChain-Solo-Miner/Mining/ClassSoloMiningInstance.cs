@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Mining.Function;
 using SeguraChain_Lib.Blockchain.Mining.Object;
@@ -59,7 +57,7 @@ namespace SeguraChain_Solo_Miner.Mining
         /// </summary>
         private int[] _totalHash;
         private BigInteger[] _totalHashes;
-        private int[] _totalShare;
+        private long[] _totalShare;
         private List<byte[]> _pocRandomData;
 
         /// <summary>
@@ -84,21 +82,16 @@ namespace SeguraChain_Solo_Miner.Mining
         private void InitializeMiningInstance()
         {
             if (_currentMiningPocSettingObject == null)
-            {
                 _currentMiningPocSettingObject = _miningNetworkStatsObject.GetCurrentMiningPoWacSetting();
-            }
 
             if (_miningTasks == null)
-            {
                 _miningTasks = new Task[_soloMinerSettingObject.SoloMinerThreadSetting.max_thread];
-            }
             else
-            {
                 DestroyMiningInstance();
-            }
+
             _pocRandomData = new List<byte[]>();
             _totalHashes = new BigInteger[_soloMinerSettingObject.SoloMinerThreadSetting.max_thread];
-            _totalShare = new int[_soloMinerSettingObject.SoloMinerThreadSetting.max_thread];
+            _totalShare = new long[_soloMinerSettingObject.SoloMinerThreadSetting.max_thread];
             _totalHash = new int[_soloMinerSettingObject.SoloMinerThreadSetting.max_thread];
             _nextNonce = new long[_soloMinerSettingObject.SoloMinerThreadSetting.max_thread];
             _maxRangeNonce = new long[_soloMinerSettingObject.SoloMinerThreadSetting.max_thread];
@@ -173,9 +166,8 @@ namespace SeguraChain_Solo_Miner.Mining
             {
                 BigInteger totalHashes = 0;
                 foreach (var total in _totalHashes)
-                {
                     totalHashes += total;
-                }
+
                 return totalHashes;
             }
         }
@@ -183,15 +175,14 @@ namespace SeguraChain_Solo_Miner.Mining
         /// <summary>
         /// Return the total amount of share.
         /// </summary>
-        public int GetTotalShare
+        public long GetTotalShare
         {
             get
             {
-                int totalShare = 0;
+                long totalShare = 0;
                 foreach (var total in _totalShare)
-                {
                     totalShare += total;
-                }
+
                 return totalShare;
             }
         }
@@ -206,9 +197,7 @@ namespace SeguraChain_Solo_Miner.Mining
         public void StartMining()
         {
             if (GetMiningStatus)
-            {
                 StopMining();
-            }
 
             InitializeMiningInstance();
             _cancellationTokenMiningTasks = new CancellationTokenSource();
@@ -216,9 +205,7 @@ namespace SeguraChain_Solo_Miner.Mining
             UpdateMiningHashrate();
 
             for (int i = 0; i < _soloMinerSettingObject.SoloMinerThreadSetting.max_thread; i++)
-            {
                 RunMiningTask(i);
-            }
         }
 
         /// <summary>
@@ -234,9 +221,7 @@ namespace SeguraChain_Solo_Miner.Mining
             try
             {
                 if (!_cancellationTokenMiningTasks.IsCancellationRequested)
-                {
                     _cancellationTokenMiningTasks.Cancel();
-                }
             }
             catch
             {
@@ -306,7 +291,6 @@ namespace SeguraChain_Solo_Miner.Mining
                                     }
 
                                     #endregion
-
 
                                     _currentBlockHeight = lastBlockHeight;
                                     GetSetMiningPauseStatus = false;
@@ -386,12 +370,9 @@ namespace SeguraChain_Solo_Miner.Mining
                             if (_currentMiningPocSettingObject != null)
                             {
 
-
                                 // Put the thread in pause pending an update.
                                 while (GetSetMiningPauseStatus)
-                                {
                                     await Task.Delay(100, _cancellationTokenMiningTasks.Token);
-                                }
 
                                 // Restart explored nonces, and generate a new random PoC data.
                                 if (_nextNonce[idThread] >= _currentMiningPocSettingObject.PocShareNonceMax || _nextNonce[idThread] >= _maxRangeNonce[idThread])
@@ -402,9 +383,7 @@ namespace SeguraChain_Solo_Miner.Mining
                                 }
                                 // Increase nonce.
                                 else
-                                {
                                     _nextNonce[idThread]++;
-                                }
 
                                 // Intialize PoC random data if null.
                                 if (_pocRandomData[idThread] == null)
@@ -412,11 +391,9 @@ namespace SeguraChain_Solo_Miner.Mining
                                     timestampShare = ClassUtility.GetCurrentTimestampInSecond();
                                     _pocRandomData[idThread] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, _currentBlockHeight, timestampShare, _walletAddressDecoded, _nextNonce[idThread], out _);
                                 }
+                                // Update the timestamp share data of the random poc data.
                                 else
-                                {
-                                    // Update the timestamp share data of the random poc data.
                                     _pocRandomData[idThread] = ClassMiningPoWaCUtility.UpdateRandomPocDataTimestampAndBlockHeightTarget(_currentMiningPocSettingObject, _pocRandomData[idThread], _currentBlockHeight, _nextNonce[idThread], out timestampShare);
-                                }
 
                                 // Build a poc share.
                                 ClassMiningPoWaCShareObject pocShareObject = ClassMiningPoWaCUtility.DoPoWaCShare(_currentMiningPocSettingObject, _soloMinerSettingObject.SoloMinerWalletSetting.wallet_address, _currentBlockHeight, _currentBlockHash, _currentBlockDifficulty, _previousBlockTransactionCount, _previousFinalBlockTransactionHashKey, _pocRandomData[idThread], _nextNonce[idThread], timestampShare, _sha3512Mining[idThread], _walletAddressDecoded);
@@ -428,17 +405,13 @@ namespace SeguraChain_Solo_Miner.Mining
                                     _totalHash[idThread]++;
                                     _totalShare[idThread]++;
                                     if (pocShareObject.PoWaCShareDifficulty > 0)
-                                    {
                                         _totalHashes[idThread] += pocShareObject.PoWaCShareDifficulty;
-                                    }
 
                                     #endregion
 
                                     // Submit the share if this one reach the difficulty of the block or if this one is higher.
                                     if (pocShareObject.PoWaCShareDifficulty >= _currentBlockDifficulty)
-                                    {
                                         _miningNetworkFunction.UnlockCurrentBlockTemplate(pocShareObject);
-                                    }
                                 }
                             }
                         }

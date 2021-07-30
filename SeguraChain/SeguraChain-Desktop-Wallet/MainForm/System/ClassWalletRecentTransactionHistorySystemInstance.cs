@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SeguraChain_Desktop_Wallet.Common;
-using SeguraChain_Desktop_Wallet.Components;
 using SeguraChain_Desktop_Wallet.MainForm.Object;
 using SeguraChain_Desktop_Wallet.Properties;
 using SeguraChain_Desktop_Wallet.Settings.Enum;
@@ -229,7 +228,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                     {
                         if (!walletDataObject.WalletEnableRescan)
                         {
-                            if (walletDataObject.WalletLastBlockHeightSynced >= await ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(cancellation))
+                            if (walletDataObject.WalletLastBlockHeightSynced >= await ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightUnlockedSynced(cancellation, true))
                             {
                                 string walletAddress = walletDataObject.WalletAddress;
                                 long walletLastBlockHeightSynced = walletDataObject.WalletLastBlockHeightSynced;
@@ -380,7 +379,7 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                                     {
                                         if (countTransactionIndexed > 0)
                                         {
-                                            long blockHeightStart = ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced();
+                                            long blockHeightStart = await ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced(cancellation, true);
                                             while (blockHeightStart >= 0)
                                             {
                                                 cancellation?.Token.ThrowIfCancellationRequested();

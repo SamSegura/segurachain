@@ -67,6 +67,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         private void ClassWalletCreateInternalForm_Load(object sender, EventArgs e)
         {
             tabControlCreateWallet.ItemSize = new Size(tabControlCreateWallet.ItemSize.Width, 1);
+            Height -= 10;
             InitializeLanguageContentText();
             ChangeTabPage();
             if(_import)
@@ -86,13 +87,9 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
             if (_currentStep == ClassWalletCreateEnumMenu.WALLET_CREATE_FINAL_STEP && !_saved)
             {
                 if (MessageBox.Show(_walletCreateFormLanguageObject.MESSAGEBOX_WALLET_CREATE_ON_CLOSING_LAST_STEP_TEXT, _walletCreateFormLanguageObject.MESSAGEBOX_WALLET_CREATE_ON_CLOSING_LAST_STEP_TITLE_TEXT, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                {
                     e.Cancel = true;
-                }
                 else
-                {
                     e.Cancel = false;
-                }
             }
         }
 
@@ -273,9 +270,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         private void textBoxCreateWalletPassword_TextChanged(object sender, EventArgs e)
         {
             if (_currentStep == ClassWalletCreateEnumMenu.WALLET_CREATE_WRITE_PASSWORD)
-            {
                 _passwordSelected = textBoxCreateWalletPassword.Text;
-            }
         }
 
         /// <summary>
@@ -451,9 +446,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Create
         private void tabControlCreateWallet_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (tabControlCreateWallet.SelectedIndex != (int)_currentStep)
-            {
                 tabControlCreateWallet.SelectedTab = tabControlCreateWallet.TabPages[(int)_currentStep];
-            }
         }
 
         /// <summary>

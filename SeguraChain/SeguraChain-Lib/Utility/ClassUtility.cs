@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -997,9 +995,7 @@ namespace SeguraChain_Lib.Utility
             foreach (var character in base58String)
             {
                 if (ClassBase58.CharacterIsInsideBase58CharacterList(character))
-                {
                     base58StringCopy += character;
-                }
 
                 if (isWalletAddress)
                 {
@@ -1022,9 +1018,7 @@ namespace SeguraChain_Lib.Utility
             if (!isWalletAddress)
             {
                 if (ClassBase58.DecodeWithCheckSum(base58StringCopy, false) != null)
-                {
                     return base58StringCopy;
-                }
             }
 
             return string.Empty;
@@ -1040,9 +1034,8 @@ namespace SeguraChain_Lib.Utility
             string copiedString = string.Empty;
 
             foreach (char character in srcString)
-            {
                 copiedString += character;
-            }
+
             return copiedString;
         }
 
@@ -1057,9 +1050,7 @@ namespace SeguraChain_Lib.Utility
                 fixed (char* ptr = s)
                 {
                     for (int i = 0; i < s.Length; i++)
-                    {
                         ptr[i] = '\0';
-                    }
                 }
             }
         }
@@ -1082,9 +1073,7 @@ namespace SeguraChain_Lib.Utility
                 foreach (var word in src.Split(new[] { seperatorStr }, StringSplitOptions.None))
                 {
                     if (!word.IsNullOrEmpty(out string wordTrimmed))
-                    {
                         listSplitted.Add(wordTrimmed);
-                    }
                 }
 
                 #region Old split way. Too slow, around 236ms per block without tx's splitted.
@@ -1173,6 +1162,7 @@ namespace SeguraChain_Lib.Utility
 
             while (char.IsWhiteSpace(str[endIndex]))
                 endIndex -= 1;
+
             endIndex += 1;
 
             return str.Substring(startIndex, (endIndex - startIndex));
@@ -1249,8 +1239,9 @@ namespace SeguraChain_Lib.Utility
         /// <param name="packetBytesToSend"></param>
         /// <param name="cancellation"></param>
         /// <param name="packetMaxSize"></param>
+        /// <param name="noFlush">No flush network stream.</param>
         /// <returns></returns>
-        public static async Task<bool> TrySendSplittedPacket(this NetworkStream networkStream, byte[] packetBytesToSend, CancellationTokenSource cancellation, int packetMaxSize)
+        public static async Task<bool> TrySendSplittedPacket(this NetworkStream networkStream, byte[] packetBytesToSend, CancellationTokenSource cancellation, int packetMaxSize, bool singleWrite = false)
         {
             bool sendStatus = true;
             try
@@ -1258,7 +1249,7 @@ namespace SeguraChain_Lib.Utility
                 if (packetBytesToSend.Length > 0)
                 {
 
-                    if (packetBytesToSend.Length >= packetMaxSize)
+                    if (packetBytesToSend.Length >= packetMaxSize && !singleWrite)
                     {
                         int packetLength = packetBytesToSend.Length;
                         int countPacketSendLength = 0;
@@ -1279,6 +1270,7 @@ namespace SeguraChain_Lib.Utility
                             Array.Copy(packetBytesToSend, countPacketSendLength, dataBytes, 0, packetSize);
 
                             await networkStream.WriteAsync(dataBytes, 0, dataBytes.Length, cancellation.Token);
+
                             await networkStream.FlushAsync(cancellation.Token);
 
                             countPacketSendLength += packetSize;
@@ -1290,6 +1282,7 @@ namespace SeguraChain_Lib.Utility
                     else
                     {
                         await networkStream.WriteAsync(packetBytesToSend, 0, packetBytesToSend.Length, cancellation.Token);
+
                         await networkStream.FlushAsync(cancellation.Token);
                     }
                 }

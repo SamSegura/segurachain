@@ -24,6 +24,9 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Object
         public bool WalletEnableRescan;
 
         [JsonIgnore]
+        public bool WalletOnSync;
+
+        [JsonIgnore]
         public bool WalletBalanceCalculated;
 
         [JsonIgnore]

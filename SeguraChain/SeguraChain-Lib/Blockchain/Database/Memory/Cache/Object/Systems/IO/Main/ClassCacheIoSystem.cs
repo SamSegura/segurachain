@@ -827,6 +827,42 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
         }
 
         /// <summary>
+        /// Retrieve every block transactions by a list of transaction hash a block height from the cache.
+        /// </summary>
+        /// <param name="listTransactionHash"></param>
+        /// <param name="blockHeight"></param>
+        /// <param name="keepAlive"></param>
+        /// <param name="cancellation"></param>
+        /// <returns></returns>
+        public async Task<List<ClassBlockTransaction>> GetListBlockTransactionFromListTransactionHashAndBlockHeightTarget(List<string> listTransactionHash, long blockHeight, bool keepAlive, CancellationTokenSource cancellationIoCache)
+        {
+            List<ClassBlockTransaction> listBlockTransaction = new List<ClassBlockTransaction>();
+
+
+            if (blockHeight >= BlockchainSetting.GenesisBlockHeight)
+            {
+
+                string ioFileName = GetIoFileNameFromBlockHeight(blockHeight);
+
+                if (_dictionaryCacheIoIndexObject.ContainsKey(ioFileName))
+                {
+                    ClassBlockObject blockObject = await _dictionaryCacheIoIndexObject[ioFileName].GetIoBlockDataFromBlockHeight(blockHeight, keepAlive, false, cancellationIoCache);
+
+                    if (blockObject != null)
+                    {
+                        foreach(string transactionHash in listTransactionHash)
+                        {
+                            if (blockObject.BlockTransactions.ContainsKey(transactionHash))
+                                listBlockTransaction.Add(blockObject.BlockTransactions[transactionHash].Clone());
+                        }
+                    }
+                }
+            }
+
+            return listBlockTransaction;
+        }
+
+        /// <summary>
         /// Insert or update a block transaction directly to the io cache system.
         /// </summary>
         /// <param name="transactionHash"></param>
@@ -1033,6 +1069,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
         /// <returns></returns>
         public long GetIoCacheSystemMemoryConsumption(CancellationTokenSource cancellation, out int totalBlockKeepAlive)
         {
+
             totalBlockKeepAlive = 0; // Default.
 
             if (_dictionaryCacheIoIndexObject.Count > 0)
@@ -1042,7 +1079,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
                 foreach (string ioFileName in _dictionaryCacheIoIndexObject.Keys.ToArray())
                 {
                     if (cancellation != null)
-                        cancellation.Token.ThrowIfCancellationRequested();
+                    {
+                        if (cancellation.IsCancellationRequested)
+                            break;
+                    }
 
                     totalMemoryUsagePendingCalculation += _dictionaryCacheIoIndexObject[ioFileName].GetIoMemoryUsage(cancellation, out int indexTotalBlockKeepAlive);
                     totalBlockKeepAlive += indexTotalBlockKeepAlive;
@@ -1050,6 +1090,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
 
                 _totalIoCacheSystemMemoryUsage = totalMemoryUsagePendingCalculation;
             }
+
 
             return _totalIoCacheSystemMemoryUsage;
         }

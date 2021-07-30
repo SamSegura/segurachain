@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
@@ -18,19 +19,18 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.TransactionHistory
         /// <summary>
         /// Transaction to show.
         /// </summary>
-        private ClassBlockTransaction _blockTransactionInformation;
+        private List<Tuple<bool, ClassBlockTransaction>> _blockTransactionInformationList;
         private ClassWalletTransactionHistoryInformationFormLanguage _walletTransactionHistoryInformationFormLanguage;
-        private bool _isMemPool;
+
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="blockTransaction"></param>
+        /// <param name="blockTransactionList"></param>
         /// <param name="isMemPool"></param>
-        public ClassWalletTransactionHistoryInformationInternalForm(ClassBlockTransaction blockTransaction, bool isMemPool)
+        public ClassWalletTransactionHistoryInformationInternalForm(List<Tuple<bool, ClassBlockTransaction>> blockTransactionList)
         {
-            _blockTransactionInformation = blockTransaction;
-            _isMemPool = isMemPool;
+            _blockTransactionInformationList = blockTransactionList;
             InitializeComponent();
         }
 
@@ -52,39 +52,54 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.TransactionHistory
             buttonTransactionHistoryInformationCopy.Text = _walletTransactionHistoryInformationFormLanguage.BUTTON_TRANSACTION_INFORMATION_COPY_TEXT;
             buttonTransactionHistoryInformationCopy = ClassGraphicsUtility.AutoResizeControlFromText<Button>(buttonTransactionHistoryInformationCopy);
 
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_BLOCK_HEIGHT_TEXT + _blockTransactionInformation.TransactionObject.BlockHeightTransaction + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_BLOCK_HEIGHT_TARGET_TEXT + _blockTransactionInformation.TransactionObject.BlockHeightTransactionConfirmationTarget + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_CONFIRMATIONS_COUNT_TEXT + _blockTransactionInformation.TransactionTotalConfirmation + @"/" + (_blockTransactionInformation.TransactionObject.BlockHeightTransactionConfirmationTarget - _blockTransactionInformation.TransactionObject.BlockHeightTransaction) + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_DATE_TEXT + ClassUtility.GetDatetimeFromTimestamp(_blockTransactionInformation.TransactionObject.TimestampSend).ToString(CultureInfo.CurrentUICulture) + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_SRC_WALLET_TEXT + _blockTransactionInformation.TransactionObject.WalletAddressSender + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_DST_WALLET_TEXT + _blockTransactionInformation.TransactionObject.WalletAddressReceiver + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_AMOUNT_TEXT + ClassTransactionUtility.GetFormattedAmountFromBigInteger(_blockTransactionInformation.TransactionObject.Amount) + @" " + BlockchainSetting.CoinMinName + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_FEE_TEXT + ClassTransactionUtility.GetFormattedAmountFromBigInteger(_blockTransactionInformation.TransactionObject.Fee) + @" " + BlockchainSetting.CoinMinName + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_HASH_TEXT + _blockTransactionInformation.TransactionObject.TransactionHash + Environment.NewLine);
-            richTextBoxTransactionInformations.AppendText(string.Format(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_SIZE_TEXT, _blockTransactionInformation.TransactionSize) + Environment.NewLine);
+            int countShowed = 0;
 
-            if (_isMemPool)
+            foreach (Tuple<bool, ClassBlockTransaction> blockTransactionTuple in _blockTransactionInformationList)
             {
-                richTextBoxTransactionInformationsNotes.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_IS_MEMPOOL_TEXT);
-                if (!_blockTransactionInformation.TransactionStatus)
+
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_BLOCK_HEIGHT_TEXT + blockTransactionTuple.Item2.TransactionObject.BlockHeightTransaction + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_BLOCK_HEIGHT_TARGET_TEXT + blockTransactionTuple.Item2.TransactionObject.BlockHeightTransactionConfirmationTarget + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_CONFIRMATIONS_COUNT_TEXT + blockTransactionTuple.Item2.TransactionTotalConfirmation + @"/" + (blockTransactionTuple.Item2.TransactionObject.BlockHeightTransactionConfirmationTarget - blockTransactionTuple.Item2.TransactionObject.BlockHeightTransaction) + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_DATE_TEXT + ClassUtility.GetDatetimeFromTimestamp(blockTransactionTuple.Item2.TransactionObject.TimestampSend).ToString(CultureInfo.CurrentUICulture) + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_SRC_WALLET_TEXT + blockTransactionTuple.Item2.TransactionObject.WalletAddressSender + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_DST_WALLET_TEXT + blockTransactionTuple.Item2.TransactionObject.WalletAddressReceiver + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_AMOUNT_TEXT + ClassTransactionUtility.GetFormattedAmountFromBigInteger(blockTransactionTuple.Item2.TransactionObject.Amount) + @" " + BlockchainSetting.CoinMinName + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_FEE_TEXT + ClassTransactionUtility.GetFormattedAmountFromBigInteger(blockTransactionTuple.Item2.TransactionObject.Fee) + @" " + BlockchainSetting.CoinMinName + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_HASH_TEXT + blockTransactionTuple.Item2.TransactionObject.TransactionHash + Environment.NewLine);
+                richTextBoxTransactionInformations.AppendText(string.Format(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_SIZE_TEXT, blockTransactionTuple.Item2.TransactionSize) + Environment.NewLine);
+
+                if (blockTransactionTuple.Item1)
                 {
-                    richTextBoxTransactionInformationsNotes.AppendText(Environment.NewLine);
-                    richTextBoxTransactionInformationsNotes.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_IS_INVALID_FROM_MEMPOOL_TEXT);
-                }
-            }
-            else
-            {
-                if (!_blockTransactionInformation.TransactionStatus)
-                {
-                    richTextBoxTransactionInformationsNotes.AppendText(Environment.NewLine);
-                    richTextBoxTransactionInformationsNotes.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_IS_INVALID_FROM_BLOCKCHAIN_TEXT);
+                    richTextBoxTransactionInformationsNotes.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_IS_MEMPOOL_TEXT);
+                    if (!blockTransactionTuple.Item2.TransactionStatus)
+                    {
+                        richTextBoxTransactionInformationsNotes.AppendText(Environment.NewLine);
+                        richTextBoxTransactionInformationsNotes.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_IS_INVALID_FROM_MEMPOOL_TEXT);
+                    }
                 }
                 else
                 {
-                    richTextBoxTransactionInformationsNotes.Hide();
-                    buttonTransactionHistoryInformationCopy.Location = new Point(buttonTransactionHistoryInformationCopy.Location.X, richTextBoxTransactionInformationsNotes.Location.Y);
-                    buttonTransactionHistoryInformationClose.Location = new Point(buttonTransactionHistoryInformationClose.Location.X, richTextBoxTransactionInformationsNotes.Location.Y);
-                    Height = richTextBoxTransactionInformationsNotes.Location.Y + richTextBoxTransactionInformationsNotes.Height + buttonTransactionHistoryInformationClose.Height;
+                    if (!blockTransactionTuple.Item2.TransactionStatus)
+                    {
+                        richTextBoxTransactionInformationsNotes.AppendText(Environment.NewLine);
+                        richTextBoxTransactionInformationsNotes.AppendText(_walletTransactionHistoryInformationFormLanguage.LINE_TRANSACTION_INFORMATION_IS_INVALID_FROM_BLOCKCHAIN_TEXT);
+                    }
+                    else
+                    {
+                        richTextBoxTransactionInformationsNotes.Hide();
+                        buttonTransactionHistoryInformationCopy.Location = new Point(buttonTransactionHistoryInformationCopy.Location.X, richTextBoxTransactionInformationsNotes.Location.Y);
+                        buttonTransactionHistoryInformationClose.Location = new Point(buttonTransactionHistoryInformationClose.Location.X, richTextBoxTransactionInformationsNotes.Location.Y);
+                        Height = richTextBoxTransactionInformationsNotes.Location.Y + richTextBoxTransactionInformationsNotes.Height + buttonTransactionHistoryInformationClose.Height;
+                    }
+                }
+
+                countShowed++;
+
+                if (countShowed < _blockTransactionInformationList.Count)
+                {
+                    richTextBoxTransactionInformations.AppendText("____________________________________________________________________________________");
+                    richTextBoxTransactionInformations.AppendText(Environment.NewLine);
+                    richTextBoxTransactionInformations.AppendText(Environment.NewLine);
                 }
             }
         }

@@ -104,5 +104,14 @@ namespace SeguraChain_Desktop_Wallet.Settings.Enum
         public static readonly SolidBrush DefaultPanelTransactionHistoryColumnButtonOrderColumnsSolidBrushSelected = new SolidBrush(Color.FromArgb(222, 206, 64));
 
         #endregion
+
+        #region Donations addresses settings.
+
+        public const string BitcoinAddress = "39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU";
+        public const string CurecoinAddress = "B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR";
+        public const string MoneroAddress = "44TSVkQ2k9TVns4AdKpP1bSPQ5ZgHU9sULZZwBrWye82fa6MpLgFFi66mjLMtQEZ7xPXGLz5LPktfH71tFqdX36HCbE3DvU";
+        public const string LitecoinAddress = "MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt";
+
+        #endregion
     }
 }

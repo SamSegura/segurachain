@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Log
@@ -125,14 +126,10 @@ namespace SeguraChain_Lib.Log
             _logListOnCollect = new Dictionary<ClassEnumLogLevelType, List<ClassLogObject>>();
 
             if (customLogFilePath.IsNullOrEmpty(out _))
-            {
                 customLogFilePath = LogFilePath;
-            }
 
             if (!Directory.Exists(customLogFilePath))
-            {
                 Directory.CreateDirectory(customLogFilePath);
-            }
 
             #region Initialize Filestream of logs.
             try
@@ -172,6 +169,7 @@ namespace SeguraChain_Lib.Log
                 Console.WriteLine("Can't initialize stream writer of log file. Exception: " + error.Message);
                 return false;
             }
+
             #endregion
 
             #region Initialize list(s) of type of logs.
@@ -203,9 +201,7 @@ namespace SeguraChain_Lib.Log
             _cancellationTokenSourceLogWriter = new CancellationTokenSource();
 
             foreach (ClassEnumLogLevelType logLevelType in _logListOnCollect.Keys)
-            {
                 WriteLogTask(logLevelType);
-            }
         }
 
         /// <summary>
@@ -222,38 +218,102 @@ namespace SeguraChain_Lib.Log
                     while (!_cancellationTokenSourceLogWriter.IsCancellationRequested)
                     {
                         bool enterList = false;
-                        List<ClassLogObject> logListToWrite = new List<ClassLogObject>();
-
-                        try
+                        using (DisposableList<ClassLogObject> logListToWrite = new DisposableList<ClassLogObject>())
                         {
 
                             try
                             {
 
-                                if (_logListOnCollect[logLevelType].Count >= MinLogToWrite)
+                                try
                                 {
 
-                                    // Clean safely the log list.
-                                    if (Monitor.TryEnter(_logListOnCollect[logLevelType]))
+                                    if (_logListOnCollect[logLevelType].Count >= MinLogToWrite)
                                     {
-                                        enterList = true;
 
-                                        // Get all log content retrieved to the concurrent bag of logs.
-                                        foreach (ClassLogObject logObject in _logListOnCollect[logLevelType].ToArray())
+                                        // Clean safely the log list.
+                                        if (Monitor.TryEnter(_logListOnCollect[logLevelType]))
                                         {
-                                            _cancellationTokenSourceLogWriter.Token.ThrowIfCancellationRequested();
-                                            logListToWrite.Add(logObject);
-                                            _logListOnCollect[logLevelType].Remove(logObject);
-                                            writtenLog++;
-                                        }
+                                            enterList = true;
 
-                                        if (writtenLog >= LogCapacityList)
+                                            // Get all log content retrieved to the concurrent bag of logs.
+                                            foreach (ClassLogObject logObject in _logListOnCollect[logLevelType].ToArray())
+                                            {
+                                                _cancellationTokenSourceLogWriter.Token.ThrowIfCancellationRequested();
+                                                logListToWrite.Add(logObject);
+                                                _logListOnCollect[logLevelType].Remove(logObject);
+                                                writtenLog++;
+                                            }
+
+                                            if (writtenLog >= LogCapacityList || _logListOnCollect[logLevelType].Count == 0)
+                                            {
+                                                _logListOnCollect[logLevelType].TrimExcess();
+                                                writtenLog = 0;
+                                            }
+
+                                            Monitor.PulseAll(_logListOnCollect[logLevelType]);
+                                        }
+                                    }
+                                }
+                                catch (Exception error)
+                                {
+                                    // The task is cancelled.
+                                    if (error is OperationCanceledException)
+                                    {
+                                        logListToWrite.Clear();
+                                        break;
+                                    }
+#if DEBUG
+                                    Debug.WriteLine("Error on saving log(s) of type: " + logLevelType + " into the log file target. Exception: " + error.Message);
+#endif
+                                    WriteLine("Error on saving log(s) of type: " + logLevelType + " into the log file target. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                                }
+                            }
+                            finally
+                            {
+                                if (enterList)
+                                    Monitor.Exit(_logListOnCollect[logLevelType]);
+                            }
+
+                            try
+                            {
+                                if (logListToWrite.Count > 0)
+                                {
+                                    // Join all log strings content has array of lines and write them directly by a single call.
+                                    foreach (ClassLogObject logLine in logListToWrite.GetList.OrderBy(x => x.Timestamp))
+                                    {
+                                        switch (logLevelType)
                                         {
-                                            _logListOnCollect[logLevelType].TrimExcess();
-                                            writtenLog = 0;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_GENERAL:
+                                                _logGeneralStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC:
+                                                _logPeerTaskSyncStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_PEER_SERVER:
+                                                _logPeerServerStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_API_SERVER:
+                                                _logApiServerStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_FIREWALL:
+                                                _logFirewallStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_WALLET:
+                                                _logWalletStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_MINING:
+                                                _logMiningStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_PEER_MANAGER:
+                                                _logPeerManagerStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION:
+                                                _logPeerTaskTransactionConfirmationStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
+                                            case ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER:
+                                                _logCacheManagerStreamWriter.WriteLine(logLine.LogContent);
+                                                break;
                                         }
-
-                                        Monitor.PulseAll(_logListOnCollect[logLevelType]);
                                     }
                                 }
                             }
@@ -261,87 +321,22 @@ namespace SeguraChain_Lib.Log
                             {
                                 // The task is cancelled.
                                 if (error is OperationCanceledException)
-                                {
-                                    logListToWrite.Clear();
                                     break;
-                                }
 #if DEBUG
                                 Debug.WriteLine("Error on saving log(s) of type: " + logLevelType + " into the log file target. Exception: " + error.Message);
 #endif
                                 WriteLine("Error on saving log(s) of type: " + logLevelType + " into the log file target. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
                             }
                         }
-                        finally
-                        {
-                            if (enterList)
-                            {
-                                Monitor.Exit(_logListOnCollect[logLevelType]);
-                            }
-                        }
 
                         try
                         {
-                            if (logListToWrite.Count > 0)
-                            {
-                                foreach (ClassLogObject logLine in logListToWrite.OrderBy(x => x.Timestamp))
-                                {
-                                    // Join all log strings content has array of lines and write them directly by a single call.
-                                    switch (logLevelType)
-                                    {
-                                        case ClassEnumLogLevelType.LOG_LEVEL_GENERAL:
-                                            _logGeneralStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC:
-                                            _logPeerTaskSyncStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_PEER_SERVER:
-                                            _logPeerServerStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_API_SERVER:
-                                            _logApiServerStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_FIREWALL:
-                                            _logFirewallStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_WALLET:
-                                            _logWalletStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_MINING:
-                                            _logMiningStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_PEER_MANAGER:
-                                            _logPeerManagerStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_TRANSACTION_CONFIRMATION:
-                                            _logPeerTaskTransactionConfirmationStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                        case ClassEnumLogLevelType.LOG_LEVEL_MEMORY_MANAGER:
-                                            _logCacheManagerStreamWriter.WriteLine(logLine.LogContent);
-                                            break;
-                                    }
-                                }
-
-                                // Clean up.
-                                logListToWrite.Clear();
-                                logListToWrite.TrimExcess();
-                            }
-
+                            await Task.Delay(TaskWriteLogInterval, _cancellationTokenSourceLogWriter.Token);
                         }
-                        catch (Exception error)
+                        catch
                         {
-                            // The task is cancelled.
-                            if (error is OperationCanceledException)
-                            {
-                                logListToWrite.Clear();
-                                break;
-                            }
-#if DEBUG
-                            Debug.WriteLine("Error on saving log(s) of type: " + logLevelType + " into the log file target. Exception: " + error.Message);
-#endif
-                            WriteLine("Error on saving log(s) of type: " + logLevelType + " into the log file target. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                            break;
                         }
-
-                        await Task.Delay(TaskWriteLogInterval, _cancellationTokenSourceLogWriter.Token);
                     }
                 }, _cancellationTokenSourceLogWriter.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
             }
@@ -432,13 +427,13 @@ namespace SeguraChain_Lib.Log
         public static void WriteLine(string logLine, ClassEnumLogLevelType logLevelType, ClassEnumLogWriteLevel writeLogLevel, bool hideText = false, ConsoleColor color = ConsoleColor.White)
         {
             logLine = DateTime.Now + " - " + logLine;
+
             if (!hideText)
             {
                 if (logLevelType == CurrentLogLevelType || logLevelType == ClassEnumLogLevelType.LOG_LEVEL_GENERAL)
-                {
                     SimpleWriteLine(logLine, color, true);
-                }
             }
+
             if ((int)writeLogLevel <= (int)CurrentWriteLogLevel)
             {
                 if (LogWriterInitialized)
@@ -471,9 +466,7 @@ namespace SeguraChain_Lib.Log
                         finally
                         {
                             if (enterList)
-                            {
                                 Monitor.Exit(_logListOnCollect[logLevelType]);
-                            }
                         }
                     }, CancellationToken.None, TaskCreationOptions.PreferFairness, TaskScheduler.Current).ConfigureAwait(false);
                 }
@@ -490,13 +483,10 @@ namespace SeguraChain_Lib.Log
         {
             Console.ForegroundColor = color;
             if (!haveDatetime)
-            {
                 Console.WriteLine(DateTime.Now + " - " + line);
-            }
             else
-            {
                 Console.WriteLine(line);
-            }
+
             Console.ForegroundColor = ConsoleColor.White;
         }
 

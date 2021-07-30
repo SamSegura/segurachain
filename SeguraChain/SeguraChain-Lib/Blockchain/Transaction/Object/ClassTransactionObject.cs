@@ -23,10 +23,12 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Object
         #endregion
 
         #region Informations of the wallet who send the transaction.
+
         public string WalletAddressSender;
         public string WalletPublicKeySender;
         public string TransactionSignatureSender; // Signature of the sender encoded into Base64 String.
         public string TransactionBigSignatureSender; // Big signature of the sender encoded into Base64 String.
+
         #endregion
 
         #region Informations of the wallet receiver, some informations are used for a transfer transaction type only.

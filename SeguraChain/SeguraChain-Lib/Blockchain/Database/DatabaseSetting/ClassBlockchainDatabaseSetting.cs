@@ -45,8 +45,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         public const long DefaultIoDiskCacheMaxBlockPerFile = 100; // Maximum of blocks per io cache file.
         public const long DefaultIoCacheDiskTransactionSizePerLine = 1_000_000_000;
         public const int DefaultIoCacheDiskMaxTransactionPerLineOnBlockStringToWrite = 1000; // A maximum of 1000 transactions per line per block. Example, 100 000 tx's are stored on a block, the result return 100 lines who contains 1000 transactions on each.
-        public const int DefaultIoCacheDiskGetCallBackToMemoryInterval = 10000; // Retrieve back data to the active memory from a IO cache file after multiple gets faster or equals of 30000ms
-        public const int DefaultIoCacheDiskMaxKeepAliveDataInMemoryTimeLimit = 10 * 1000; // Maximum of time to keep data in the active memory.
+        public const int DefaultIoCacheDiskMaxKeepAliveDataInMemoryTimeLimit = 600 * 1000; // Maximum of time to keep data in the active memory.
         public const double DefaultIoCacheDiskFullPurgeEnablePercentWrite = 50d; // If the amount of blocks to write on a io cache index file is above this percent, a full purge is done on the file. If not, new lines are written on the cache file.
         public const int DefaultIoCacheDiskWriteStreamBufferSize = 65535;
         public const int DefaultIoCacheDiskReadStreamBufferSize = 8192;
@@ -82,8 +81,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
         public const long DefaultGlobalMaxRangeReadBlockDataFromCache = 2; // The maximum of blocks to retrieve back from the cache by range.
         public const int DefaultGlobalTaskManageMemoryInterval = 60 * 1000;  // Task interval who manage the active memory.
         public const int DefaultGlobalObjectCacheUpdateLimitTime = 60; // Max time of update interval of an element. Once the average of time is reach, the element is inserted/updated from the active memory to the Cache.
-        public const int DefaultGlobalObjectExpirationMemoryCached = 120; // Delete an element permently of the active memory after 2 minutes of inactivity, insert/update the element removed from the active memory to the Cache.
-        public const int DefaultGlobalObjectExpiredFromCache = 15; // The element retrieved from the cache and put again to the active memory return back to the persistent cache after 15 seconds of inactivity.
+        public const int DefaultGlobalBlockActiveMemoryKeepAlive = 120; // Delete an element permently of the active memory after 2 minutes of inactivity, insert/update the element removed from the active memory to the Cache.
         public const int DefaultGlobalObjectLimitSimpleGetObjectFromCache = 5; // Once this limit is reach on a block height object target, this one is retrieved back to the active memory and call to do the same on the IO system to retrieve it faster later, until a purge is done.
     }
 
@@ -148,7 +146,6 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
                 IoCacheDiskMaxBlockPerFile = ClassBlockchainDatabaseDefaultSetting.DefaultIoDiskCacheMaxBlockPerFile,
                 IoCacheDiskMaxTransactionSizePerLine = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskTransactionSizePerLine,
                 IoCacheDiskMaxTransactionPerLineOnBlockStringToWrite = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskMaxTransactionPerLineOnBlockStringToWrite,
-                IoCacheDiskGetCallBackToMemoryInterval = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskGetCallBackToMemoryInterval,
                 IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskMaxKeepAliveDataInMemoryTimeLimit,
                 IoCacheDiskFullPurgeEnablePercentWrite = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskFullPurgeEnablePercentWrite,
                 IoCacheDiskWriteStreamBufferSize = ClassBlockchainDatabaseDefaultSetting.DefaultIoCacheDiskWriteStreamBufferSize,
@@ -178,8 +175,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
                 GlobalMaxRangeReadBlockDataFromCache = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalMaxRangeReadBlockDataFromCache,
                 GlobalTaskManageMemoryInterval = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalTaskManageMemoryInterval,
                 GlobalObjectCacheUpdateLimitTime = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalObjectCacheUpdateLimitTime,
-                GlobalObjectExpirationMemoryCached = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalObjectExpirationMemoryCached,
-                GlobalObjectExpiredFromCache = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalObjectExpiredFromCache,
+                GlobalBlockActiveMemoryKeepAlive = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalBlockActiveMemoryKeepAlive,
                 GlobalObjectLimitSimpleGetObjectFromCache = ClassBlockchainDatabaseDefaultSetting.DefaultGlobalObjectLimitSimpleGetObjectFromCache
             };
 
@@ -257,7 +253,6 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
             public long IoCacheDiskMaxBlockPerFile;
             public long IoCacheDiskMaxTransactionSizePerLine;
             public int IoCacheDiskMaxTransactionPerLineOnBlockStringToWrite;
-            public int IoCacheDiskGetCallBackToMemoryInterval; 
             public int IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit;
             public double IoCacheDiskFullPurgeEnablePercentWrite;
             public int IoCacheDiskWriteStreamBufferSize;
@@ -285,8 +280,7 @@ namespace SeguraChain_Lib.Blockchain.Database.DatabaseSetting
             public long GlobalMaxRangeReadBlockDataFromCache;
             public int GlobalTaskManageMemoryInterval;
             public int GlobalObjectCacheUpdateLimitTime;
-            public int GlobalObjectExpirationMemoryCached;
-            public int GlobalObjectExpiredFromCache;
+            public int GlobalBlockActiveMemoryKeepAlive;
             public int GlobalObjectLimitSimpleGetObjectFromCache;
         }
 

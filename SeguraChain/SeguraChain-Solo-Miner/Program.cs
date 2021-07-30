@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
 using System.Reflection;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Log;
@@ -28,7 +29,6 @@ namespace SeguraChain_Solo_Miner
         {
             AppDomain.CurrentDomain.UnhandledException += ClassUnhandledException.UnhandledException;
             Console.CancelKeyPress += Console_CancelKeyPress;
-
             ClassLog.SimpleWriteLine(BlockchainSetting.CoinName + " Solo Miner " + Assembly.GetExecutingAssembly().GetName().Version, ConsoleColor.Magenta);
 
             bool startSoloMinerStatus = false;
@@ -67,11 +67,6 @@ namespace SeguraChain_Solo_Miner
                 startSoloMinerStatus = LoadSoloMinerSetting(string.Empty);
             }
 
-            // Enable command line task.
-            if (startSoloMinerStatus)
-            {
-
-            }
         }
 
         /// <summary>

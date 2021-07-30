@@ -33,8 +33,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Object
         /// </summary>
         public string ListenIp;
         public int ListenPort;
-        public string ListenApiIp;
-        public int ListenApiPort;
+
         public bool PublicPeer;
         public bool IsDedicatedServer;
 
@@ -49,7 +48,6 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Object
         /// Limits.
         /// </summary>
         public int PeerMaxNodeConnectionPerIp;
-        public int PeerMaxApiConnectionPerIp;
         public int PeerMaxNoPacketPerConnectionOpened;
         public int PeerMaxInvalidPacket; // Banned after (x) invalid packets.
         public int PeerMaxDelayAwaitResponse;
@@ -83,13 +81,24 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Object
         public int PeerMaxThreadsPoolCompletionPort;
 
         /// <summary>
+        /// API.
+        /// </summary>
+        public string ListenApiIp;
+        public int ListenApiPort;
+        public int PeerMaxApiConnectionPerIp;
+        public int PeerApiMaxConnectionDelay;
+        public int PeerApiMaxEarlierPacketDelay;
+        public int PeerApiMaxPacketDelay;
+        public int PeerApiMaxRangeTransactionToSyncPerRequest;
+        public int PeerApiSemaphoreDelay;
+        public int PeerApiMaxRetryRequest;
+
+        /// <summary>
         /// Set default values.
         /// </summary>
         public ClassPeerNetworkSettingObject()
         {
-            ListenApiIp = BlockchainSetting.PeerDefaultApiIp;
             PeerMaxNodeConnectionPerIp = BlockchainSetting.PeerMaxNodeConnectionPerIp;
-            PeerMaxApiConnectionPerIp = BlockchainSetting.PeerMaxApiConnectionPerIp;
             PeerMaxNoPacketPerConnectionOpened = BlockchainSetting.PeerMaxNoPacketConnectionAttempt;
             PeerMaxInvalidPacket = BlockchainSetting.PeerMaxInvalidPacket;
             PeerMaxDelayAwaitResponse = BlockchainSetting.PeerMaxDelayAwaitResponse;
@@ -121,6 +130,17 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Object
             PeerMinThreadsPoolCompletionPort = PeerMinThreadsPool * PeerMinThreadsPool;
             PeerMaxThreadsPool = PeerMinThreadsPool * PeerMinThreadsPool;
             PeerMaxThreadsPoolCompletionPort = PeerMinThreadsPoolCompletionPort * PeerMinThreadsPoolCompletionPort;
+
+            // API Part.
+            ListenApiIp = BlockchainSetting.PeerDefaultApiIp;
+            ListenApiPort = BlockchainSetting.PeerDefaultApiPort;
+            PeerMaxApiConnectionPerIp = BlockchainSetting.PeerMaxApiConnectionPerIp;
+            PeerApiMaxConnectionDelay = BlockchainSetting.PeerApiMaxConnectionDelay;
+            PeerApiMaxEarlierPacketDelay = BlockchainSetting.PeerApiMaxEarlierPacketDelay;
+            PeerApiMaxPacketDelay = BlockchainSetting.PeerApiMaxPacketDelay;
+            PeerApiMaxRangeTransactionToSyncPerRequest = BlockchainSetting.PeerApiMaxRangeTransactionToSyncPerRequest;
+            PeerApiSemaphoreDelay = BlockchainSetting.PeerApiSemaphoreDelay;
+            PeerApiMaxRetryRequest = BlockchainSetting.PeerApiMaxRetryRequest;
         }
     }
 

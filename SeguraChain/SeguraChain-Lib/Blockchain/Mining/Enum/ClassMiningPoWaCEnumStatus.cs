@@ -18,5 +18,6 @@
         BLOCK_ALREADY_FOUND = 14,
         VALID_SHARE = 15,
         VALID_UNLOCK_BLOCK_SHARE = 16,
+        SUBMIT_NETWORK_ERROR = 17
     }
 }

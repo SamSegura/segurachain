@@ -7,6 +7,7 @@ using SeguraChain_Lib.Blockchain.Setting;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Net;
 using System.Windows.Forms;
 
 namespace SeguraChain_Desktop_Wallet.InternalForm.Setup.StepForm
@@ -80,7 +81,13 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Setup.StepForm
 
         private void textBoxSyncExternalModeHost_TextChanged(object sender, EventArgs e)
         {
-            ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp = textBoxSyncExternalModeHost.Text;
+            if (IPAddress.TryParse(textBoxSyncExternalModeHost.Text, out _))
+            {
+                ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp = textBoxSyncExternalModeHost.Text;
+                textBoxSyncExternalModeHost.ForeColor = Color.Black;
+            }
+            else
+                textBoxSyncExternalModeHost.ForeColor = Color.Red;
         }
 
         private void textBoxSyncExternalModePort_TextChanged(object sender, EventArgs e)

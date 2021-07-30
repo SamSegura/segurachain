@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Database;
@@ -62,7 +61,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
             string blockHash = ClassUtility.GetHexStringFromByteArray(blockHashBytes).ToLower();
 
-
             // Clean up.
             Array.Clear(blockHeightBytes, 0, blockHeightBytes.Length);
             Array.Clear(blockDifficultyBytes, 0, blockDifficultyBytes.Length);
@@ -86,13 +84,10 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
         public static ClassBlockEnumCheckStatus CheckBlockHash(string blockHash, long blockHeight, BigInteger blockDifficulty, int previousBlockTransactionCount, string blockTransactionHash)
         {
             if (blockHash.Length != BlockchainSetting.BlockHashHexSize)
-            {
                 return ClassBlockEnumCheckStatus.INVALID_BLOCK_HASH_LENGTH;
-            }
+
             if (!ClassUtility.CheckHexStringFormat(blockHash))
-            {
                 return ClassBlockEnumCheckStatus.INVALID_BLOCK_HASH_FORMAT;
-            }
 
             try
             {
@@ -121,32 +116,24 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 long blockHeightFromHash = BitConverter.ToInt64(blockHeightBytes, 0);
 
                 if (blockHeightFromHash != blockHeight)
-                {
                     result = ClassBlockEnumCheckStatus.INVALID_BLOCK_HEIGHT_HASH;
-                }
+
                 else
                 {
                     BigInteger blockDifficultyFromHash = (BigInteger)BitConverter.ToDouble(blockDifficultyBytes, 0);
 
                     if (blockDifficultyFromHash != blockDifficulty)
-                    {
                         result = ClassBlockEnumCheckStatus.INVALID_BLOCK_DIFFICULTY;
-                    }
                     else
                     {
                         int blockTransactionCountFromHash = BitConverter.ToInt32(blockCountTransactionBytes, 0);
 
                         if (blockTransactionCountFromHash != previousBlockTransactionCount)
-                        {
                             result = ClassBlockEnumCheckStatus.INVALID_BLOCK_TRANSACTION_COUNT;
-                        }
                         else
                         {
                             if (!string.Equals(ClassUtility.GetHexStringFromByteArray(blockFinalTransactionHashBytes), blockTransactionHash, StringComparison.CurrentCultureIgnoreCase))
-                            {
                                 result = ClassBlockEnumCheckStatus.INVALID_BLOCK_TRANSACTION_HASH;
-                               
-                            }
                         }
                     }
                 }
@@ -176,11 +163,10 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
         /// <returns></returns>
         public static string GetFinalTransactionHashList(List<string> blockHashTransactionList, string previousBlockHash)
         {
-            if (blockHashTransactionList != null)
-                if (blockHashTransactionList.Count > 0)
-                    return ClassUtility.GenerateSha3512FromString(string.Join("", blockHashTransactionList));
+            if (blockHashTransactionList?.Count > 0)
+                return ClassUtility.GenerateSha3512FromString(string.Join("", blockHashTransactionList));
             else if (!previousBlockHash.IsNullOrEmpty(out _))
-                    return ClassUtility.GenerateSha3512FromString(previousBlockHash);
+                return ClassUtility.GenerateSha3512FromString(previousBlockHash);
 
             return string.Empty;
         }
@@ -212,7 +198,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     Array.Copy(blockHashBytes, BlockchainSetting.BlockHeightByteArrayLengthOnBlockHash + BlockchainSetting.BlockDifficultyByteArrayLengthOnBlockHash + BlockchainSetting.BlockCountTransactionByteArrayLengthOnBlockHash, blockFinalTransactionHashBytes, 0, BlockchainSetting.BlockFinalTransactionHashByteArrayLengthOnBlockHash);
                     Array.Copy(blockHashBytes, BlockchainSetting.BlockHeightByteArrayLengthOnBlockHash + BlockchainSetting.BlockDifficultyByteArrayLengthOnBlockHash + BlockchainSetting.BlockCountTransactionByteArrayLengthOnBlockHash + BlockchainSetting.BlockFinalTransactionHashByteArrayLengthOnBlockHash, previousWalletAddressWinnerBytes, 0, BlockchainSetting.WalletAddressByteArrayLength);
 
-
                     blockTemplateObject = new ClassBlockTemplateObject()
                     {
                         BlockHash = blockHash,
@@ -242,6 +227,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
             {
                 blockTemplateObject = null;
             }
+
             return false;
         }
 
@@ -940,9 +926,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
                             // Calculate allocations from transaction object stored.
                             foreach (string transactionHash in blockObject.BlockTransactions.Keys)
-                            {
                                 totalMemoryUsage += ClassTransactionUtility.GetBlockTransactionMemorySize(blockObject.BlockTransactions[transactionHash]);
-                            }
                         }
                     }
 
@@ -963,21 +947,15 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
                     // Block total coin confirmed.
                     if (blockObject.TotalCoinConfirmed > 0)
-                    {
                         totalMemoryUsage += blockObject.TotalCoinConfirmed.ToByteArray().Length;
-                    }
 
                     // Block total coin pending.
                     if (blockObject.TotalCoinPending > 0)
-                    {
                         totalMemoryUsage += blockObject.TotalCoinPending.ToByteArray().Length;
-                    }
 
                     // Block total fee.
                     if (blockObject.TotalFee > 0)
-                    {
                         totalMemoryUsage += blockObject.TotalFee.ToByteArray().Length;
-                    }
 
                     // Block total transactions.
                     totalMemoryUsage += sizeof(int);
@@ -992,14 +970,21 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     totalMemoryUsage += sizeof(int);
                 }
             }
+#if DEBUG
             catch(Exception error)
             {
                 Debug.WriteLine("Error on calculating block object memory size. Exception: " + error.Message);
             }
+#else
+            catch
+            {
+                // Ignored.
+            }
+#endif
             return totalMemoryUsage;
         }
 
 
-        #endregion
+#endregion
     }
 }

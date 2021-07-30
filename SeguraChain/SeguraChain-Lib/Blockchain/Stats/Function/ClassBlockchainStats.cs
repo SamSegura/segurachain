@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -123,9 +122,8 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         public static long GetLastBlockHeight()
         {
             if (BlockCount > 0)
-            {
                 return ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight;
-            }
+
             return 0;
         }
 

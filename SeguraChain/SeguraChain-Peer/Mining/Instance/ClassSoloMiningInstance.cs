@@ -63,7 +63,7 @@ namespace SeguraChain_Peer.Mining.Instance
         /// </summary>
         private int[] _totalHash;
         private BigInteger[] _totalHashes;
-        private int[] _totalShare;
+        private long[] _totalShare;
         private int[] _totalAlreadyShare;
         private int[] _totalUnlockShare;
         private int[] _totalRefusedShare;
@@ -98,21 +98,16 @@ namespace SeguraChain_Peer.Mining.Instance
         private void InitializeMiningInstance()
         {
             if (_currentMiningPocSettingObject == null)
-            {
                 _currentMiningPocSettingObject = BlockchainSetting.CurrentMiningPoWaCSettingObject(_currentBlockHeight);
-            }
 
             if (_miningTasks == null)
-            {
                 _miningTasks = new Task[_totalThreads];
-            }
             else
-            {
                 DestroyMiningInstance();
-            }
+
             _pocRandomData = new List<byte[]>();
             _totalHashes = new BigInteger[_totalThreads];
-            _totalShare = new int[_totalThreads];
+            _totalShare = new long[_totalThreads];
             _totalAlreadyShare = new int[_totalThreads];
             _totalUnlockShare = new int[_totalThreads];
             _totalRefusedShare = new int[_totalThreads];
@@ -190,9 +185,8 @@ namespace SeguraChain_Peer.Mining.Instance
             {
                 BigInteger totalHashes = 0;
                 foreach (var total in _totalHashes)
-                {
                     totalHashes += total;
-                }
+
                 return totalHashes;
             }
         }
@@ -200,15 +194,14 @@ namespace SeguraChain_Peer.Mining.Instance
         /// <summary>
         /// Return the total amount of share.
         /// </summary>
-        public int GetTotalShare
+        public long GetTotalShare
         {
             get
             {
-                int totalShare = 0;
+                long totalShare = 0;
                 foreach (var total in _totalShare)
-                {
                     totalShare += total;
-                }
+
                 return totalShare;
             }
         }
@@ -222,9 +215,8 @@ namespace SeguraChain_Peer.Mining.Instance
             {
                 int totalValidShare = 0;
                 foreach (var total in _totalAlreadyShare)
-                {
                     totalValidShare += total;
-                }
+
                 return totalValidShare;
             }
         }
@@ -238,9 +230,8 @@ namespace SeguraChain_Peer.Mining.Instance
             {
                 int totalUnlockShare = 0;
                 foreach (var total in _totalUnlockShare)
-                {
                     totalUnlockShare += total;
-                }
+
                 return totalUnlockShare;
             }
         }
@@ -254,9 +245,8 @@ namespace SeguraChain_Peer.Mining.Instance
             {
                 int totalInvalidShare = 0;
                 foreach (var total in _totalRefusedShare)
-                {
                     totalInvalidShare += total;
-                }
+
                 return totalInvalidShare;
             }
         }
@@ -270,9 +260,8 @@ namespace SeguraChain_Peer.Mining.Instance
             {
                 int totalLowDifficultyShare = 0;
                 foreach (var total in _totalLowDifficultyShare)
-                {
                     totalLowDifficultyShare += total;
-                }
+
                 return totalLowDifficultyShare;
             }
         }
@@ -353,19 +342,14 @@ namespace SeguraChain_Peer.Mining.Instance
                                 {
                                     // Get current mining poc settings.
                                     if (_currentMiningPocSettingObject == null)
-                                    {
                                         _currentMiningPocSettingObject = BlockchainSetting.CurrentMiningPoWaCSettingObject(lastBlockHeight);
-                                    }
 
                                     bool cancel = false;
                                     long currentPreviousBlockHeight = lastBlockHeight - 1;
 
                                     var previousBlockObjectInformations = await ClassBlockchainStats.GetBlockInformationData(currentPreviousBlockHeight, _cancellationTokenMiningTasks);
                                     var previousBlockTransactionCount = previousBlockObjectInformations.TotalTransaction;
-                                    if (previousBlockTransactionCount == 0)
-                                    {
-                                        cancel = true;
-                                    }
+                                    cancel = previousBlockTransactionCount == 0;
 
                                     if (previousBlockObjectInformations != null && !cancel)
                                     {
@@ -403,7 +387,6 @@ namespace SeguraChain_Peer.Mining.Instance
 
                                                 #endregion
 
-
                                                 _currentBlockHeight = lastBlockHeight;
                                                 _miningDataInitialized = true;
                                             }
@@ -416,9 +399,7 @@ namespace SeguraChain_Peer.Mining.Instance
                         catch (Exception error)
                         {
                             if (GetMiningStatus)
-                            {
                                 ClassLog.WriteLine("Error on solo mining instance. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                            }
                         }
                     }
                 }, _cancellationTokenMiningTasks.Token, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
@@ -475,8 +456,6 @@ namespace SeguraChain_Peer.Mining.Instance
                     // Initialize timestamp of share.
                     long timestampShare = ClassUtility.GetCurrentTimestampInSecond();
 
-
-
                     while (GetMiningStatus)
                     {
                         try
@@ -485,17 +464,13 @@ namespace SeguraChain_Peer.Mining.Instance
                             {
                                 // Retrieve back the current mining poc setting if null.
                                 if (_currentMiningPocSettingObject == null)
-                                {
                                     _currentMiningPocSettingObject = BlockchainSetting.CurrentMiningPoWaCSettingObject(_currentBlockHeight);
-                                }
                                 else
                                 {
 
                                     // Put the thread in pause pending an update.
                                     while (_miningPauseStatus)
-                                    {
                                         await Task.Delay(100, _cancellationTokenMiningTasks.Token);
-                                    }
 
                                     // Restart explored nonces, and generate a new random PoC data.
                                     if (_nextNonce[idThread] >= BlockchainSetting.CurrentMiningPoWaCSettingObject(_currentBlockHeight).PocShareNonceMax || _nextNonce[idThread] >= _maxRangeNonce[idThread])
@@ -506,9 +481,7 @@ namespace SeguraChain_Peer.Mining.Instance
                                     }
                                     // Increase nonce.
                                     else
-                                    {
                                         _nextNonce[idThread]++;
-                                    }
 
 
                                     // Intialize PoC random data if null.
@@ -517,11 +490,9 @@ namespace SeguraChain_Peer.Mining.Instance
                                         timestampShare = ClassUtility.GetCurrentTimestampInSecond();
                                         _pocRandomData[idThread] = ClassMiningPoWaCUtility.GenerateRandomPocData(_currentMiningPocSettingObject, _previousBlockTransactionCount, _currentBlockHeight, timestampShare, _walletAddressDecoded, _nextNonce[idThread], out _);
                                     }
+                                    // Update the timestamp share data of the random poc data.
                                     else
-                                    {
-                                        // Update the timestamp share data of the random poc data.
                                         _pocRandomData[idThread] = ClassMiningPoWaCUtility.UpdateRandomPocDataTimestampAndBlockHeightTarget(_currentMiningPocSettingObject, _pocRandomData[idThread], _currentBlockHeight, _nextNonce[idThread], out timestampShare);
-                                    }
 
                                     // Build a poc share.
                                     ClassMiningPoWaCShareObject pocShareObject = ClassMiningPoWaCUtility.DoPoWaCShare(_currentMiningPocSettingObject, _walletAddress, _currentBlockHeight, _currentBlockHash, _currentBlockDifficulty, _previousBlockTransactionCount, _previousFinalBlockTransactionHashKey, _pocRandomData[idThread], _nextNonce[idThread], timestampShare, _sha3512Mining[idThread], _walletAddressDecoded);
@@ -532,17 +503,15 @@ namespace SeguraChain_Peer.Mining.Instance
 
                                         _totalHash[idThread]++;
                                         _totalShare[idThread]++;
+
                                         if (pocShareObject.PoWaCShareDifficulty > 0)
-                                        {
                                             _totalHashes[idThread] += pocShareObject.PoWaCShareDifficulty;
-                                        }
 
                                         #endregion
 
                                         // Submit the share if this one reach the difficulty of the block or if this one is higher.
                                         if (pocShareObject.PoWaCShareDifficulty >= _currentBlockDifficulty)
                                         {
-
                                             ClassBlockEnumMiningShareVoteStatus unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, true, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenMiningTasks);
                                          
                                             switch (unlockResult)
@@ -563,20 +532,17 @@ namespace SeguraChain_Peer.Mining.Instance
                                 }
                             }
                             else
-                            {
                                 await Task.Delay(1, _cancellationTokenMiningTasks.Token);
-                            }
                         }
                         catch (Exception error)
                         {
                             if (GetMiningStatus)
-                            {
                                 ClassLog.WriteLine("Error on solo mining instance. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                            }
                         }
                     }
 
                 }, _cancellationTokenMiningTasks.Token);
+
                 _miningTasks[idThread].Start();
             }
             catch

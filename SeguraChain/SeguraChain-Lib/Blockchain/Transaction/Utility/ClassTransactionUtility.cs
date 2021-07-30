@@ -6,7 +6,6 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using SeguraChain_Lib.Algorithm;
 using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
@@ -405,6 +404,7 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
                             listBlockHeightRange.Add(blockHeightToTravel);
 
                         blockHeightToTravel++;
+
                         if (blockHeightToTravel > lastBlockHeightUnlocked)
                             break;
                     }
@@ -521,9 +521,8 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             long transactionSize = GetTransactionMemorySize(transactionObject, true);
 
             if (transactionSize > 0)
-            {
                 transactionSize /= 1024;
-            }
+
             return BlockchainSetting.FeeTransactionPerKb * transactionSize;
         }
 
@@ -548,27 +547,26 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             {
                 // List of block heights to travel.
                 using (DisposableList<long> listBlockHeightRange = new DisposableList<long>())
-                { 
-
+                {
                     // Initialize the block to start to travel.
                     long blockHeightToTravel = lastBlockHeightUnlocked - BlockchainSetting.BlockExpectedPerDay;
 
-                // Ensure the block height of start.
-                if (blockHeightToTravel < BlockchainSetting.GenesisBlockHeight)
-                    blockHeightToTravel = BlockchainSetting.GenesisBlockHeight;
+                    // Ensure the block height of start.
+                    if (blockHeightToTravel < BlockchainSetting.GenesisBlockHeight)
+                        blockHeightToTravel = BlockchainSetting.GenesisBlockHeight;
 
-                // Insert each block height to travel.
-                for (long i = 0; i < BlockchainSetting.BlockExpectedPerDay; i++)
-                {
-                    if (blockHeightToTravel >= BlockchainSetting.GenesisBlockHeight)
+                    // Insert each block height to travel.
+                    for (long i = 0; i < BlockchainSetting.BlockExpectedPerDay; i++)
                     {
-                        listBlockHeightRange.Add(blockHeightToTravel);
+                        if (blockHeightToTravel >= BlockchainSetting.GenesisBlockHeight)
+                        {
+                            listBlockHeightRange.Add(blockHeightToTravel);
 
-                        blockHeightToTravel++;
-                        if (blockHeightToTravel > lastBlockHeightUnlocked)
-                            break;
+                            blockHeightToTravel++;
+                            if (blockHeightToTravel > lastBlockHeightUnlocked)
+                                break;
+                        }
                     }
-                }
 
                     if (listBlockHeightRange.Count > 0)
                     {
@@ -858,7 +856,6 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             // Public Key Sender.
             totalMemoryUsage += BlockchainSetting.WalletPublicKeyWifLength * sizeof(char);
 
-
             long feeCostSize = BlockchainSetting.FeeTransactionPerKb * totalMemoryUsage;
 
             if (feeCostSize > 0)
@@ -981,7 +978,6 @@ namespace SeguraChain_Lib.Blockchain.Transaction.Utility
             {
                 if (!transactionObject.TransactionSignatureSender.IsNullOrEmpty(out _))
                     totalMemoryUsage += transactionObject.TransactionSignatureSender.Length * sizeof(char);
-                
             }
 
             // Big signature sender.

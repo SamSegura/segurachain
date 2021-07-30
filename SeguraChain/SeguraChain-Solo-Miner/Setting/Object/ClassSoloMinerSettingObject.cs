@@ -1,4 +1,6 @@
-﻿namespace SeguraChain_Solo_Miner.Setting.Object
+﻿using SeguraChain_Lib.Blockchain.Setting;
+
+namespace SeguraChain_Solo_Miner.Setting.Object
 {
     public class ClassSoloMinerSettingObject
     {
@@ -69,17 +71,18 @@
         {
             public string peer_ip_target;
             public int peer_api_port_target;
+            public int peer_api_max_connection_delay;
 
             /// <summary>
             /// Constructor.
             /// </summary>
-            /// <param name="useDefaultPeer"></param>
             /// <param name="peerIpTarget"></param>
             /// <param name="peerApiPortTarget"></param>
             public ClassSoloMinerNetworkSettingObject(string peerIpTarget, int peerApiPortTarget)
             {
                 peer_ip_target = peerIpTarget;
                 peer_api_port_target = peerApiPortTarget;
+                peer_api_max_connection_delay = BlockchainSetting.PeerApiMaxConnectionDelay;
             }
         }
 

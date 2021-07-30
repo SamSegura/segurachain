@@ -10,6 +10,7 @@ namespace SeguraChain_Desktop_Wallet.Components
 {
     public class ClassGraphicsUtility
     {
+
         /// <summary>
         /// Auto set location of a control from another control source.
         /// </summary>

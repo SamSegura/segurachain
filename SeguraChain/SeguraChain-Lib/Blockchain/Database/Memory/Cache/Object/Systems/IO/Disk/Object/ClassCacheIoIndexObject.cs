@@ -6,7 +6,6 @@ using SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Main;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.List;
-
 using SeguraChain_Lib.Utility;
 using System;
 using System.Collections.Generic;
@@ -784,7 +783,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                             blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
                                             // Update the io cache file and remove the data updated from the active memory
-                                            await InsertInActiveMemory(blockObject, keepAlive, true, cancellationIoCache);
+                                            await InsertInActiveMemory(blockObject, keepAlive, false, cancellationIoCache);
 
                                             result = true;
                                         }
@@ -926,9 +925,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             finally
             {
                 if (useSemaphore)
-                {
                     _ioSemaphoreAccess.Release();
-                }
             }
 
             return result;
@@ -956,9 +953,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             finally
             {
                 if (useSemaphore)
-                {
                     _ioSemaphoreAccess.Release();
-                }
             }
 
             return listBlockHeight;
@@ -1001,70 +996,26 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         {
                             if (!_ioStructureObjectsDictionary[ioBlockHeight].IsNull)
                             {
-                                // Write updated blocks.
+                                // List updated blocks to remove of the memory allocated to the cache system.
                                 if (_ioStructureObjectsDictionary[ioBlockHeight].IsUpdated)
                                 {
-                                    if (!useSemaphore)
-                                    {
-                                        long timestamp = ClassUtility.GetCurrentTimestampInMillisecond();
+                                    long timestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
-                                        bool getOutBlock = _ioStructureObjectsDictionary[ioBlockHeight].LastUpdateTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp &&
-                                            _ioStructureObjectsDictionary[ioBlockHeight].LastGetTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp;
+                                    bool getOutBlock =
+                                        (_ioStructureObjectsDictionary[ioBlockHeight].LastUpdateTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp 
+                                        &&
+                                        _ioStructureObjectsDictionary[ioBlockHeight].LastGetTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp) 
+                                        || enableAskMemory;
 
-                                        // Push the block updated copied to a list of block to write and clean up.
-                                        if (getOutBlock)
-                                        {
-                                            if (enableAskMemory)
-                                                totalAvailableMemoryRetrieved += _ioStructureObjectsDictionary[ioBlockHeight].IoDataSizeOnMemory;
-
-                                            if (_ioStructureObjectsDictionary[ioBlockHeight].IsUpdated)
-                                                listIoData.Add(ioBlockHeight, _ioStructureObjectsDictionary[ioBlockHeight].BlockObject);
-                                            else
-                                                _ioStructureObjectsDictionary[ioBlockHeight].BlockObject = null;
-                                        }
-                                    }
-                                    else
+                                    if (getOutBlock)
                                     {
                                         if (enableAskMemory)
-                                        {
-                                            long timestamp = ClassUtility.GetCurrentTimestampInMillisecond();
+                                            totalAvailableMemoryRetrieved += _ioStructureObjectsDictionary[ioBlockHeight].IoDataSizeOnMemory;
 
-                                            bool getOutBlock = _ioStructureObjectsDictionary[ioBlockHeight].LastUpdateTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp &&
-                                                _ioStructureObjectsDictionary[ioBlockHeight].LastGetTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp;
-
-                                            if (getOutBlock)
-                                            {
-                                                if (_ioStructureObjectsDictionary[ioBlockHeight].IsUpdated)
-                                                {
-                                                    // Write directly a block updated and clean it.
-                                                    if (await WriteNewIoDataOnIoStreamFile(_ioStructureObjectsDictionary[ioBlockHeight].BlockObject, cancellation))
-                                                    {
-                                                        totalAvailableMemoryRetrieved += _ioStructureObjectsDictionary[ioBlockHeight].IoDataSizeOnMemory;
-                                                        _ioStructureObjectsDictionary[ioBlockHeight].BlockObject = null;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    totalAvailableMemoryRetrieved += _ioStructureObjectsDictionary[ioBlockHeight].IoDataSizeOnMemory;
-                                                    _ioStructureObjectsDictionary[ioBlockHeight].BlockObject = null;
-                                                }
-                                            }
-                                        }
+                                        if (_ioStructureObjectsDictionary[ioBlockHeight].IsUpdated)
+                                            listIoData.Add(ioBlockHeight, _ioStructureObjectsDictionary[ioBlockHeight].BlockObject);
                                         else
-                                        {
-                                            long timestamp = ClassUtility.GetCurrentTimestampInMillisecond();
-
-                                            bool getOutBlock = _ioStructureObjectsDictionary[ioBlockHeight].LastUpdateTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp &&
-                                                _ioStructureObjectsDictionary[ioBlockHeight].LastGetTimestamp + _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskMaxKeepAliveDataInMemoryTimeLimit < timestamp;
-
-                                            if (getOutBlock)
-                                            {
-                                                if (_ioStructureObjectsDictionary[ioBlockHeight].IsUpdated)
-                                                    listIoData.Add(ioBlockHeight, _ioStructureObjectsDictionary[ioBlockHeight].BlockObject);
-                                                else
-                                                    _ioStructureObjectsDictionary[ioBlockHeight].BlockObject = null;
-                                            }
-                                        }
+                                            _ioStructureObjectsDictionary[ioBlockHeight].BlockObject = null;
                                     }
                                 }
                                 // Directly clean up block(s) not updated.
@@ -1087,56 +1038,41 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         {
                             if (totalMemoryAsked <= totalAvailableMemoryRetrieved)
                                 break;
-
-                            if (_ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellation, out _) + (totalMemoryAsked - totalAvailableMemoryRetrieved) <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
-                            {
-                                totalAvailableMemoryRetrieved = totalMemoryAsked;
-                                break;
-                            }
                         }
                     }
 
                     #endregion
 
+                    if (enableAskMemory && totalMemoryAsked > totalAvailableMemoryRetrieved)
+                    {
+                        if (_ioCacheSystem.GetIoCacheSystemMemoryConsumption(cancellation, out _) +
+                            (totalMemoryAsked - totalAvailableMemoryRetrieved) <= _blockchainDatabaseSetting.BlockchainCacheSetting.GlobalMaxActiveMemoryAllocationFromCache)
+                            totalAvailableMemoryRetrieved = totalMemoryAsked;
+                    }
+
                     #region Update the io cache file.
 
-                    if (listIoData.Count > 0 || _lastIoCacheTotalFileSizeWritten > 0)
+                    if (listIoData.Count > 0)
                     {
-                        double percentWriteSize = ((double)_lastIoCacheTotalFileSizeWritten / _totalIoCacheFileSize) * 100d;
+                        long previousLastIoCacheTotalFileSizeWritten = _lastIoCacheTotalFileSizeWritten;
 
-                        bool fullPurge = percentWriteSize >= _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskFullPurgeEnablePercentWrite;
-
-                        if (!fullPurge && listIoData.Count > 0)
-                        {
-                            percentWriteSize = ((double)listIoData.Count / _ioStructureObjectsDictionary.Count) * 100d;
-                            fullPurge = percentWriteSize >= _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskFullPurgeEnablePercentWrite;
-                        }
+                        bool fullPurge = _lastIoCacheTotalFileSizeWritten > 0 ? ((double)_lastIoCacheTotalFileSizeWritten / _totalIoCacheFileSize) * 100d >= _blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskFullPurgeEnablePercentWrite : false;
 
                         if (listIoData.Count > 0)
                         {
-                            // Rewrite all latest io block data, erase oldest data.
+
+                            await ReplaceIoDataListOnIoStreamFile(listIoData.GetList, cancellation, fullPurge);
+
+                            foreach (long blockHeight in listIoData.GetList.Keys)
+                            {
+                                if (!_ioStructureObjectsDictionary[blockHeight].IsNull)
+                                    _ioStructureObjectsDictionary[blockHeight].BlockObject = null;
+                            }
+
                             if (fullPurge)
                             {
-                                await ReplaceIoDataListOnIoStreamFile(listIoData.GetList, cancellation, true);
-
-                                foreach (long blockHeight in listIoData.GetList.Keys)
-                                {
-                                    if (!_ioStructureObjectsDictionary[blockHeight].IsNull)
-                                        _ioStructureObjectsDictionary[blockHeight].BlockObject = null;
-                                }
-
-                                _lastIoCacheTotalFileSizeWritten = 0;
-                            }
-                            else
-                            {
-                                foreach (long blockHeight in listIoData.GetList.Keys)
-                                {
-                                    if (await WriteNewIoDataOnIoStreamFile(listIoData[blockHeight], cancellation))
-                                    {
-                                        if (!_ioStructureObjectsDictionary[blockHeight].IsNull)
-                                            _ioStructureObjectsDictionary[blockHeight].BlockObject = null;
-                                    }
-                                }
+                                _lastIoCacheTotalFileSizeWritten -= previousLastIoCacheTotalFileSizeWritten;
+                                ClassUtility.CleanGc();
                             }
                         }
                     }
@@ -1249,9 +1185,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     }
                 }
 
-                if (!insertInMemory)
+                if (!insertInMemory && !fromReading)
                 {
-                    if (blockObject.BlockIsUpdated || !fromReading)
+                    if (!_ioStructureObjectsDictionary[blockObject.BlockHeight].IsNull)
+                        _ioStructureObjectsDictionary[blockObject.BlockHeight].BlockObject = blockObject;
+                    else
                         await WriteNewIoDataOnIoStreamFile(blockObject, cancellationIoCache);
                 }
             }
@@ -1529,7 +1467,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             try
             {
 
-                _ioDataStructureFileLockStream.Seek(0, SeekOrigin.End);
+                _ioDataStructureFileLockStream.Position = _lastIoCacheFileLength;
 
                 long position = _lastIoCacheFileLength;
 
@@ -1551,9 +1489,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     var writeResult = WriteByBlock(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, _ioDataStructureFileLockStream);
 
                     if (writeResult.Item1)
-                    {
                         dataLength += writeResult.Item2;
-                    }
                     else
                     {
                         cancelled = true;
@@ -1567,9 +1503,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     _ioDataStructureFileLockStream.WriteByte((byte)'\n');
 
                     if (!_ioStructureObjectsDictionary[blockObject.BlockHeight].IsWritten)
-                    {
                         _totalIoCacheFileSize += dataLength;
-                    }
                     else
                     {
                         _totalIoCacheFileSize -= _ioStructureObjectsDictionary[blockObject.BlockHeight].IoDataSizeOnFile;
@@ -1797,29 +1731,23 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         OpenLockStream();
                     }
                     else
-                    {
                         File.Delete(ioDataStructureFileBackupPath);
-                    }
                 }
                 else
                 {
                     if (blockListObject.Count > 0)
                     {
-                        //_ioDataStructureFileLockStream.Position = _lastIoCacheFileLength;
-                        _ioDataStructureFileLockStream.Seek(0, SeekOrigin.End);
+                        _ioDataStructureFileLockStream.Position = _lastIoCacheFileLength;
 
                         foreach (long blockHeight in blockListObject.Keys.ToArray())
                         {
-
 
                             bool cancelled = false;
 
                             if (cancellation != null)
                             {
                                 if (cancellation.IsCancellationRequested)
-                                {
                                     break;
-                                }
                             }
 
                             long position = _ioDataStructureFileLockStream.Position;
@@ -1838,9 +1766,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 var writeResult = WriteByBlock(_ioDataUtf8Encoding.GetBytes(ioDataLine), cancellation, _ioDataStructureFileLockStream);
 
                                 if (writeResult.Item1)
-                                {
                                     dataLength += writeResult.Item2;
-                                }
                                 else
                                 {
                                     cancelled = true;
@@ -1855,9 +1781,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 _ioDataStructureFileLockStream.WriteByte((byte)'\n');
 
                                 if (!_ioStructureObjectsDictionary[blockHeight].IsWritten)
-                                {
                                     _totalIoCacheFileSize += dataLength;
-                                }
                                 else
                                 {
                                     _totalIoCacheFileSize -= _ioStructureObjectsDictionary[blockHeight].IoDataSizeOnFile;
@@ -1875,11 +1799,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 blockListObject.Remove(blockHeight);
                             }
                             else
-                            {
                                 break;
-                            }
                         }
 
+                        await _ioDataStructureFileLockStream.FlushAsync(cancellation.Token);
                         //if (cancellation != null) await _ioDataStructureFileLockStream.FlushAsync(cancellation.Token);
                     }
                 }

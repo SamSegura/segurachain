@@ -34,6 +34,9 @@
     <Compile Update="InternalForm\Setup\ClassWalletSetupForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="InternalForm\Setup\StepForm\ClassWalletSetupStepFinalForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="InternalForm\Setup\StepForm\ClassWalletSetupStepOneForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -43,5 +46,10 @@
     <Compile Update="InternalForm\TransactionHistory\ClassWalletTransactionHistoryInformationInternalForm.cs">
       <SubType>Form</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

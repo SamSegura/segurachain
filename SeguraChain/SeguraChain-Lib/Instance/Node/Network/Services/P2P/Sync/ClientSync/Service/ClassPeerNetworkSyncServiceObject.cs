@@ -905,7 +905,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                                                                 ClassBlockObject blockObjectToCheck = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockDataStrategy(blockHeightToCheck, false, true, _cancellationTokenServiceSync);
                                                                                 if (blockObjectToCheck.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
                                                                                 {
-                                                                                    blockObjectToCheck.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+                                                                                    blockObjectToCheck.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
                                                                                     ClassLog.WriteLine("The block height: " + blockHeightToCheck + " seems to be valid for other peers. Amount of confirmations: " + blockObjectToCheck.BlockNetworkAmountConfirmations + "/" + BlockchainSetting.BlockAmountNetworkConfirmations, ClassEnumLogLevelType.LOG_LEVEL_PEER_TASK_SYNC, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
 
@@ -4107,9 +4107,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                                 incremented++;
 
                                 if (incremented == _peerNetworkSettingObject.PeerMaxRangeTransactionToSyncPerRequest)
-                                {
                                     break;
-                                }
                             }
 
                             SortedDictionary<string, ClassTransactionObject> transactionObjectByRange = await StartAskBlockTransactionObjectByRangeFromListPeerTarget(peerTargetList, blockObject.BlockHeight, startRange, endRange, listWalletAndPublicKeys);
@@ -4277,7 +4275,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.P2P.Sync.ClientSync.Ser
                             blockObject.BlockUnlockValid = true;
                         }
 
-                        blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+                        blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
                         if (ClassBlockchainStats.ContainsBlockHeight(blockObject.BlockHeight))
                         {

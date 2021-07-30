@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Status;
-
 using SeguraChain_Lib.Utility;
 using System.Threading;
 
@@ -9,14 +8,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
     public class ClassPeerObject
     {
         #region Peer intern side.
+
         public byte[] PeerInternPacketEncryptionKey;
         public byte[] PeerInternPacketEncryptionKeyIv;
         public string PeerInternPrivateKey; // Used for sign encrypted packets sent to a peer.
         public string PeerInternPublicKey; // Used for check signature of encrypted packets sent to another peer.
         public long PeerInternTimestampKeyGenerated;
+
         #endregion
 
         #region Peer client side.
+
         public long PeerTimestampInsert;
         public string PeerIp;
         public int PeerPort;
@@ -28,9 +30,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         public bool PeerIsPublic;
         public string PeerNumericPublicKey; // Used by peer with the seed node rank.
         public long PeerTimestampSignatureWhitelist; // Used to know when it's necessary to sign a packet.
+
         #endregion
 
         #region Peer stats.
+
         public long PeerLastUpdateOfKeysTimestamp;
         public int PeerClientTotalValidPacket;
         public long PeerClientLastTimestampPeerPacketSignatureWhitelist;
@@ -43,6 +47,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         public long PeerLastPacketReceivedTimestamp;
         public long PeerBanDate;
         public long PeerLastDeadTimestamp;
+
         #endregion
 
 

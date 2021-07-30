@@ -4,13 +4,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Packet
 {
     public class ClassApiPeerPacketObjectSend
     {
-        public ClassPeerApiEnumPacketSend PacketType;
+        public ClassPeerApiPostPacketSendEnum PacketType;
         public string PacketContentObjectSerialized;
     }
 
     public class ClassApiPeerPacketObjetReceive
     {
-        public ClassPeerApiEnumPacketResponse PacketType;
+        public ClassPeerApiPacketResponseEnum PacketType;
         public string PacketObjectSerialized;
     }
 }

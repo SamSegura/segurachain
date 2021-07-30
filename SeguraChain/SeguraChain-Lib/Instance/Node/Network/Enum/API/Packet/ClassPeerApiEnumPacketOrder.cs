@@ -1,39 +1,52 @@
 ﻿namespace SeguraChain_Lib.Instance.Node.Network.Enum.API.Packet
 {
-    public enum ClassPeerApiEnumPacketSend
+    public enum ClassPeerApiPostPacketSendEnum
     {
-        ASK_BLOCK_METADATA_BY_ID = 0, // Argument: Block ID.
-        ASK_BLOCK_TRANSACTION_BY_ID = 1, // Argument(s): Block ID + Transaction ID.
-        ASK_WALLET_BALANCE_BY_ADDRESS = 2, // Argument: Wallet Address.
-        ASK_WALLET_TRANSACTION_MEMPOOL_HASH_LIST = 3, // Argument: Wallet Address.
-        ASK_WALLET_TRANSACTION_MEMPOOL_BY_HASH = 4, // Argument(s): Wallet Address + Transaction Hash.
-        ASK_WALLET_TRANSACTION_HASH_LIST = 5, // Argument: Wallet Address.
-        ASK_WALLET_TRANSACTION_BY_HASH = 6, // Argument(s): Wallet Address + Transaction Hash.
-        PUSH_WALLET_TRANSACTION = 7, // Argument: Wallet Transaction Object signed.
-        PUSH_MINING_SHARE = 8,
+        ASK_BLOCK_INFORMATION, // Argument: Block Height
+        ASK_BLOCK_TRANSACTION, // Arguments: Transaction hash + Block Height
+        ASK_BLOCK_TRANSACTION_BY_RANGE, // Arguments: Block Height, start, end.
+        ASK_BLOCK_TRANSACTION_BY_HASH_LIST, // Arguments: List transaction hash, block height.
+        ASK_GENERATE_BLOCK_HEIGHT_START_TRANSACTION_CONFIRMATION, // Arguments: Last block height unlocked, last block height
+        ASK_FEE_COST_TRANSACTION, // Arguments: Last block height unlocked, block height confirmation start, block height confirmation target.
+        ASK_MEMPOOL_TRANSACTION, // Arguments: Transaction hash + Block Height
+        ASK_MEMPOOL_TRANSACTION_COUNT_BY_BLOCK_HEIGHT, // Argument: Block Height.
+        ASK_MEMPOOL_TRANSACTION_BY_RANGE, // Arguments: block height, start, end.
+        PUSH_WALLET_TRANSACTION, // Argument: Wallet Transaction Object signed.
+        PUSH_MINING_SHARE,
+        BLOCKCHAIN_EXPLORER
     }
 
-    public enum ClassPeerApiEnumPacketResponse
+    public enum ClassPeerApiPacketResponseEnum
     {
-        SEND_NETWORK_STATS = 0,
-        SEND_BLOCK_METADATA_BY_ID = 1,
-        SEND_BLOCK_TRANSACTION_BY_ID = 2,
-        SEND_WALLET_BALANCE_BY_ADDRESS = 3,
-        SEND_WALLET_TRANSACTION_MEMPOOL_HASH_LIST = 4,
-        SEND_WALLET_TRANSACTION_MEMPOOL_BY_HASH = 5,
-        SEND_WALLET_TRANSACTION_HASH_LIST = 6,
-        SEND_WALLET_TRANSACTION_BY_HASH = 7,
-        SEND_REPLY_WALLET_TRANSACTION_PUSHED = 8,
-        SEND_PUBLIC_API_PEER = 9,
-        INVALID_PACKET = 10,
-        INVALID_PACKET_TIMESTAMP = 11,
-        INVALID_BLOCK_ID = 12,
-        INVALID_BLOCK_TRANSACTION_ID = 13,
-        INVALID_WALLET_ADDRESS = 14,
-        INVALID_WALLET_TRANSACTION_HASH = 15,
-        WALLET_ADDRESS_NOT_REGISTERED = 16,
-        INVALID_PUSH_TRANSACTION = 17,
-        MAX_BLOCK_TRANSACTION_REACH = 18,
-        SEND_MINING_SHARE_RESPONSE = 19,
+        SEND_NETWORK_STATS,
+        SEND_BLOCK_INFORMATION,
+        SEND_BLOCK_TRANSACTION,
+        SEND_BLOCK_TRANSACTION_BY_RANGE,
+        SEND_BLOCK_TRANSACTION_BY_HASH_LIST,
+        SEND_MEMPOOL_TRANSACTION,
+        SEND_MEMPOOL_TRANSACTION_COUNT,
+        SEND_MEMPOOL_TRANSACTION_COUNT_BY_BLOCK_HEIGHT,
+        SEND_MEMPOOL_TRANSACTION_BY_RANGE,
+        SEND_LAST_BLOCK_HEIGHT_UNLOCKED,
+        SEND_LAST_BLOCK_HEIGHT,
+        SEND_LAST_BLOCK_HEIGHT_TRANSACTION_CONFIRMATION,
+        SEND_GENERATE_BLOCK_HEIGHT_START_TRANSACTION_CONFIRMATION,
+        SEND_FEE_COST_TRANSACTION,
+        SEND_REPLY_WALLET_TRANSACTION_PUSHED,
+
+        SEND_BLOCK_TEMPLATE,
+        SEND_MINING_SHARE_RESPONSE,
+
+        INVALID_PACKET,
+        INVALID_PACKET_TIMESTAMP,
+        INVALID_BLOCK_HEIGHT,
+        INVALID_BLOCK_TRANSACTION_ID,
+        INVALID_WALLET_ADDRESS,
+        INVALID_WALLET_TRANSACTION_HASH,
+        WALLET_ADDRESS_NOT_REGISTERED,
+        INVALID_PUSH_TRANSACTION,
+        INVALID_PUSH_MINING_SHARE,
+        MAX_BLOCK_TRANSACTION_REACH,
+        OK
     }
 }

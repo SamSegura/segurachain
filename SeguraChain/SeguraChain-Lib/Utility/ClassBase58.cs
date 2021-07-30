@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
 using SeguraChain_Lib.Blockchain.Setting;
+using SeguraChain_Lib.Other.Object.List;
 
 namespace SeguraChain_Lib.Utility
 {
@@ -97,16 +98,13 @@ namespace SeguraChain_Lib.Utility
                 intData /= 58;
                 result = Base58DictionaryIndex[remainder] + result;
                 if (intData <= 0)
-                {
                     break;
-                }
             }
 
             // Append `1` for each leading 0 byte
             for (int i = 0; i < dataToEncode.Length && dataToEncode[i] == 0; i++)
-            {
                 result = FixedDigit + result;
-            }
+
             return result;
         }
 
@@ -130,9 +128,8 @@ namespace SeguraChain_Lib.Utility
         private static byte[] Decode(string base58Content, bool useBlockchainVersion)
         {
             if (base58Content.IsNullOrEmpty(out _))
-            {
                 return null;
-            }
+
             try
             {
                 BigInteger intData = 0;
@@ -144,10 +141,9 @@ namespace SeguraChain_Lib.Utility
                         intData = intData * 58 + digit;
                     }
                     else
-                    {
                         return null;
-                    }
                 }
+
                 int leadingZeroCount = base58Content.TakeWhile(c => c == FixedDigit).Count();
                 var leadingZeros = Enumerable.Repeat((byte)0, leadingZeroCount);
                 var bytesWithoutLeadingZeros = intData.ToByteArray().Reverse().SkipWhile(b => b == 0);//strip sign byte
@@ -157,9 +153,7 @@ namespace SeguraChain_Lib.Utility
                 {
                     string resultHex = ClassUtility.GetHexStringFromByteArray(result);
                     if (!resultHex.StartsWith(BlockchainSetting.BlockchainVersion))
-                    {
                         return null;
-                    }
                 }
 
                 return result;
@@ -177,7 +171,7 @@ namespace SeguraChain_Lib.Utility
         /// <returns></returns>
         private static byte[] AddCheckSum(byte[] data)
         {
-            return ArrayHelpers.ConcatArrays(data, GetCheckSum(data));
+            return ConcatArrays(data, GetCheckSum(data));
         }
 
         //Check and remove the check, returns null if the checksum is invalid.
@@ -187,8 +181,8 @@ namespace SeguraChain_Lib.Utility
             {
                 try
                 {
-                    byte[] result = ArrayHelpers.SubArray(data, 0, data.Length - BlockchainSetting.BlockchainChecksum);
-                    byte[] givenCheckSum = ArrayHelpers.SubArray(data, data.Length - BlockchainSetting.BlockchainChecksum);
+                    byte[] result = SubArray(data, 0, data.Length - BlockchainSetting.BlockchainChecksum);
+                    byte[] givenCheckSum = SubArray(data, data.Length - BlockchainSetting.BlockchainChecksum);
 
                     if (givenCheckSum != null)
                     {
@@ -197,9 +191,7 @@ namespace SeguraChain_Lib.Utility
                         if (correctCheckSum != null)
                         {
                             if (givenCheckSum.Where((t, i) => t != correctCheckSum[i]).Any())
-                            {
                                 return null;
-                            }
 
                             return result;
                         }
@@ -238,42 +230,25 @@ namespace SeguraChain_Lib.Utility
             }
             return null;
         }
-    }
 
-    public class ArrayHelpers
-    {
         public static T[] ConcatArrays<T>(params T[][] arrays)
         {
-            var result = new T[arrays.Sum(arr => arr.Length)];
-            int offset = 0;
-            for (int i = 0; i < arrays.Length; i++)
-            {
-                var arr = arrays[i];
-                Array.Copy(arr, 0, result, offset, arr.Length);
-
-                offset += arr.Length;
-            }
-            return result;
+            return arrays.SelectMany(x => x.ToArray()).ToArray();
         }
 
         public static T[] ConcatArrays<T>(T[] arr1, T[] arr2)
         {
-            var result = new T[arr1.Length + arr2.Length];
-            Array.Copy(arr1, 0, result, 0, arr1.Length);
-            Array.Copy(arr2, 0, result, arr1.Length, arr2.Length);
-            return result;
+            return arr1.Concat(arr2).ToArray();
         }
 
         public static T[] SubArray<T>(T[] arr, int start, int length)
         {
-            var result = new T[length];
-            Array.Copy(arr, start, result, 0, length);
-            return result;
+            return arr.Skip(start).Take(length).ToArray();
         }
 
         public static T[] SubArray<T>(T[] arr, int start)
         {
-            return SubArray(arr, start, arr.Length - start);
+            return arr.Skip(start).Take(arr.Length - start).ToArray();
         }
     }
 }

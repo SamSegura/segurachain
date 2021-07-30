@@ -192,11 +192,6 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Setup.StepForm
         }
 
         #endregion
-
-        private System.Windows.Forms.CheckBox checkBoxSyncInternalMode;
-        private System.Windows.Forms.CheckBox checkBoxSyncExternalMode;
-        private System.Windows.Forms.TextBox textBoxSyncExternalModeHost;
-        private System.Windows.Forms.TextBox textBoxSyncExternalModePort;
         private System.Windows.Forms.Panel panelSetupSyncExternalMode;
         private System.Windows.Forms.Label labelSyncExternalModeHost;
         private System.Windows.Forms.ComboBox comboBoxSetupSelectLanguage;
@@ -204,5 +199,9 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Setup.StepForm
         private System.Windows.Forms.Label labelSelectLanguage;
         private System.Windows.Forms.Label labelSyncInternalModeDescription;
         private System.Windows.Forms.Label labelSyncExternalModeDescription;
+        public System.Windows.Forms.TextBox textBoxSyncExternalModeHost;
+        public System.Windows.Forms.TextBox textBoxSyncExternalModePort;
+        public System.Windows.Forms.CheckBox checkBoxSyncInternalMode;
+        public System.Windows.Forms.CheckBox checkBoxSyncExternalMode;
     }
 }

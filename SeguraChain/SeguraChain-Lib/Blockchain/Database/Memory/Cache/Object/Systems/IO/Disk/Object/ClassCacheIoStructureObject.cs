@@ -22,7 +22,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                     LastGetTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
-                    return ClassUtility.LockReturnObject(_blockObject);
+                    return _blockObject;
                 }
 
                 return null;
@@ -32,43 +32,58 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             {
                 if (value != null)
                 {
-                    lock (value)
-                    {
-                        if (value.BlockIsUpdated)
-                            IsUpdated = true;
+                    bool lockedBlock = false;
 
-                        if (!IsNull)
+                    try
+                    {
+                        lockedBlock = Monitor.TryEnter(value);
+
+                        if (lockedBlock)
                         {
-                            lock (_blockObject)
+                            if (value.BlockIsUpdated)
+                                IsUpdated = true;
+
+                            if (!IsNull)
                             {
-                                if (value.BlockFromMemory || value.BlockCloned)
-                                    _blockObject = value.DirectCloneBlockObject();
-                                else
+
+                                lock(_blockObject)
                                 {
-                                    if (_blockObject.BlockLastChangeTimestamp <= value.BlockLastChangeTimestamp)
-                                        _blockObject = value;
+                                    if (value.BlockFromMemory || value.BlockCloned)
+                                        _blockObject = value.DirectCloneBlockObject();
+                                    else
+                                    {
+                                        if (_blockObject.BlockLastChangeTimestamp <= value.BlockLastChangeTimestamp)
+                                            _blockObject = value;
+                                    }
+                                    _blockObject.BlockFromMemory = false;
+                                    _blockObject.BlockFromCache = true;
+                                    _blockObject.BlockCloned = false;
+                                    _blockObject.BlockIsUpdated = false;
+                                    _blockObject.Disposed = false;
+                                    LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                                 }
+                            }
+                            else
+                            {
+                                _blockObject = value.BlockFromMemory || value.BlockFromCache ? value.DirectCloneBlockObject() : value;
                                 _blockObject.BlockFromMemory = false;
                                 _blockObject.BlockFromCache = true;
                                 _blockObject.BlockCloned = false;
                                 _blockObject.BlockIsUpdated = false;
                                 _blockObject.Disposed = false;
+                                LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                             }
-                        }
-                        else
-                        {
-                            _blockObject = value.BlockFromMemory || value.BlockFromCache ? value.DirectCloneBlockObject() : value;
-                            _blockObject.BlockFromMemory = false;
-                            _blockObject.BlockFromCache = true;
-                            _blockObject.BlockCloned = false;
-                            _blockObject.BlockIsUpdated = false;
-                            _blockObject.Disposed = false;
-                        }
 
-                        if (_ioDataSizeOnMemory == 0)
-                            _ioDataSizeOnMemory = ClassBlockUtility.GetIoBlockSizeOnMemory(_blockObject);
+                            if (_ioDataSizeOnMemory == 0)
+                                _ioDataSizeOnMemory = ClassBlockUtility.GetIoBlockSizeOnMemory(_blockObject);
+                        }
                     }
-                    LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
+                    finally
+                    {
+                        if (lockedBlock)
+                            Monitor.Exit(value);
+
+                    }
 
                 }
                 else
@@ -78,6 +93,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                         _blockObject?.Dispose();
                         _blockObject = null;
                         IsUpdated = false;
+                        LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                     }
                 }
             }
@@ -104,14 +120,26 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
         /// </summary>
         public long IoDataSizeOnMemory
         {
+            [MethodImpl(MethodImplOptions.Synchronized)]
             get
             {
                 if (_ioDataSizeOnMemory == 0)
                 {
                     if (!IsNull)
                     {
-                        lock (_blockObject)
-                            _ioDataSizeOnMemory = ClassBlockUtility.GetIoBlockSizeOnMemory(_blockObject);
+                        bool locked = false;
+
+                        try
+                        {
+                            Monitor.TryEnter(_blockObject, ref locked);
+                            if (locked)
+                                _ioDataSizeOnMemory = ClassBlockUtility.GetIoBlockSizeOnMemory(_blockObject);
+                        }
+                        finally
+                        {
+                            if (locked)
+                                Monitor.Exit(_blockObject);
+                        }
                     }
                 }
                 return _ioDataSizeOnMemory;
@@ -185,22 +213,35 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     }
                     else
                     {
-
+                        bool locked = false;
                         bool exception = false;
 
                         try
                         {
-                            if (_blockObject.Disposed)
-                                return true;
+                            try
+                            {
+                                Monitor.TryEnter(_blockObject, ref locked);
 
-                            if (_blockObject.BlockTransactions == null)
-                                return true;
+                                if (locked)
+                                {
+                                    if (_blockObject.Disposed)
+                                        return true;
 
-                            if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
-                                return true;
+                                    if (_blockObject.BlockTransactions == null)
+                                        return true;
 
-                            if (IsDeleted)
-                                return true;
+                                    if (_blockObject.BlockTransactions.Count != _blockObject.TotalTransaction)
+                                        return true;
+
+                                    if (IsDeleted)
+                                        return true;
+                                }
+                            }
+                            finally
+                            {
+                                if (locked)
+                                    Monitor.Exit(_blockObject);
+                            }
                         }
                         catch
                         {
@@ -209,6 +250,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
 
                         if (exception) return true;
+
 
                     }
                 }

@@ -1,15 +1,11 @@
-﻿using System.Numerics;
-using SeguraChain_Lib.Blockchain.Mining.Object;
+﻿using SeguraChain_Lib.Blockchain.Stats.Object;
+
 
 namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Packet.SubPacket.Response
 {
     public class ClassApiPeerPacketSendNetworkStats
     {
-        public long CurrentBlockHeight;
-        public BigInteger CurrentBlockDifficulty;
-        public string CurrentBlockHash;
-        public long LastTimestampBlockFound;
-        public ClassMiningPoWaCSettingObject CurrentMiningPoWaCSetting;
+        public ClassBlockchainNetworkStatsObject BlockchainNetworkStatsObject;
         public long PacketTimestamp;
     }
 }

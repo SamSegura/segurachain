@@ -102,7 +102,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int BlockDifficultyPrecision = 100000; // The precision put on the difficulty factor calculated.
         public const int GenesisBlockHeight = 1; // The genesis block height.
         public static readonly BigInteger GenesisBlockAmount = 2973370 * CoinDecimal; // The genesis block amount reward has pre-mining.
-        public const string GenesisBlockFinalTransactionHash = "711468EC1670569AB75CA84E74249EBCB7F97B9B5BB7CF4160E51011D50F61718ECA8814E2BEDF397982D570AF49394CCC739E5138C3C33EDBB9FBB88CF8CE23"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
+        public const string GenesisBlockFinalTransactionHash = "0408497C98E7B6D991E04E946DD988D96BF256C09B03208E695DE4FA621B96B0E883FAE494A8A32FA55F00F3218426BEE724B570D521456BBD7F23064C24CFD0"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
         public const int GenesisBlockTransactionCount = 1; // The maximum of transaction inserted on the genesis block.
         public const int BlockAmountNetworkConfirmations = 2; // The minimum amount of network checks on blocks to do with peers, before to enable the task of confirmations on the block.
         public const int BlockAmountSlowNetworkConfirmations = 5; // This amount increment another amount of network checks, once this one is reach, the network counter increment and this one return back to 0.
@@ -179,7 +179,6 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerMinPort = 1;
         public const int PeerMaxPort = 65535;
         public const int PeerMaxNodeConnectionPerIp = 1000;
-        public const int PeerMaxApiConnectionPerIp = 1000;
         public const int PeerMaxSemaphoreConnectAwaitDelay = 5000;
         public const int PeerMaxRangeBlockToSyncPerRequest = 5; // Amount of blocks to sync per range.
         public const int PeerMaxRangeTransactionToSyncPerRequest = 5; // Amount of transactions to sync per range.
@@ -203,13 +202,15 @@ namespace SeguraChain_Lib.Blockchain.Setting
         /// <summary>
         /// Peer API Settings.
         /// </summary>
-        public const int PeerApiMaxConnectionDelay = 10;
-        public const int PeerApiMaxEarlierPacketDelay = 30;
-        public const int PeerApiMaxPacketDelay = 10;
-        public const int PeerDefaultApiPort = 2401;
         public const string PeerDefaultApiIp = "127.0.0.1";
-
-
+        public const int PeerDefaultApiPort = 2401;
+        public const int PeerMaxApiConnectionPerIp = 1000;
+        public const int PeerApiMaxConnectionDelay = 30;
+        public const int PeerApiMaxEarlierPacketDelay = 60;
+        public const int PeerApiMaxPacketDelay = 30;
+        public const int PeerApiMaxRangeTransactionToSyncPerRequest = 10; // Amount of transactions to sync per range, by an API.
+        public const int PeerApiSemaphoreDelay = 30000;
+        public const int PeerApiMaxRetryRequest = 5;
 
         #endregion
 

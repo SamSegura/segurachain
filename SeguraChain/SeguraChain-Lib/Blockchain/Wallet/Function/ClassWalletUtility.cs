@@ -22,8 +22,6 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static readonly ECDomainParameters ECDomain = new ECDomainParameters(ECParameters.Curve, ECParameters.G, ECParameters.N, ECParameters.H);
         private const string BaseHexCurve = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
-
-
         #region Functions for generate a wallet.
 
         /// <summary>
@@ -35,8 +33,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static ClassWalletGeneratorObject GenerateWallet(string baseWords, bool fastGenerator = false)
         {
 #if DEBUG
-            Stopwatch watchProcessTimespend = new Stopwatch();
-            watchProcessTimespend.Start();
+            long timestampStart = ClassUtility.GetCurrentTimestampInMillisecond();
 #endif
             ClassWalletGeneratorObject walletObject;
 
@@ -52,8 +49,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
             };
 
 #if DEBUG
-            watchProcessTimespend.Stop();
-            Debug.WriteLine("Amount of time spend for generate the whole wallet: " + watchProcessTimespend.ElapsedMilliseconds + " ms.");
+            Debug.WriteLine("Amount of time spend for generate the whole wallet: " + (ClassUtility.GetCurrentTimestampInMillisecond() - timestampStart) + " ms.");
 #endif
 
             return walletObject;
@@ -67,14 +63,6 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         /// <returns>Return a private key WIF.</returns>
         public static string GenerateWalletPrivateKey(string baseWords, bool fastGenerator = false)
         {
-            /* Was usefull on testing SECT571R1 signer and ECDSA-SHA512 performances.
-#if DEBUG
-            Stopwatch watchProcessTimespend = new Stopwatch();
-
-            watchProcessTimespend.Start();
-#endif
-            */
-
             // Not really much secure..
             if (!fastGenerator)
             {
@@ -84,20 +72,15 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
                 if (useBaseWord)
                 {
                     using (ClassSha3512DigestDisposable sha3512Digest = new ClassSha3512DigestDisposable())
-                    {
                         sha3512Digest.Compute(ClassUtility.GetByteArrayFromStringAscii(baseWords), out privateKeyWifByteArray);
-                    }
                 }
                 else
                 {
                     using (RNGCryptoServiceProvider rngCrypto = new RNGCryptoServiceProvider())
-                    {
                         rngCrypto.GetBytes(privateKeyWifByteArray, 0, BlockchainSetting.WalletPrivateKeyWifByteArrayLength);
-                    }
+
                     using (ClassSha3512DigestDisposable sha3512Digest = new ClassSha3512DigestDisposable())
-                    {
                         sha3512Digest.Compute(privateKeyWifByteArray, out privateKeyWifByteArray);
-                    }
                 }
 
                 #region Input Blockchain version and generate the private key WIF.
@@ -112,13 +95,6 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
                 string privateKeyWif = ClassBase58.EncodeWithCheckSum(ClassUtility.GetByteArrayFromHexString(finalPrivateKeyHex));
 
                 #endregion
-
-                /*
-#if DEBUG
-                watchProcessTimespend.Stop();
-                Debug.WriteLine("Timespend to generate a private key: " + watchProcessTimespend.ElapsedMilliseconds + " ms.");
-#endif
-                */
 
                 return privateKeyWif;
             }
@@ -135,34 +111,12 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
 
                 Array.Resize(ref privateKeyWifByteArray, BlockchainSetting.WalletPrivateKeyWifByteArrayLength);
 
-                /*
-                using (RNGCryptoServiceProvider randomProvider = new RNGCryptoServiceProvider())
-                {
-                    randomProvider.GetBytes(privateKeyWifByteArray, 0, privateKeyWifByteArray.Length);
-                }*/
-
-
                 ClassUtility.InsertBlockchainVersionToByteArray(privateKeyWifByteArray, out var finalPrivateKeyHex);
-
-                /*
-#if DEBUG
-                Debug.WriteLine("Private key Hex generated: " + finalPrivateKeyHex);
-#endif
-                */
 
                 // Clean up.
                 Array.Clear(privateKeyWifByteArray, 0, privateKeyWifByteArray.Length);
 
-                string privateKeyWif = ClassBase58.EncodeWithCheckSum(ClassUtility.GetByteArrayFromHexString(finalPrivateKeyHex));
-
-                /* Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-                watchProcessTimespend.Stop();
-                Debug.WriteLine("Timespend to generate a private key: " + watchProcessTimespend.ElapsedMilliseconds + " ms.");
-#endif
-                */
-
-                return privateKeyWif;
+                return ClassBase58.EncodeWithCheckSum(ClassUtility.GetByteArrayFromHexString(finalPrivateKeyHex));
             }
         }
 
@@ -175,48 +129,22 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static string GenerateWalletPublicKeyFromPrivateKey(string privateKeyWif, bool blockReward = false)
         {
             if (privateKeyWif.IsNullOrEmpty(out _))
-            {
                 return null;
-            }
 
             if (!blockReward)
             {
                 if (privateKeyWif.Length != BlockchainSetting.WalletPrivateKeyWifLength)
-                {
                     return string.Empty;
-                }
             }
             else
             {
                 if (privateKeyWif.Length < BlockchainSetting.WalletAddressWifLengthMin || privateKeyWif.Length > BlockchainSetting.WalletAddressWifLengthMax)
-                {
                     return string.Empty;
-                }
             }
-
-            /* Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-            Stopwatch watchProcessTimespend = new Stopwatch();
-
-            watchProcessTimespend.Start();
-#endif
-            */
-
-
 
             Org.BouncyCastle.Math.EC.ECPoint publicKeyOne = ECParameters.G.Multiply(new BigInteger(ClassBase58.DecodeWithCheckSum(privateKeyWif, true)));
 
-
-            /* Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-            watchProcessTimespend.Stop();
-            Debug.WriteLine("Timespend to generate a public key: " + watchProcessTimespend.ElapsedMilliseconds + " ms.");
-#endif
-            */
-
             return ClassBase58.EncodeWithCheckSum(new ECPublicKeyParameters(publicKeyOne, ECDomain).Q.GetEncoded());
-
-
         }
 
         /// <summary>
@@ -227,52 +155,24 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static string GenerateWalletAddressFromPublicKey(string publicKeyWif)
         {
             if (publicKeyWif.IsNullOrEmpty(out _))
-            {
                 return null;
-            }
 
             if (publicKeyWif.Length != BlockchainSetting.WalletPublicKeyWifLength)
-            {
                 return string.Empty;
-            }
-
-            // Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-            Stopwatch watchProcessTimespend = new Stopwatch();
-
-            watchProcessTimespend.Start();
-#endif
 
 
             byte[] walletAddressByteArray = new byte[BlockchainSetting.WalletAddressByteArrayLength - 1];
 
             using (ClassSha3512DigestDisposable sha512 = new ClassSha3512DigestDisposable())
             {
-
                 sha512.Compute(ClassBase58.DecodeWithCheckSum(publicKeyWif, false), out walletAddressByteArray);
                 sha512.Reset();
             }
 
-
             ClassUtility.InsertBlockchainVersionToByteArray(walletAddressByteArray, out var finalWalletAddressHexWif);
 
-
             // Convert wallet address into Base58 Format.
-            string walletAddressWif = ClassBase58.EncodeWithCheckSum(ClassUtility.GetByteArrayFromHexString(finalWalletAddressHexWif));
-
-
-            /*// Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-            watchProcessTimespend.Stop();
-            Debug.WriteLine("Timespend to generate a wallet address: " + watchProcessTimespend.ElapsedMilliseconds + " ms.");
-#endif
-            */
-
-            // Cleanup.
-            Array.Clear(walletAddressByteArray, 0, walletAddressByteArray.Length);
-
-
-            return walletAddressWif;
+            return ClassBase58.EncodeWithCheckSum(ClassUtility.GetByteArrayFromHexString(finalWalletAddressHexWif));
         }
 
         #endregion
@@ -289,17 +189,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static string WalletGenerateSignature(string privateKeyWif, string hash)
         {
             if (privateKeyWif.IsNullOrEmpty(out _) || hash.IsNullOrEmpty(out _))
-            {
                 return null;
-            }
-
-            /* Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-            Stopwatch stopwatch =new Stopwatch(); 
-            stopwatch.Start();
-#endif
-            */
-
 
             var signer = SignerUtilities.GetSigner(BlockchainSetting.SignerName);
 
@@ -325,9 +215,7 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static bool WalletCheckSignature(string hash, string signature, string publicKeyWif)
         {
             if (hash.IsNullOrEmpty(out _) || publicKeyWif.IsNullOrEmpty(out _) || signature.IsNullOrEmpty(out _))
-            {
                 return false;
-            }
 
             var signer = SignerUtilities.GetSigner(BlockchainSetting.SignerName);
             signer.Init(false, new ECPublicKeyParameters(ECParameters.Curve.DecodePoint(ClassBase58.DecodeWithCheckSum(publicKeyWif, false)), ECDomain));
@@ -338,7 +226,6 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
 
             // Reset.
             signer.Reset();
-
 
             return result;
         }
@@ -355,25 +242,19 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static bool CheckWalletAddress(string walletAddress)
         {
             if (walletAddress.IsNullOrEmpty(out _))
-            {
                 return false;
-            }
 
             #region Check WIF length.
 
             if (walletAddress.Length < BlockchainSetting.WalletAddressWifLengthMin || walletAddress.Length > BlockchainSetting.WalletAddressWifLengthMax)
-            {
                 return false;
-            }
 
             #endregion
 
             #region Check WIF encoding.
 
             if (ClassBase58.DecodeWithCheckSum(walletAddress, true) == null)
-            {
                 return false;
-            }
 
             #endregion
 
@@ -388,25 +269,19 @@ namespace SeguraChain_Lib.Blockchain.Wallet.Function
         public static bool CheckWalletPublicKey(string walletPublicKey)
         {
             if (walletPublicKey.IsNullOrEmpty(out _))
-            {
                 return false;
-            }
 
             #region Check WIF length.
 
             if (walletPublicKey.Length != BlockchainSetting.WalletPublicKeyWifLength)
-            {
                 return false;
-            }
 
             #endregion
 
             #region Check WIF encoding.
 
             if (ClassBase58.DecodeWithCheckSum(walletPublicKey, false) == null)
-            {
                 return false;
-            }
 
             #endregion
 

@@ -23,9 +23,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Startup
         {
             InitializeComponent();
             if(!ClassDesktopWalletCommonData.InitializeLanguageDatabaseForStartupForm())
-            {
                 Close(); 
-            }
         }
 
         /// <summary>
@@ -61,7 +59,6 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Startup
                     _noWalletFile = ClassDesktopWalletCommonData.WalletDatabase.GetCountWalletFile == 0;
 
                     _canOpenMainInterface = true;
-
 
                 }
             }).ConfigureAwait(false);

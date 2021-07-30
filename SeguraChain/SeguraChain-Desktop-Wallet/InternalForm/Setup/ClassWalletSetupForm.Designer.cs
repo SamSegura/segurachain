@@ -61,6 +61,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Setup
             this.buttonWalletSetupSave.TabIndex = 6;
             this.buttonWalletSetupSave.Text = "BUTTON_WALLET_SETUP_SAVE_TEXT";
             this.buttonWalletSetupSave.UseVisualStyleBackColor = false;
+            this.buttonWalletSetupSave.Click += new System.EventHandler(this.buttonWalletSetupSave_Click);
             // 
             // panelWalletSetupParent
             // 

@@ -59,7 +59,59 @@ namespace SeguraChain_Desktop_Wallet.Properties {
                 resourceCulture = value;
             }
         }
-        
+
+
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logo_bitcoin
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("logo-bitcoin", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logo_monero
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("logo-monero", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logo_litecoin
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("logo-litecoin", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logo_curecoin
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("logo-curecoin", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+
+
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
