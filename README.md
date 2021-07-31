@@ -27,6 +27,8 @@ Other technical informations are available on the whitepaper:
 
 <b>Visual Studio 2019 16.9 is required.</b>
 
+> Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
+
  
 <h3>Libraries:</h3>
 
@@ -95,6 +97,4 @@ If you want to contact me, reach the official discord of Xiropht and send me a p
 
 > Litecoin: MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt
 
-Thank you for your help. 
 
-Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
