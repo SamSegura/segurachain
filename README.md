@@ -9,12 +9,6 @@ It was developed to update Xiropht which is a centralized cryptocurrency, once t
 <b>For now be sure to use the current version centralized of Xiropht: https://xiropht.com/</b>
 <b>Official Github of Xiropht current version: https://github.com/XIROPHT</b>
 
-<b>It will also make it possible to further trivialize cryptocurrencies, because this technology is simple to set up,
-indirectly this will increase the difficulty for those who wish to create one to distinguish
-from the moment when users in general will understand that it is simple.
-When a product, a task to be accomplished becomes simple, the final value of this one generally becomes much lower over time.
-Which should allow users to be more vigilant.</b>
-
 Please read the whitepaper document, the document is available in french only and at the moment 2 parts of the whitepaper
 who explain some important process are not written into this one.
 
