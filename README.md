@@ -21,7 +21,7 @@ who explain some important process are not written into this one.
 Once the whitepaper is complete, I will make the translation of this one into english.
 
 Everything has been developed in C#, and support Net5, a downgrade to NetFramework 4.8 is available.
-Other technical informations available on the whitepaper:
+Other technical informations are available on the whitepaper:
 <h5>ECDSA with SHA3-512, Curve: SECT571R1</h5>
 
 <h5>Visual Studio 2019 16.9 is required.</h5>
