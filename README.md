@@ -7,6 +7,7 @@ allowing to include updates on it without editing the content of the Blockchain.
 It was developed to update Xiropht which is a centralized cryptocurrency, once the stable version is complete.
 
 <b>For now be sure to use the current version centralized of Xiropht: https://xiropht.com/</b>
+
 <b>Official Github of Xiropht current version: https://github.com/XIROPHT</b>
 
 Please read the whitepaper document, the document is not yet complete but most of important details are actually written.
