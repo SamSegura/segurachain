@@ -28,15 +28,15 @@ Other technical informations available on the whitepaper:
 
 <h5>Libraries:</h5>
 
--> LZ4Net.
+-> LZ4Net. (The most better ratio between compression/decompression)
 
 -> Newtonsoft.Json.
 
 -> Open.NAT.
 
--> Portable.BouncyCastle.
+-> Portable.BouncyCastle. (Need a replacement to gain performances).
 
--> ZXing.net (Desktop wallet only).
+-> ZXing.net (Desktop wallet only, need a replacement later to erase this library).
 
 More upgrades of the project will coming soon, the complete version should be done the 1st July.
 
@@ -60,12 +60,11 @@ Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
 <h3>To do list:</h3>
 
-
--> Complete some parts of the whitepaper and translate it in english. (80% done)
+-> Complete some parts of the whitepaper and translate it in english. (85% done)
 
 -> Complete wallets balance checkpoint disk cache process. (40% done)
 
--> Complete Desktop Wallet features and options. (80% done)
+-> Complete Desktop Wallet features and options. (90% done)
 
 -> Develop the IO Cache Network mode. (0% done)
 
@@ -73,11 +72,12 @@ Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
 -> Develop an example of Mining Pool. (0% done)
 
--> Finish optimizations. (80% done)
+-> Finish optimizations. (85% done)
+
+-> Develop a block explorer page inside of the node API. (10% done)
+
 
 <h3>Project of development:</h3>
-
--> Develop a block explorer page inside of the node API.
 
 -> Implement an option to convert the BTC Blockchain database compatible with this technology.
 
