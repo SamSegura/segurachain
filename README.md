@@ -9,17 +9,13 @@ It was developed to update Xiropht which is a centralized cryptocurrency, once t
 <b>For now be sure to use the current version centralized of Xiropht: https://xiropht.com/</b>
 <b>Official Github of Xiropht current version: https://github.com/XIROPHT</b>
 
-Please read the whitepaper document, the document is available in french only and at the moment 2 parts of the whitepaper
-who explain some important process are not written into this one.
+Please read the whitepaper document, the document is not yet complete but most of important details are actually written.
 
 Once the whitepaper is complete, I will make the translation of this one into english.
 
 Everything has been developed in C#, and support Net5, a downgrade to NetFramework 4.8 is available.
 
-Other technical informations are available on the whitepaper:
-<b>ECDSA with SHA3-512, Curve: SECT571R1</b>
-
-<b>Visual Studio 2019 16.9 is required.</b>
+<b>Visual Studio 2019 16 at minimum is required.</b>
 
 > Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
