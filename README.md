@@ -6,14 +6,14 @@ allowing to include updates on it without editing the content of the Blockchain.
 
 It was developed to update Xiropht which is a centralized cryptocurrency, once the stable version is complete.
 
-<h4>For now be sure to use the current version centralized of Xiropht: https://xiropht.com/</h4>
-<h4>Official Github of Xiropht current version: https://github.com/XIROPHT</h4>
+<b>For now be sure to use the current version centralized of Xiropht: https://xiropht.com/</b>
+<b>Official Github of Xiropht current version: https://github.com/XIROPHT</b>
 
-<h4>It will also make it possible to further trivialize cryptocurrencies, because this technology is simple to set up,
+<b>It will also make it possible to further trivialize cryptocurrencies, because this technology is simple to set up,
 indirectly this will increase the difficulty for those who wish to create one to distinguish
 from the moment when users in general will understand that it is simple.
 When a product, a task to be accomplished becomes simple, the final value of this one generally becomes much lower over time.
-Which should allow users to be more vigilant.</h4>
+Which should allow users to be more vigilant.</b>
 
 Please read the whitepaper document, the document is available in french only and at the moment 2 parts of the whitepaper
 who explain some important process are not written into this one.
@@ -21,30 +21,36 @@ who explain some important process are not written into this one.
 Once the whitepaper is complete, I will make the translation of this one into english.
 
 Everything has been developed in C#, and support Net5, a downgrade to NetFramework 4.8 is available.
+
 Other technical informations are available on the whitepaper:
-<h5>ECDSA with SHA3-512, Curve: SECT571R1</h5>
+<b>ECDSA with SHA3-512, Curve: SECT571R1</b>
 
-<h5>Visual Studio 2019 16.9 is required.</h5>
+<b>Visual Studio 2019 16.9 is required.</b>
 
-<h5>Libraries:</h5>
+  
+<h3>Libraries:</h3>
 
--> LZ4Net. (The most better ratio between compression/decompression)
+> LZ4Net. (The most better ratio between compression/decompression)
 
--> Newtonsoft.Json.
+> Newtonsoft.Json.
 
--> Open.NAT.
+> Open.NAT.
 
--> Portable.BouncyCastle. (Need a replacement to gain performances).
+> Portable.BouncyCastle. (Need a replacement to gain performances).
 
--> ZXing.net (Desktop wallet only, need a replacement later to erase this library).
+> ZXing.net (Desktop wallet only, need a replacement later to erase this library).
 
-More upgrades of the project will coming soon, the complete version should be done the 1st July.
 
-Every devs and potential users can send me their returns about the project, potential fix, issues and more.
+<h3>How to setup your own Blockchain</h3>
 
-If you want to contact me, reach the official discord of Xiropht and send me a pm: https://discord.gg/cmRN2xD
+> https://github.com/SamSegura/segurachain/wiki/Setup-your-own-Blockchain
 
-<h4>If you want to donate to the project:</h4>
+<h3>How to make your own binaries</h3>
+
+> https://github.com/SamSegura/segurachain/wiki/Compilation-command-lines-for-Linux-and-others-OS-support
+
+
+<h3>If you want to donate to the project:</h3>
 
 BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
 
@@ -58,27 +64,38 @@ Thank you for your help.
 
 Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
 
+  
 <h3>To do list:</h3>
 
--> Complete some parts of the whitepaper and translate it in english. (85% done)
+> Complete some parts of the whitepaper and translate it in english. (85% done)
 
--> Complete wallets balance checkpoint disk cache process. (40% done)
+> Complete wallets balance checkpoint disk cache process. (40% done)
 
--> Complete Desktop Wallet features and options. (90% done)
+> Complete Desktop Wallet features and options. (90% done)
 
--> Develop the IO Cache Network mode. (0% done)
+> Develop the IO Cache Network mode. (0% done)
 
--> Develop the RPC Wallet. (0% done)
+> Develop the RPC Wallet. (0% done)
 
--> Develop an example of Mining Pool. (0% done)
+> Develop an example of Mining Pool. (0% done)
 
--> Finish optimizations. (85% done)
+> Finish optimizations. (85% done)
 
--> Develop a block explorer page inside of the node API. (10% done)
+> Develop a block explorer page inside of the node API. (10% done)
 
-
+  
 <h3>Project of development:</h3>
 
--> Implement an option to convert the BTC Blockchain database compatible with this technology.
+> Implement an option to convert the BTC Blockchain database compatible with this technology.
 
--> Develop an example of web wallet with <b>NuxtJS</b>
+> Develop an example of web wallet with <b>NuxtJS</b>
+
+
+<h3>Contacts</h3>
+  
+More upgrades of the project will coming soon, the complete version should be done the 1st July.
+
+Every devs and potential users can send me their returns about the project, potential fix, issues and more.
+
+If you want to contact me, reach the official discord of Xiropht and send me a pm: https://discord.gg/cmRN2xD
+  
