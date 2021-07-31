@@ -27,7 +27,7 @@ Other technical informations are available on the whitepaper:
 
 <b>Visual Studio 2019 16.9 is required.</b>
 
-  
+ 
 <h3>Libraries:</h3>
 
 > LZ4Net. (The most better ratio between compression/decompression)
@@ -48,7 +48,6 @@ Other technical informations are available on the whitepaper:
 <h3>How to make your own binaries</h3>
 
 > https://github.com/SamSegura/segurachain/wiki/Compilation-command-lines-for-Linux-and-others-OS-support
-
 
   
 <h3>To do list:</h3>
@@ -88,13 +87,13 @@ If you want to contact me, reach the official discord of Xiropht and send me a p
   
 <h3>If you want to donate to the project:</h3>
 
-BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
+> BTC: 39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU
 
-Curecoin: <b>B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR</b>
+> Curecoin: B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR
 
-Monero: <b>44TSVkQ2k9TVns4AdKpP1bSPQ5ZgHU9sULZZwBrWye82fa6MpLgFFi66mjLMtQEZ7xPXGLz5LPktfH71tFqdX36HCbE3DvU</b>
+> Monero: 44TSVkQ2k9TVns4AdKpP1bSPQ5ZgHU9sULZZwBrWye82fa6MpLgFFi66mjLMtQEZ7xPXGLz5LPktfH71tFqdX36HCbE3DvU
 
-Litecoin: <b>MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt</b>
+> Litecoin: MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt
 
 Thank you for your help. 
 
