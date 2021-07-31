@@ -50,20 +50,6 @@ Other technical informations are available on the whitepaper:
 > https://github.com/SamSegura/segurachain/wiki/Compilation-command-lines-for-Linux-and-others-OS-support
 
 
-<h3>If you want to donate to the project:</h3>
-
-BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
-
-Curecoin: <b>B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR</b>
-
-Monero: <b>44TSVkQ2k9TVns4AdKpP1bSPQ5ZgHU9sULZZwBrWye82fa6MpLgFFi66mjLMtQEZ7xPXGLz5LPktfH71tFqdX36HCbE3DvU</b>
-
-Litecoin: <b>MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt</b>
-
-Thank you for your help. 
-
-Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
-
   
 <h3>To do list:</h3>
 
@@ -99,3 +85,17 @@ Every devs and potential users can send me their returns about the project, pote
 
 If you want to contact me, reach the official discord of Xiropht and send me a pm: https://discord.gg/cmRN2xD
   
+  
+<h3>If you want to donate to the project:</h3>
+
+BTC: <b>39mUsJFhjU6GDrchCkQ4iJsmdvD8S2jpzU<b>
+
+Curecoin: <b>B6V6mSNRDFzmDgiPcQKYhBer6GgbM5XJeR</b>
+
+Monero: <b>44TSVkQ2k9TVns4AdKpP1bSPQ5ZgHU9sULZZwBrWye82fa6MpLgFFi66mjLMtQEZ7xPXGLz5LPktfH71tFqdX36HCbE3DvU</b>
+
+Litecoin: <b>MCBC7r7WWBULBhRyYj4XzVco3XQMzM4URt</b>
+
+Thank you for your help. 
+
+Official bitcointalk topic link: https://bitcointalk.org/index.php?topic=5328045
