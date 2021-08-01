@@ -1,4 +1,4 @@
-﻿using SeguraChain_Lib.Blockchain.Block.Object.Structure;
+using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Other.Object.List;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -620,13 +620,16 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
                                         pendingBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
                                     else
                                         pendingBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+
                                 }
                             }
                             else
                             {
                                 if (_syncCacheDatabase[blockHeight][transactionHash].IsSender)
                                 {
-                                    availableBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                                    if (availableBalance - (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee) >= 0)
+                                        availableBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+
                                     pendingBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
                                 }
                                 else
