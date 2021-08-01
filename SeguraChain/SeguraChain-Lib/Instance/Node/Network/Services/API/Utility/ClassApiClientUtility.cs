@@ -1,4 +1,4 @@
-﻿using SeguraChain_Lib.Blockchain.Block.Enum;
+using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Mining.Enum;
 using SeguraChain_Lib.Blockchain.Mining.Object;
@@ -182,7 +182,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
             }), ClassPeerApiPostPacketSendEnum.ASK_FEE_COST_TRANSACTION, cancellation);
 
 
-            return peerPacketSendFeeCostConfirmation != null ? new Tuple<BigInteger, bool>(peerPacketSendFeeCostConfirmation.FeeCost, peerPacketSendFeeCostConfirmation.Status) : null;
+            return peerPacketSendFeeCostConfirmation != null ? new Tuple<BigInteger, bool>(peerPacketSendFeeCostConfirmation.FeeCost, peerPacketSendFeeCostConfirmation.Status) : new Tuple<BigInteger, bool>(0, false);
         }
 
         /// <summary>
@@ -273,11 +273,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
         /// Get the total amount of transaction on MemPool from the external sync mode.
         /// </summary>
         /// <returns></returns>
-        public static async Task<List<long>> GetMemPoolListBlockHeights(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, CancellationTokenSource cancellation)
+        public static async Task<DisposableList<long>> GetMemPoolListBlockHeights(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, CancellationTokenSource cancellation)
         {
             ClassApiPeerPacketSendMemPoolBlockHeights peerPacketSendMemPoolBlockHeights = await SendGetRequestToExternalSyncNode<ClassApiPeerPacketSendMemPoolBlockHeights>(peerApiIp, peerApiPort, peerApiMaxConnectionDelay, ClassPeerApiEnumGetRequest.GetMemPoolBlockHeights, cancellation);
 
-            return peerPacketSendMemPoolBlockHeights?.ListBlockHeights != null ? peerPacketSendMemPoolBlockHeights.ListBlockHeights : new List<long>();
+            return peerPacketSendMemPoolBlockHeights?.ListBlockHeights != null ? new DisposableList<long>(false, 0, peerPacketSendMemPoolBlockHeights.ListBlockHeights) : new DisposableList<long>();
         }
 
 
@@ -289,9 +289,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
         /// <param name="end"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        public static async Task<List<ClassTransactionObject>> GetMemPoolTransactionByRangeFromExternalSyncMode(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, long blockHeight, int start, int end, CancellationTokenSource cancellation)
+        public static async Task<DisposableList<ClassTransactionObject>> GetMemPoolTransactionByRangeFromExternalSyncMode(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, long blockHeight, int start, int end, CancellationTokenSource cancellation)
         {
-            ClassApiPeerPacketSendMemPoolTransactionByRange peerpacketSendMemPoolTransactionByRange = await SendPostRequestToExternalSyncNode<ClassApiPeerPacketSendMemPoolTransactionByRange>(peerApiIp, peerApiPort, peerApiMaxConnectionDelay, ClassUtility.SerializeData(new ClassApiPeerPacketAskMemPoolTransactionByRange
+            ClassApiPeerPacketSendMemPoolTransactionByRange peerPacketSendMemPoolTransactionByRange = await SendPostRequestToExternalSyncNode<ClassApiPeerPacketSendMemPoolTransactionByRange>(peerApiIp, peerApiPort, peerApiMaxConnectionDelay, ClassUtility.SerializeData(new ClassApiPeerPacketAskMemPoolTransactionByRange
             {
                 BlockHeight = blockHeight,
                 Start = start,
@@ -299,7 +299,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
                 PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
             }), ClassPeerApiPostPacketSendEnum.ASK_MEMPOOL_TRANSACTION_BY_RANGE, cancellation);
 
-            return peerpacketSendMemPoolTransactionByRange?.ListTransaction != null ? peerpacketSendMemPoolTransactionByRange.ListTransaction : new List<ClassTransactionObject>();
+            return peerPacketSendMemPoolTransactionByRange?.ListTransaction != null ? new DisposableList<ClassTransactionObject>(false, 0, peerPacketSendMemPoolTransactionByRange.ListTransaction) : new DisposableList<ClassTransactionObject>();
         }
 
         /// <summary>
@@ -310,7 +310,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
         /// <param name="end"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        public static async Task<List<ClassBlockTransaction>> GetBlockTransactionByRangeFromExternalSyncMode(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, long blockHeight, int start, int end, CancellationTokenSource cancellation)
+        public static async Task<DisposableList<ClassBlockTransaction>> GetBlockTransactionByRangeFromExternalSyncMode(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, long blockHeight, int start, int end, CancellationTokenSource cancellation)
         {
             ClassApiPeerPacketSendListBlockTransaction peerPacketSendListBlockTransaction = await SendPostRequestToExternalSyncNode<ClassApiPeerPacketSendListBlockTransaction>(peerApiIp, peerApiPort, peerApiMaxConnectionDelay, ClassUtility.SerializeData(new ClassApiPeerPacketAskBlockTransactionByRange()
             {
@@ -320,7 +320,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
                 PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
             }), ClassPeerApiPostPacketSendEnum.ASK_BLOCK_TRANSACTION_BY_RANGE, cancellation);
 
-            return peerPacketSendListBlockTransaction?.ListBlockTransaction != null ? peerPacketSendListBlockTransaction.ListBlockTransaction : new List<ClassBlockTransaction>();
+            return peerPacketSendListBlockTransaction?.ListBlockTransaction != null ? new DisposableList<ClassBlockTransaction>(false, 0, peerPacketSendListBlockTransaction.ListBlockTransaction) : new DisposableList<ClassBlockTransaction>();
         }
 
         /// <summary>
@@ -332,8 +332,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
         /// <returns></returns>
         public static async Task<DisposableList<ClassBlockTransaction>> GetBlockTransactionByHashFromExternalSyncMode(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, List<string> listTransactionHash, long blockHeight, CancellationTokenSource cancellation)
         {
-            DisposableList<ClassBlockTransaction> listBlockTransaction = new DisposableList<ClassBlockTransaction>();
-
 
             ClassApiPeerPacketSendListBlockTransaction peerPacketSendListBlockTransaction = await SendPostRequestToExternalSyncNode<ClassApiPeerPacketSendListBlockTransaction>(peerApiIp, peerApiPort, peerApiMaxConnectionDelay, ClassUtility.SerializeData(new ClassApiPeerPacketAskBlockTransactionByHashList()
             {
@@ -342,14 +340,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
                 PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond(),
             }), ClassPeerApiPostPacketSendEnum.ASK_BLOCK_TRANSACTION_BY_HASH_LIST, cancellation);
 
-            if (peerPacketSendListBlockTransaction?.ListBlockTransaction != null)
-            {
-                foreach (ClassBlockTransaction blockTransaction in peerPacketSendListBlockTransaction.ListBlockTransaction)
-                    listBlockTransaction.Add(blockTransaction);
-            }
 
-
-            return listBlockTransaction;
+            return peerPacketSendListBlockTransaction?.ListBlockTransaction != null ? new DisposableList<ClassBlockTransaction>(false, 0, peerPacketSendListBlockTransaction.ListBlockTransaction) : new DisposableList<ClassBlockTransaction>();
         }
 
         /// <summary>
