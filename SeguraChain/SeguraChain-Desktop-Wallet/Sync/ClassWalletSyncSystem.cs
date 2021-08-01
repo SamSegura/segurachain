@@ -92,7 +92,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                             if (ClassUtility.TryDeserialize(line, out ClassSyncCacheBlockTransactionObject blockTransactionSyncCacheObject))
                             {
                                 if (blockTransactionSyncCacheObject != null)
-                                    await InsertOrUpdateBlockTransactionToSyncCache(blockTransactionSyncCacheObject.WalletAddressOwner, blockTransactionSyncCacheObject.BlockTransaction, blockTransactionSyncCacheObject.IsMemPool, true, _cancellationSyncCache);
+                                    await InsertOrUpdateBlockTransactionToSyncCache(blockTransactionSyncCacheObject.IsSender ? blockTransactionSyncCacheObject.BlockTransaction.TransactionObject.WalletAddressSender : blockTransactionSyncCacheObject.BlockTransaction.TransactionObject.WalletAddressReceiver, blockTransactionSyncCacheObject.BlockTransaction, blockTransactionSyncCacheObject.IsMemPool, true, _cancellationSyncCache);
                             }
                         }
                     }
@@ -310,7 +310,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                                                     if (blockTransaction != null)
                                                     {
-                                                        DatabaseSyncCache[walletAddress].UpdateBlockTransaction(blockTransaction, false, cancellationUpdateWalletSync);
+                                                        DatabaseSyncCache[walletAddress].UpdateBlockTransaction(blockTransaction, false);
                                                         totalTxUpdated++;
                                                     }
                                                 }
@@ -346,7 +346,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                                     else
                                                     {
                                                         currentBlockTransaction.BlockTransaction.TransactionTotalConfirmation = (lastBlockHeightTransactionConfirmation - blockHeight)+1;
-                                                        DatabaseSyncCache[walletAddress].UpdateBlockTransaction(currentBlockTransaction.BlockTransaction, false, cancellationUpdateWalletSync);
+                                                        DatabaseSyncCache[walletAddress].UpdateBlockTransaction(currentBlockTransaction.BlockTransaction, false);
                                                         totalTxUpdated++;
                                                     }
                                                 }
@@ -458,7 +458,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                         if (updateWalletBalance)
                             UpdateWalletSyncCacheBalances(walletAddress, isMemPool, blockTransaction);
 
-                        await DatabaseSyncCache[walletAddress].InsertBlockTransaction(new ClassSyncCacheBlockTransactionObject(walletAddress)
+                        await DatabaseSyncCache[walletAddress].InsertBlockTransaction(new ClassSyncCacheBlockTransactionObject()
                         {
                             BlockTransaction = blockTransaction,
                             IsMemPool = isMemPool,
@@ -466,7 +466,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                         }, cancellation) ;
                     }
                     else
-                        DatabaseSyncCache[walletAddress].UpdateBlockTransaction(blockTransaction, isMemPool, cancellation);
+                        DatabaseSyncCache[walletAddress].UpdateBlockTransaction(blockTransaction, isMemPool);
                 }
             }
 
@@ -1259,17 +1259,21 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                     break;
                             }
                         }
-
                         if (cancelled)
                         {
+#if DEBUG
+                            Debug.WriteLine("Sync cancelled for wallet address: " + walletAddress);
+#endif
                             changeDone = false;
                             ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletEnableRescan = true;
                         }
                         else
                         {
-                            if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced < lastBlockHeight)
+                            if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced != blockHeightStart)
                             {
-                                ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = lastBlockHeight;
+#if DEBUG
+                                Debug.WriteLine("Change done on the sync of the wallet filename: " + walletFileName + " - Previous Height: " + blockHeightStart + " | New Height: " + ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced);
+#endif
                                 changeDone = true;
                             }
                         }
@@ -1289,6 +1293,8 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 }
             }
+            else
+                ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletEnableRescan = true;
 
 
             return changeDone;
@@ -1651,7 +1657,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                         }
                         else
                         {
-                            if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced - blockHeightStart > 0)
+                            if (ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced != blockHeightStart)
                             {
 #if DEBUG
                                 Debug.WriteLine("Change done on the sync of the wallet filename: " + walletFileName + " - Previous Height: " + blockHeightStart + " | New Height: " + ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced);
@@ -1675,6 +1681,8 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 }
             }
+            else
+                ClassDesktopWalletCommonData.WalletDatabase.DictionaryWalletData[walletFileName].WalletEnableRescan = true;
 
 
             return changeDone;

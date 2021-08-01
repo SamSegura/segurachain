@@ -1,12 +1,11 @@
 ﻿using SeguraChain_Lib.Blockchain.Block.Object.Structure;
-using System.Collections.Generic;
-using System.Threading;
-using System.Linq;
-using SeguraChain_Lib.Utility;
-using System.Numerics;
-using System.Threading.Tasks;
 using SeguraChain_Lib.Other.Object.List;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SeguraChain_Desktop_Wallet.Sync.Object
 {
@@ -214,7 +213,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// </summary>
         /// <param name="blockTransaction"></param>
         /// <param name="isMemPool"></param>
-        public void UpdateBlockTransaction(ClassBlockTransaction blockTransaction, bool isMemPool, CancellationTokenSource cancellation)
+        public void UpdateBlockTransaction(ClassBlockTransaction blockTransaction, bool isMemPool)
         {
             if (_syncCacheDatabase.ContainsKey(blockTransaction.TransactionObject.BlockHeightTransaction))
             {
@@ -238,20 +237,15 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
                 await _semaphoreDictionaryAccess.WaitAsync(cancellation.Token);
                 semaphoreUsed = true;
 
-                try
-                {
-                    if (cancellationTokenSyncCacheUpdate != null)
-                    {
-                        if (!cancellationTokenSyncCacheUpdate.IsCancellationRequested)
-                            cancellationTokenSyncCacheUpdate.Cancel();
-                    }
-                }
-                catch
-                {
-                    // Ignored.
-                }
+
+                foreach(long blockHeight in BlockHeightKeys.GetAll)
+                    _syncCacheDatabase[blockHeight].Clear();
 
                 _syncCacheDatabase.Clear();
+
+                AvailableBalance = 0;
+                PendingBalance = 0;
+                
             }
             finally
             {
@@ -605,35 +599,35 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
                 {
                     cancellation.Token.ThrowIfCancellationRequested();
 
-                    foreach (var transaction in _syncCacheDatabase[blockHeight].ToArray())
+                    foreach (var transactionHash in _syncCacheDatabase[blockHeight].Keys)
                     {
                         cancellation.Token.ThrowIfCancellationRequested();
 
-                        if (transaction.Value.BlockTransaction.TransactionStatus)
+                        if (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionStatus)
                         {
-                            if (!transaction.Value.IsMemPool)
+                            if (!_syncCacheDatabase[blockHeight][transactionHash].IsMemPool)
                             {
-                                if (transaction.Value.BlockTransaction.IsConfirmed)
+                                if (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.IsConfirmed)
                                 {
-                                    if (transaction.Value.BlockTransaction.TransactionObject.WalletAddressReceiver == transaction.Value.WalletAddressOwner)
-                                        availableBalance += transaction.Value.BlockTransaction.TransactionObject.Amount;
+                                    if (!_syncCacheDatabase[blockHeight][transactionHash].IsSender)
+                                        availableBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
                                     else
-                                        availableBalance -= (transaction.Value.BlockTransaction.TransactionObject.Amount + transaction.Value.BlockTransaction.TransactionObject.Fee);
+                                        availableBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
                                 }
                                 else
                                 {
-                                    if (transaction.Value.BlockTransaction.TransactionObject.WalletAddressReceiver == transaction.Value.WalletAddressOwner)
-                                        pendingBalance += transaction.Value.BlockTransaction.TransactionObject.Amount;
+                                    if (!_syncCacheDatabase[blockHeight][transactionHash].IsSender)
+                                        pendingBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
                                     else
-                                        pendingBalance -= (transaction.Value.BlockTransaction.TransactionObject.Amount + transaction.Value.BlockTransaction.TransactionObject.Fee);
+                                        pendingBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
                                 }
                             }
                             else
                             {
-                                if (transaction.Value.BlockTransaction.TransactionObject.WalletAddressSender == transaction.Value.WalletAddressOwner)
-                                    pendingBalance -= (transaction.Value.BlockTransaction.TransactionObject.Amount + transaction.Value.BlockTransaction.TransactionObject.Fee);
+                                if (_syncCacheDatabase[blockHeight][transactionHash].IsSender)
+                                    pendingBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
                                 else
-                                    pendingBalance += transaction.Value.BlockTransaction.TransactionObject.Amount;
+                                    pendingBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
 
                             }
                         }

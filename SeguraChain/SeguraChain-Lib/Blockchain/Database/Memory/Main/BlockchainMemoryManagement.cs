@@ -1761,7 +1761,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
 
                             if (blockObjectUpdated.BlockTransactions[txHash].TransactionStatus)
                             {
-                                blockObjectUpdated.BlockTransactions[txHash].TransactionTotalConfirmation = lastBlockHeightTransactionConfirmationDone - blockHeight;
+                                blockObjectUpdated.BlockTransactions[txHash].TransactionTotalConfirmation = (lastBlockHeightTransactionConfirmationDone - blockHeight)+1;
 
                                 if (blockObjectUpdated.BlockTransactions[txHash].IsConfirmed)
                                 {

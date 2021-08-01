@@ -69,42 +69,9 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         public ClassBlockTransaction Clone()
         {
-            //ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(this), out ClassBlockTransaction blockTransaction);
+           ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(this), out ClassBlockTransaction blockTransaction);
 
-            return new ClassBlockTransaction(IndexInsert, new ClassTransactionObject()
-            {
-                Amount = TransactionObject.Amount,
-                BlockHash = TransactionObject.BlockHash,
-                AmountTransactionSource = TransactionObject.AmountTransactionSource,
-                BlockHeightTransaction = TransactionObject.BlockHeightTransaction,
-                BlockHeightTransactionConfirmationTarget = TransactionObject.BlockHeightTransactionConfirmationTarget,
-                Fee = TransactionObject.Fee,
-                PaymentId = TransactionObject.PaymentId,
-                TimestampBlockHeightCreateSend = TransactionObject.TimestampBlockHeightCreateSend,
-                TimestampSend = TransactionObject.TimestampSend,
-                TransactionBigSignatureReceiver = TransactionObject.TransactionBigSignatureReceiver,
-                TransactionBigSignatureSender = TransactionObject.TransactionBigSignatureSender,
-                TransactionHash = TransactionObject.TransactionHash,
-                TransactionHashBlockReward = TransactionObject.TransactionHashBlockReward,
-                TransactionSignatureReceiver = TransactionObject.TransactionSignatureReceiver,
-                TransactionSignatureSender = TransactionObject.TransactionSignatureSender,
-                TransactionType = TransactionObject.TransactionType,
-                TransactionVersion = TransactionObject.TransactionVersion,
-                WalletAddressReceiver = TransactionObject.WalletAddressReceiver,
-                WalletAddressSender = TransactionObject.WalletAddressSender,
-                WalletPublicKeyReceiver = TransactionObject.WalletPublicKeyReceiver,
-                WalletPublicKeySender = TransactionObject.WalletPublicKeySender,
-            })
-            {
-                TotalSpend = TotalSpend,
-                TransactionBlockHeightInsert = TransactionBlockHeightInsert,
-                TransactionBlockHeightTarget = TransactionBlockHeightTarget,
-                TransactionInvalidRemoveTimestamp = TransactionInvalidRemoveTimestamp,
-                TransactionInvalidStatus = TransactionInvalidStatus,
-                TransactionSize = TransactionSize,
-                TransactionStatus = TransactionStatus,
-                TransactionTotalConfirmation = TransactionTotalConfirmation
-            };
+            return blockTransaction;
         }
     }
 }
