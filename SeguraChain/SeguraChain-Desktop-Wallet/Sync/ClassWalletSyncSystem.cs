@@ -1058,7 +1058,11 @@ namespace SeguraChain_Desktop_Wallet.Sync
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
                         if (_apiIsAlive)
+                        {
                             calculationFeeCostConfirmation = await ClassApiClientUtility.GetFeeCostTransactionFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, blockHeightConfirmationStart, blockHeightConfirmationTarget, cancellation);
+                            if (calculationFeeCostConfirmation == null)
+                                return new Tuple<BigInteger, bool>(0, false);
+                        }
                     }
                     break;
             }
