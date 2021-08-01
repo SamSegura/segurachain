@@ -28,6 +28,25 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
     /// </summary>
     public class ClassApiClientUtility
     {
+
+        /// <summary>
+        /// Check if the API is alive.
+        /// </summary>
+        /// <param name="peerApiIp"></param>
+        /// <param name="peerApiPort"></param>
+        /// <param name="peerApiMaxConnectionDelay"></param>
+        /// <param name="cancellation"></param>
+        /// <returns></returns>
+        public static async Task<bool> GetAliveFromExternalSyncMode(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, CancellationTokenSource cancellation)
+        {
+            string content = await SendGetRequest(peerApiIp, peerApiPort, peerApiMaxConnectionDelay, ClassPeerApiEnumGetRequest.GetAlive, cancellation);
+
+            if (ClassUtility.TryDeserialize(content, out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
+                return apiPeerPacketObjetReceive.PacketType == ClassPeerApiPacketResponseEnum.OK;
+
+            return false;
+        }
+
         /// <summary>
         /// Retrieve the current blocktemplate from the external sync mode.
         /// </summary>
@@ -360,6 +379,36 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
         /// <returns></returns>
         private static async Task<T> SendGetRequestToExternalSyncNode<T>(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, string getRequest, CancellationTokenSource cancellation)
         {
+            string content = await SendGetRequest(peerApiIp, peerApiPort, peerApiMaxConnectionDelay, getRequest, cancellation);
+
+
+            if (ClassUtility.TryDeserialize(content, out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
+            {
+                // Clean up.
+                content.Clear();
+
+                if (!apiPeerPacketObjetReceive.PacketObjectSerialized.IsNullOrEmpty(out _))
+                {
+                    if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out T apiPeerPacketContent))
+                        return apiPeerPacketContent;
+                }
+
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// Send a get request.
+        /// </summary>
+        /// <param name="peerApiIp"></param>
+        /// <param name="peerApiPort"></param>
+        /// <param name="peerApiMaxConnectionDelay"></param>
+        /// <param name="getRequest"></param>
+        /// <param name="cancellation"></param>
+        /// <returns></returns>
+        private static async Task<string> SendGetRequest(string peerApiIp, int peerApiPort, int peerApiMaxConnectionDelay, string getRequest, CancellationTokenSource cancellation)
+        {
             string content = null;
 
             try
@@ -380,26 +429,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
                 // Ignored catch the exception once the task is cancelled.
             }
 
-
-            if (!content.IsNullOrEmpty(out _))
-            {
-                if (ClassUtility.TryDeserialize(content, out ClassApiPeerPacketObjetReceive apiPeerPacketObjetReceive))
-                {
-                    // Clean up.
-                    content.Clear();
-
-                    if (apiPeerPacketObjetReceive != null)
-                    {
-                        if (ClassUtility.TryDeserialize(apiPeerPacketObjetReceive.PacketObjectSerialized, out T apiPeerPacketContent))
-                            return apiPeerPacketContent;
-                    }
-                }
-                else
-                    // Clean up.
-                    content.Clear();
-            }
-
-            return default;
+            return content;
         }
 
         /// <summary>

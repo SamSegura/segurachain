@@ -48,6 +48,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
         /// For external sync mode.
         /// </summary>
         private CancellationTokenSource _cancellationExternalSyncMode;
+        private bool _apiIsAlive;
         private long _lastBlockHeight;
         private long _lastBlockHeightUnlocked;
         private long _lastBlockHeightTransactionConfirmationDone;
@@ -394,7 +395,6 @@ namespace SeguraChain_Desktop_Wallet.Sync
             }
         }
 
-
         /// <summary>
         /// Clean sync cache of a wallet address target.
         /// </summary>
@@ -565,23 +565,34 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     {
                         while (ClassDesktopWalletCommonData.DesktopWalletStarted)
                         {
-                            var lastBlockHeight = await GetLastBlockHeightSynced(_cancellationExternalSyncMode, false);
-                            _lastBlockHeight = lastBlockHeight > 0 ? lastBlockHeight : _lastBlockHeight;
+                            _apiIsAlive = await ClassApiClientUtility.GetAliveFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, _cancellationExternalSyncMode);
 
-                            var lastBlockHeightTransactionConfirmationDone = await GetLastBlockHeightTransactionConfirmation(_cancellationExternalSyncMode, false);
-                            _lastBlockHeightTransactionConfirmationDone = lastBlockHeightTransactionConfirmationDone > 0 ? lastBlockHeightTransactionConfirmationDone : _lastBlockHeightTransactionConfirmationDone;
+                            if (_apiIsAlive)
+                            {
+                                var lastBlockHeight = await GetLastBlockHeightSynced(_cancellationExternalSyncMode, false);
+                                _lastBlockHeight = lastBlockHeight > 0 ? lastBlockHeight : _lastBlockHeight;
 
-                            var lastBlockHeightUnlocked = await GetLastBlockHeightUnlockedSynced(_cancellationExternalSyncMode, false);
-                            _lastBlockHeightUnlocked = lastBlockHeightUnlocked > 0 ? lastBlockHeightUnlocked : _lastBlockHeightUnlocked;
+                                var lastBlockHeightTransactionConfirmationDone = await GetLastBlockHeightTransactionConfirmation(_cancellationExternalSyncMode, false);
+                                _lastBlockHeightTransactionConfirmationDone = lastBlockHeightTransactionConfirmationDone > 0 ? lastBlockHeightTransactionConfirmationDone : _lastBlockHeightTransactionConfirmationDone;
 
-                            _lastTotalMemPoolTransaction = await ClassApiClientUtility.GetMemPoolTotalTransactionCountFromExternalSyncMode(
-                               ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, _cancellationExternalSyncMode);
+                                var lastBlockHeightUnlocked = await GetLastBlockHeightUnlockedSynced(_cancellationExternalSyncMode, false);
+                                _lastBlockHeightUnlocked = lastBlockHeightUnlocked > 0 ? lastBlockHeightUnlocked : _lastBlockHeightUnlocked;
 
-                            var lastBlockHeightTimestampCreate = await ClassApiClientUtility.GetBlockTimestampCreateFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeight, _cancellationExternalSyncMode);
-                            _lastBlockHeightTimestampCreate = lastBlockHeightTimestampCreate > 0 ? lastBlockHeightTimestampCreate : _lastBlockHeightTimestampCreate;
+                                _lastTotalMemPoolTransaction = await ClassApiClientUtility.GetMemPoolTotalTransactionCountFromExternalSyncMode(
+                                   ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, _cancellationExternalSyncMode);
 
-                            var lastBlockHeightConfirmationTarget = await ClassApiClientUtility.GetGenerateBlockHeightStartTransactionConfirmationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, lastBlockHeight, _cancellationExternalSyncMode);
-                            _lastBlockHeightConfirmationTarget = lastBlockHeightConfirmationTarget > 0 ? lastBlockHeightConfirmationTarget : _lastBlockHeightConfirmationTarget;
+                                var lastBlockHeightTimestampCreate = await ClassApiClientUtility.GetBlockTimestampCreateFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeight, _cancellationExternalSyncMode);
+                                _lastBlockHeightTimestampCreate = lastBlockHeightTimestampCreate > 0 ? lastBlockHeightTimestampCreate : _lastBlockHeightTimestampCreate;
+
+                                var lastBlockHeightConfirmationTarget = await ClassApiClientUtility.GetGenerateBlockHeightStartTransactionConfirmationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, lastBlockHeight, _cancellationExternalSyncMode);
+                                _lastBlockHeightConfirmationTarget = lastBlockHeightConfirmationTarget > 0 ? lastBlockHeightConfirmationTarget : _lastBlockHeightConfirmationTarget;
+                            }
+#if DEBUG
+                            else
+                            {
+                                Debug.WriteLine("The API " + ClassDesktopWalletCommonData.WalletSettingObject.ApiHost + ":" + ClassDesktopWalletCommonData.WalletSettingObject.ApiPort + " seems to be dead.");
+                            }
+#endif
 
                             await Task.Delay(1000, _cancellationExternalSyncMode.Token);
                         }
@@ -679,8 +690,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return await UpdateWalletSyncFromExternalSyncMode(walletFileName, cancellation);
+                        if (_apiIsAlive)
+                            return await UpdateWalletSyncFromExternalSyncMode(walletFileName, cancellation);
                     }
+                    break;
             }
             return false;
         }
@@ -793,7 +806,8 @@ namespace SeguraChain_Desktop_Wallet.Sync
                         break;
                     case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                         {
-                            blockTransaction = await ClassApiClientUtility.GetBlockTransactionByTransactionHashAndBlockHeightFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, transactionHash, blockHeight, cancellation);
+                            if (_apiIsAlive)
+                                blockTransaction = await ClassApiClientUtility.GetBlockTransactionByTransactionHashAndBlockHeightFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, transactionHash, blockHeight, cancellation);
                         }
                         break;
                 }
@@ -842,8 +856,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return await ClassApiClientUtility.GetWalletMemPoolTransactionFromTransactionHashFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, transactionHash, cancellation);
+                        if (_apiIsAlive)
+                            return await ClassApiClientUtility.GetWalletMemPoolTransactionFromTransactionHashFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, transactionHash, cancellation);
                     }
+                    break;
             }
             return null;
         }
@@ -862,8 +878,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return useInternalUpdate ? _lastBlockHeightUnlocked : await ClassApiClientUtility.GetLastBlockHeightUnlockedFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
+                        if (_apiIsAlive || useInternalUpdate)
+                            return useInternalUpdate ? _lastBlockHeightUnlocked : await ClassApiClientUtility.GetLastBlockHeightUnlockedFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
                     }
+                    break;
             }
             return 0;
         }
@@ -882,8 +900,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return useInternalUpdate ? _lastBlockHeight : await ClassApiClientUtility.GetLastBlockHeightFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
+                        if (_apiIsAlive || useInternalUpdate)
+                            return useInternalUpdate ? _lastBlockHeight : await ClassApiClientUtility.GetLastBlockHeightFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
                     }
+                    break;
             }
             return 0;
         }
@@ -903,8 +923,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return useInternalUpdate ? _lastBlockHeightTransactionConfirmationDone : await ClassApiClientUtility.GetLastBlockHeightTransactionConfirmationDoneFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
+                        if (_apiIsAlive || useInternalUpdate)
+                            return useInternalUpdate ? _lastBlockHeightTransactionConfirmationDone : await ClassApiClientUtility.GetLastBlockHeightTransactionConfirmationDoneFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
                     }
+                    break;
             }
             return 0;
         }
@@ -923,8 +945,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return await ClassApiClientUtility.GetBlockchainNetworkStatsFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
+                        if (_apiIsAlive)
+                            return await ClassApiClientUtility.GetBlockchainNetworkStatsFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
                     }
+                    break;
             }
 
             return null;
@@ -944,8 +968,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return useInternalUpdate ? _lastTotalMemPoolTransaction : await ClassApiClientUtility.GetMemPoolTotalTransactionCountFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
+                        if (_apiIsAlive || useInternalUpdate)
+                            return useInternalUpdate ? _lastTotalMemPoolTransaction : await ClassApiClientUtility.GetMemPoolTotalTransactionCountFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation);
                     }
+                    break;
             }
             return 0;
         }
@@ -972,8 +998,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     break;
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return useInternalUpdate ? _lastBlockHeightTimestampCreate : await ClassApiClientUtility.GetBlockTimestampCreateFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
+                        if (_apiIsAlive || useInternalUpdate)
+                            return useInternalUpdate ? _lastBlockHeightTimestampCreate : await ClassApiClientUtility.GetBlockTimestampCreateFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
                     }
+                    break;
             }
 
             return timestamp;
@@ -999,7 +1027,8 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     break;
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        blockHeightStart = useInternalUpdate ? _lastBlockHeightConfirmationTarget : await ClassApiClientUtility.GetGenerateBlockHeightStartTransactionConfirmationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, lastBlockHeight, cancellation);
+                        if (_apiIsAlive || useInternalUpdate)
+                            blockHeightStart = useInternalUpdate ? _lastBlockHeightConfirmationTarget : await ClassApiClientUtility.GetGenerateBlockHeightStartTransactionConfirmationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, lastBlockHeight, cancellation);
                     }
                     break;
             }
@@ -1028,7 +1057,8 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     break;
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        calculationFeeCostConfirmation = await ClassApiClientUtility.GetFeeCostTransactionFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, blockHeightConfirmationStart, blockHeightConfirmationTarget, cancellation);
+                        if (_apiIsAlive)
+                            calculationFeeCostConfirmation = await ClassApiClientUtility.GetFeeCostTransactionFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, blockHeightConfirmationStart, blockHeightConfirmationTarget, cancellation);
                     }
                     break;
             }
@@ -1054,9 +1084,10 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
-                        return await ClassApiClientUtility.GetBlockTransactionByHashFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, listTransactionHash, blockHeight, cancellation);
+                        if (_apiIsAlive)
+                            return await ClassApiClientUtility.GetBlockTransactionByHashFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, listTransactionHash, blockHeight, cancellation);
                     }
-
+                    break;
             }
 
             return new DisposableList<ClassBlockTransaction>();
@@ -1332,13 +1363,13 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                     if (countMemPoolTransaction > 0)
                     {
-                        using (DisposableList<long> listBlockHeight = new DisposableList<long>(true, 0, await ClassApiClientUtility.GetMemPoolListBlockHeights(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation)))
+                        using (DisposableList<long> listBlockHeight = new DisposableList<long>(true, 0, await ClassApiClientUtility.GetMemPoolListBlockHeights(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation)))
                         {
                             if (listBlockHeight.Count > 0)
                             {
                                 foreach (long blockHeight in listBlockHeight.GetList)
                                 {
-                                    int transactionCount = await ClassApiClientUtility.GetMemPoolTransactionCountByBlockHeightFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
+                                    int transactionCount = await ClassApiClientUtility.GetMemPoolTransactionCountByBlockHeightFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
 
                                     if (transactionCount > 0)
                                     {
@@ -1365,7 +1396,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                             }
 
 
-                                            foreach (ClassTransactionObject memPoolTransactionObject in await ClassApiClientUtility.GetMemPoolTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
+                                            foreach (ClassTransactionObject memPoolTransactionObject in await ClassApiClientUtility.GetMemPoolTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
                                             {
                                                 if (memPoolTransactionObject?.WalletAddressSender == walletAddress || memPoolTransactionObject?.WalletAddressReceiver == walletAddress)
                                                     listTransactionObject.Add(memPoolTransactionObject);
@@ -1453,7 +1484,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                             if (blockHeight >= BlockchainSetting.GenesisBlockHeight && blockHeight <= lastBlockHeight)
                             {
-                                ClassBlockObject blockObjectInformation = await ClassApiClientUtility.GetBlockInformationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
+                                ClassBlockObject blockObjectInformation = await ClassApiClientUtility.GetBlockInformationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
 
                                 while (blockObjectInformation == null)
                                 {
@@ -1463,14 +1494,23 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                     Debug.WriteLine("Block Height " + blockHeight + " received from external sync is empty.");
 #endif
 
+                                    if (blockHeight > await GetLastBlockHeightSynced(cancellation, true))
+                                    {
+                                        cancelled = true;
+                                        break;
+                                    }
+
                                     await Task.Delay(1000, cancellation.Token);
 
-                                    blockObjectInformation = await ClassApiClientUtility.GetBlockInformationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
+                                    blockObjectInformation = await ClassApiClientUtility.GetBlockInformationFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, cancellation);
 
                                     if (blockObjectInformation != null)
                                         break;
                                    
                                 }
+
+                                if (cancelled)
+                                    break;
 
                                 if (blockObjectInformation.BlockStatus == ClassBlockEnumStatus.LOCKED)
                                     break;
@@ -1519,7 +1559,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                             }
 
 
-                                            foreach (ClassBlockTransaction blockTransactionObject in await ClassApiClientUtility.GetBlockTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
+                                            foreach (ClassBlockTransaction blockTransactionObject in await ClassApiClientUtility.GetBlockTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
                                             {
                                                 if (blockTransactionObject?.TransactionObject.WalletAddressSender == walletAddress || blockTransactionObject?.TransactionObject.WalletAddressReceiver == walletAddress)
                                                     listBlockTransaction.Add(blockTransactionObject);
@@ -1530,6 +1570,12 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                                             if (totalRetrieved >= blockObjectInformation.TotalTransaction)
                                                 break;
+                                        }
+
+                                        if (blockHeight > await GetLastBlockHeightSynced(cancellation, true))
+                                        {
+                                            cancelled = true;
+                                            break;
                                         }
 
                                         if (totalRetrieved >= blockObjectInformation.TotalTransaction)
@@ -1711,7 +1757,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                             break;
                         case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                             {
-                                sendTransactionStatus = await ClassApiClientUtility.SendTransactionByExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp, ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, transactionObject, cancellation);
+                                sendTransactionStatus = await ClassApiClientUtility.SendTransactionByExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, transactionObject, cancellation);
                             }
                             break;
                     }

@@ -1,4 +1,6 @@
 ﻿using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using SeguraChain_Desktop_Wallet.Settings.Enum;
 using SeguraChain_Lib.Blockchain.Database.DatabaseSetting;
 using SeguraChain_Lib.Instance.Node.Network.Database.Manager;
@@ -14,9 +16,11 @@ namespace SeguraChain_Desktop_Wallet.Settings.Object
         public string WalletSyncCacheDirectoryPath;
         public string WalletSyncCacheFilePath;
         public ClassNodeSettingObject WalletInternalSyncNodeSetting;
+
+        [JsonConverter(typeof(StringEnumConverter))]
         public ClassWalletSettingEnumSyncMode WalletSyncMode;
-        public string CustomPeerIp;
-        public int CustomPeerPort;
+        public string ApiHost;
+        public int ApiPort;
 
         /// <summary>
         /// Constructor with default value.
@@ -27,8 +31,8 @@ namespace SeguraChain_Desktop_Wallet.Settings.Object
             WalletDirectoryPath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassWalletDefaultSetting.DefaultWalletDirectoryFilePath);
             WalletSyncCacheDirectoryPath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassWalletDefaultSetting.WalletDefaultSyncCacheDirectoryPath);
             WalletSyncCacheFilePath = WalletSyncCacheDirectoryPath + ClassWalletDefaultSetting.WalletDefaultSyncCacheFilename;
-            CustomPeerIp = null;
-            CustomPeerPort = 0;
+            ApiHost = null;
+            ApiPort = 0;
             WalletSyncMode = ClassWalletSettingEnumSyncMode.INTERNAL_PEER_SYNC_MODE;
             string numericPrivateKey = ClassPeerKeysManager.GeneratePeerPrivateKey();
 

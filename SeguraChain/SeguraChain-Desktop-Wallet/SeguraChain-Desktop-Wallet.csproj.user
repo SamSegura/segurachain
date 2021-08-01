@@ -46,6 +46,9 @@
     <Compile Update="InternalForm\TransactionHistory\ClassWalletTransactionHistoryInformationInternalForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="InternalForm\TransactionHistory\ClassWalletTransactionHistoryInformationsLoadingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">

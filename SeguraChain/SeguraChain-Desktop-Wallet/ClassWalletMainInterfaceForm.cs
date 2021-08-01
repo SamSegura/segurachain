@@ -1807,30 +1807,38 @@ namespace SeguraChain_Desktop_Wallet
                         {
                             if (foundElement)
                             {
-                                using (DisposableList<Tuple<bool, ClassBlockTransaction>> listBlockTransaction = new DisposableList<Tuple<bool, ClassBlockTransaction>>())
+                                DisposableList<Tuple<bool, ClassBlockTransaction>> listBlockTransaction = new DisposableList<Tuple<bool, ClassBlockTransaction>>();
+
+                                string currentWalletAddress = ClassDesktopWalletCommonData.WalletDatabase.GetWalletAddressFromWalletFileName(_currentWalletFilename);
+
+                                foreach (string transactionHash in listTransactionHashFound.GetList)
                                 {
-                                    string currentWalletAddress = ClassDesktopWalletCommonData.WalletDatabase.GetWalletAddressFromWalletFileName(_currentWalletFilename);
-
-                                    foreach (string transactionHash in listTransactionHashFound.GetList)
-                                    {
-                                        Tuple<bool, ClassBlockTransaction> blockTransactionTuple = ClassDesktopWalletCommonData.WalletSyncSystem.GetTransactionObjectFromSync(currentWalletAddress, transactionHash, 0, false, _cancellationTokenTaskUpdateWalletContentInformations).Result;
-                                        if (blockTransactionTuple?.Item2 != null)
-                                            listBlockTransaction.Add(blockTransactionTuple);
-                                    }
-
-                                    if (listBlockTransaction.Count > 0)
-                                    {
-                                        MethodInvoker invoke = () =>
-                                        {
-                                            using (ClassWalletTransactionHistoryInformationInternalForm walletTransactionHistoryInformationInternalForm = new ClassWalletTransactionHistoryInformationInternalForm(listBlockTransaction.GetList))
-                                                walletTransactionHistoryInformationInternalForm.ShowDialog(this);
-                                        };
-                                        BeginInvoke(invoke);
-                                    }
+                                    Tuple<bool, ClassBlockTransaction> blockTransactionTuple = ClassDesktopWalletCommonData.WalletSyncSystem.GetTransactionObjectFromSync(currentWalletAddress, transactionHash, 0, false, _cancellationTokenTaskUpdateWalletContentInformations).Result;
+                                    if (blockTransactionTuple?.Item2 != null)
+                                        listBlockTransaction.Add(blockTransactionTuple);
                                 }
+
+                                if (listBlockTransaction.Count > 0)
+                                {
+                                    MethodInvoker invoke = () =>
+                                    {
+                                        using (ClassWalletTransactionHistoryInformationInternalForm walletTransactionHistoryInformationInternalForm = new ClassWalletTransactionHistoryInformationInternalForm(listBlockTransaction.GetList))
+                                            walletTransactionHistoryInformationInternalForm.ShowDialog(this);
+
+                                        listBlockTransaction.Clear();
+                                    };
+                                    BeginInvoke(invoke);
+                                }
+
                             }
                             else
-                                MessageBox.Show(_walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_SEARCH_NOTHING_FOUND_TEXT.Replace("%s", textBoxTransactionHistorySearch.Text));
+                            {
+                                MethodInvoker invoke = () =>
+                                {
+                                    MessageBox.Show(this, _walletMainFormLanguageObject.MESSAGEBOX_TRANSACTION_HISTORY_SEARCH_NOTHING_FOUND_TEXT.Replace("%s", textBoxTransactionHistorySearch.Text));
+                                };
+                                BeginInvoke(invoke);
+                            }
                         }
                     }, _cancellationTokenTaskUpdateWalletContentInformations.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
                 }

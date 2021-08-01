@@ -46,9 +46,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
                         {
                             if (_content.BlockLastChangeTimestamp <= value.BlockLastChangeTimestamp)
                             {
-                                if (value.BlockFromCache || value.BlockCloned)
+                                if (value.BlockFromCache || value.BlockCloned || !value.BlockFromMemory)
                                 {
-                                    _content.Dispose();
+                                    _content?.Dispose();
                                     _content = value.DirectCloneBlockObject();
                                 }
                                 else _content = value;
@@ -61,7 +61,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
                         }
                         else
                         {
-                            _content = value.BlockFromCache || value.BlockCloned ? value.DirectCloneBlockObject() : value;
+                            _content = value.BlockFromCache || value.BlockCloned || !value.BlockFromMemory ? value.DirectCloneBlockObject() : value;
                             _content.BlockCloned = false;
                             _content.BlockFromCache = false;
                             _content.BlockIsUpdated = false;

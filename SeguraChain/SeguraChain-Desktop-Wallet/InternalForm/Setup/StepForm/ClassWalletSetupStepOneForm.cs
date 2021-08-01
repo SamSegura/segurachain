@@ -55,8 +55,8 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Setup.StepForm
                     {
                         checkBoxSyncExternalMode.Checked = true;
                         SwitchSyncExternalMode();
-                        textBoxSyncExternalModeHost.Text = ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp;
-                        textBoxSyncExternalModePort.Text = (ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort > 0 ? ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort : BlockchainSetting.PeerDefaultApiPort).ToString();
+                        textBoxSyncExternalModeHost.Text = ClassDesktopWalletCommonData.WalletSettingObject.ApiHost;
+                        textBoxSyncExternalModePort.Text = (ClassDesktopWalletCommonData.WalletSettingObject.ApiPort > 0 ? ClassDesktopWalletCommonData.WalletSettingObject.ApiPort : BlockchainSetting.PeerDefaultApiPort).ToString();
                     }
                     break;
             }
@@ -83,7 +83,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Setup.StepForm
         {
             if (IPAddress.TryParse(textBoxSyncExternalModeHost.Text, out _))
             {
-                ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerIp = textBoxSyncExternalModeHost.Text;
+                ClassDesktopWalletCommonData.WalletSettingObject.ApiHost = textBoxSyncExternalModeHost.Text;
                 textBoxSyncExternalModeHost.ForeColor = Color.Black;
             }
             else
@@ -94,7 +94,7 @@ namespace SeguraChain_Desktop_Wallet.InternalForm.Setup.StepForm
         {
             if (int.TryParse(textBoxSyncExternalModePort.Text, out int port))
             {
-                ClassDesktopWalletCommonData.WalletSettingObject.CustomPeerPort = port;
+                ClassDesktopWalletCommonData.WalletSettingObject.ApiPort = port;
                 textBoxSyncExternalModePort.ForeColor = Color.Black;
             }
             else textBoxSyncExternalModePort.ForeColor = Color.Red;

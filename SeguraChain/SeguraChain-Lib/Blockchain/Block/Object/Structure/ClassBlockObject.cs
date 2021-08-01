@@ -24,7 +24,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public void Dispose()
         {
             Dispose(true); 
-            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -37,6 +36,8 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             {
                 _blockTransactions?.Clear();
                 _blockTransactions?.TrimExcess();
+
+                GC.SuppressFinalize(this);
                 Disposed = true;
             }
         }
@@ -78,8 +79,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         {
             get
             {
-                SortedList<string, ClassBlockTransaction> blockTransaction = null;
-
                 bool isLocked = false;
                 try
                 {
@@ -90,11 +89,11 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
                             if (Monitor.TryEnter(_blockTransactions))
                             {
                                 isLocked = true;
-                                blockTransaction = _blockTransactions;
+                                return _blockTransactions;
                             }
                         }
                         else
-                            blockTransaction = _blockTransactions;
+                            return _blockTransactions;
                     }
                 }
                 finally
@@ -103,12 +102,9 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
                         Monitor.Exit(_blockTransactions);
                 }
 
-                return blockTransaction;
+                return null;
             }
-            set
-            {
-                _blockTransactions = value;
-            }
+            set => _blockTransactions = value;
         }
 
         private SortedList<string, ClassBlockTransaction> _blockTransactions; // Contains transactions hash has index of key with their associated BlockTransaction.
@@ -154,10 +150,10 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         [JsonIgnore]
         public bool IsConfirmedByNetwork => BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations &&
-                BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED;
+                BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED && _blockTransactions != null;
 
         [JsonIgnore]
-        public bool IsChecked => IsConfirmedByNetwork && BlockTransactionConfirmationCheckTaskDone;
+        public bool IsChecked => IsConfirmedByNetwork && BlockTransactionConfirmationCheckTaskDone && _blockTransactions != null;
 
 
 

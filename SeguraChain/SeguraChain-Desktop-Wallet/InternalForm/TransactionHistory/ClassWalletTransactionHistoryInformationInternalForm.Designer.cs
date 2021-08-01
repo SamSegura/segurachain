@@ -39,9 +39,10 @@
             // 
             this.buttonTransactionHistoryInformationClose.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(247)))), ((int)(((byte)(229)))), ((int)(((byte)(72)))));
             this.buttonTransactionHistoryInformationClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonTransactionHistoryInformationClose.Location = new System.Drawing.Point(353, 308);
+            this.buttonTransactionHistoryInformationClose.Location = new System.Drawing.Point(412, 355);
+            this.buttonTransactionHistoryInformationClose.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.buttonTransactionHistoryInformationClose.Name = "buttonTransactionHistoryInformationClose";
-            this.buttonTransactionHistoryInformationClose.Size = new System.Drawing.Size(284, 35);
+            this.buttonTransactionHistoryInformationClose.Size = new System.Drawing.Size(331, 40);
             this.buttonTransactionHistoryInformationClose.TabIndex = 2;
             this.buttonTransactionHistoryInformationClose.Text = "BUTTON_TRANSACTION_HISTORY_CLOSE_TEXT";
             this.buttonTransactionHistoryInformationClose.UseVisualStyleBackColor = false;
@@ -49,20 +50,22 @@
             // 
             // richTextBoxTransactionInformations
             // 
-            this.richTextBoxTransactionInformations.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBoxTransactionInformations.Location = new System.Drawing.Point(13, 21);
+            this.richTextBoxTransactionInformations.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.richTextBoxTransactionInformations.Location = new System.Drawing.Point(15, 24);
+            this.richTextBoxTransactionInformations.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.richTextBoxTransactionInformations.Name = "richTextBoxTransactionInformations";
             this.richTextBoxTransactionInformations.ReadOnly = true;
-            this.richTextBoxTransactionInformations.Size = new System.Drawing.Size(939, 201);
+            this.richTextBoxTransactionInformations.Size = new System.Drawing.Size(1095, 231);
             this.richTextBoxTransactionInformations.TabIndex = 3;
             this.richTextBoxTransactionInformations.Text = "";
             // 
             // richTextBoxTransactionInformationsNotes
             // 
-            this.richTextBoxTransactionInformationsNotes.Location = new System.Drawing.Point(13, 228);
+            this.richTextBoxTransactionInformationsNotes.Location = new System.Drawing.Point(15, 263);
+            this.richTextBoxTransactionInformationsNotes.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.richTextBoxTransactionInformationsNotes.Name = "richTextBoxTransactionInformationsNotes";
             this.richTextBoxTransactionInformationsNotes.ReadOnly = true;
-            this.richTextBoxTransactionInformationsNotes.Size = new System.Drawing.Size(939, 70);
+            this.richTextBoxTransactionInformationsNotes.Size = new System.Drawing.Size(1095, 80);
             this.richTextBoxTransactionInformationsNotes.TabIndex = 4;
             this.richTextBoxTransactionInformationsNotes.Text = "";
             // 
@@ -70,9 +73,10 @@
             // 
             this.buttonTransactionHistoryInformationCopy.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(247)))), ((int)(((byte)(229)))), ((int)(((byte)(72)))));
             this.buttonTransactionHistoryInformationCopy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonTransactionHistoryInformationCopy.Location = new System.Drawing.Point(12, 308);
+            this.buttonTransactionHistoryInformationCopy.Location = new System.Drawing.Point(14, 355);
+            this.buttonTransactionHistoryInformationCopy.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.buttonTransactionHistoryInformationCopy.Name = "buttonTransactionHistoryInformationCopy";
-            this.buttonTransactionHistoryInformationCopy.Size = new System.Drawing.Size(284, 35);
+            this.buttonTransactionHistoryInformationCopy.Size = new System.Drawing.Size(331, 40);
             this.buttonTransactionHistoryInformationCopy.TabIndex = 5;
             this.buttonTransactionHistoryInformationCopy.Text = "BUTTON_TRANSACTION_HISTORY_COPY_TEXT";
             this.buttonTransactionHistoryInformationCopy.UseVisualStyleBackColor = false;
@@ -80,18 +84,17 @@
             // 
             // ClassWalletTransactionHistoryInformationInternalForm
             // 
-#if NET5_0_OR_GREATER
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-#endif
-            this.BackColor = System.Drawing.Color.GhostWhite;
-            this.ClientSize = new System.Drawing.Size(964, 368);
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(90)))), ((int)(((byte)(120)))));
+            this.ClientSize = new System.Drawing.Size(1125, 425);
             this.Controls.Add(this.buttonTransactionHistoryInformationCopy);
             this.Controls.Add(this.richTextBoxTransactionInformationsNotes);
             this.Controls.Add(this.richTextBoxTransactionInformations);
             this.Controls.Add(this.buttonTransactionHistoryInformationClose);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "ClassWalletTransactionHistoryInformationInternalForm";

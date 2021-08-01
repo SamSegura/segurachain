@@ -3,6 +3,8 @@
     public class ClassApiBlockchainExplorerHtmlContent
     {
 		public const string ContentCoinName = "$coinName";
+		public const string ContentApiHost = "$apiHost";
+		public const string ContentApiPort = "$apiPort";
 
         public const string Content = @"<html lang='en'>
 <title>$coinName - Blockchain Explorer</title>
@@ -81,7 +83,7 @@
 	
 	var lastBlockHeight = 0;
 	var lastBlockHeightUnlocked = 0;
-	var apiHost = 'http://192.168.1.20:2401/';
+	var apiHost = 'http://$apiHost:$apiPort/';
 	var apiMaxBlockPerCall = 10;
 	
 	function LoadScripts()

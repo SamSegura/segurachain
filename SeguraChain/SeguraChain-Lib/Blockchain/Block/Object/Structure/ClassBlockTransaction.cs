@@ -15,6 +15,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         public long TransactionBlockHeightInsert;
         public long TransactionBlockHeightTarget;
         public long TransactionTotalConfirmation;
+
         [JsonIgnore]
         private ClassTransactionObject _transactionObject;
 
@@ -24,11 +25,13 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
             {
                 if (TransactionSize == 0)
                     TransactionSize = ClassTransactionUtility.GetTransactionMemorySize(_transactionObject, false);
+
                 return _transactionObject;
             }
             set
             {
                 _transactionObject = value;
+
                 if (TransactionSize == 0)
                     TransactionSize = ClassTransactionUtility.GetTransactionMemorySize(_transactionObject, false);
             }

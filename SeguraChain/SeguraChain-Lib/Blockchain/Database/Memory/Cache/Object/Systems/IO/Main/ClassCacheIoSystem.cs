@@ -460,125 +460,126 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Mai
             bool result = true;
 
 
-            Dictionary<string, List<ClassBlockObject>> listBlockObject = new Dictionary<string, List<ClassBlockObject>>();
-
-            // Generate a list of block object linked to the io file index.
-            foreach (var blockObject in blockObjectList)
+            using (DisposableDictionary<string, List<ClassBlockObject>> listBlockObject = new DisposableDictionary<string, List<ClassBlockObject>>())
             {
 
-                string ioFileName = GetIoFileNameFromBlockHeight(blockObject.BlockHeight);
-
-                if (!_dictionaryCacheIoIndexObject.ContainsKey(ioFileName))
+                // Generate a list of block object linked to the io file index.
+                foreach (var blockObject in blockObjectList)
                 {
-                    Tuple<bool, HashSet<long>> resultInit = await InitializeNewCacheIoIndex(ioFileName);
 
-                    if (!resultInit.Item1)
+                    string ioFileName = GetIoFileNameFromBlockHeight(blockObject.BlockHeight);
+
+                    if (!_dictionaryCacheIoIndexObject.ContainsKey(ioFileName))
                     {
-                        result = false;
+                        Tuple<bool, HashSet<long>> resultInit = await InitializeNewCacheIoIndex(ioFileName);
 
-                        break;
+                        if (!resultInit.Item1)
+                        {
+                            result = false;
+
+                            break;
+                        }
                     }
-                }
 
-                if (!listBlockObject.ContainsKey(ioFileName))
-                {
-                    listBlockObject.Add(ioFileName, new List<ClassBlockObject>()
+                    if (!listBlockObject.ContainsKey(ioFileName))
+                    {
+                        listBlockObject.Add(ioFileName, new List<ClassBlockObject>()
                         {
                             blockObject
                         });
-                }
-                else
-                    listBlockObject[ioFileName].Add(blockObject);
-            }
-
-            // Much faster insert/update.
-            if (listBlockObject.Count > 0 && result)
-            {
-                string[] ioFileNameArray = listBlockObject.Keys.ToArray();
-                int totalTaskToDo = ioFileNameArray.Length;
-                int totalTaskDone = 0;
-
-                CancellationTokenSource cancellation = new CancellationTokenSource();
-                bool cancel = false;
-
-
-                foreach (string ioFileName in ioFileNameArray)
-                {
-                    if (_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableMultiTask && ioFileNameArray.Length > 1)
-                    {
-                        try
-                        {
-                            await Task.Factory.StartNew(async () =>
-                            {
-
-                                if (cancellationIoCache != null)
-                                    if (cancellationIoCache.IsCancellationRequested)
-                                        cancel = true;
-
-                                if (!cancel)
-                                    if (!await _dictionaryCacheIoIndexObject[ioFileName].PushOrUpdateListIoBlockData(listBlockObject[ioFileName], keepAlive, cancellationIoCache))
-                                        result = false;
-
-                                totalTaskDone++;
-                            }, cancellation.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
-                        }
-                        catch
-                        {
-                            // Ignored, catch the exception once tasks are cancelled.
-                        }
                     }
                     else
+                        listBlockObject[ioFileName].Add(blockObject);
+                }
+
+                // Much faster insert/update.
+                if (listBlockObject.Count > 0 && result)
+                {
+                    string[] ioFileNameArray = listBlockObject.GetList.Keys.ToArray();
+                    int totalTaskToDo = ioFileNameArray.Length;
+                    int totalTaskDone = 0;
+
+                    CancellationTokenSource cancellation = new CancellationTokenSource();
+                    bool cancel = false;
+
+
+                    foreach (string ioFileName in ioFileNameArray)
                     {
-                        if (cancellationIoCache != null)
+                        if (_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableMultiTask && ioFileNameArray.Length > 1)
                         {
-                            if (cancellationIoCache.IsCancellationRequested)
+                            try
                             {
-                                cancel = true;
-                                break;
+                                await Task.Factory.StartNew(async () =>
+                                {
+
+                                    if (cancellationIoCache != null)
+                                        if (cancellationIoCache.IsCancellationRequested)
+                                            cancel = true;
+
+                                    if (!cancel)
+                                        if (!await _dictionaryCacheIoIndexObject[ioFileName].PushOrUpdateListIoBlockData(listBlockObject[ioFileName], keepAlive, cancellationIoCache))
+                                            result = false;
+
+                                    totalTaskDone++;
+                                }, cancellation.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+                            }
+                            catch
+                            {
+                                // Ignored, catch the exception once tasks are cancelled.
                             }
                         }
-                        if (!cancel)
+                        else
                         {
-                            if (result)
+                            if (cancellationIoCache != null)
                             {
-                                if (!await _dictionaryCacheIoIndexObject[ioFileName].PushOrUpdateListIoBlockData(listBlockObject[ioFileName], keepAlive, cancellationIoCache))
+                                if (cancellationIoCache.IsCancellationRequested)
                                 {
-                                    result = false;
+                                    cancel = true;
                                     break;
+                                }
+                            }
+                            if (!cancel)
+                            {
+                                if (result)
+                                {
+                                    if (!await _dictionaryCacheIoIndexObject[ioFileName].PushOrUpdateListIoBlockData(listBlockObject[ioFileName], keepAlive, cancellationIoCache))
+                                    {
+                                        result = false;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                if (_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableMultiTask && ioFileNameArray.Length > 1)
-                {
-                    while (totalTaskDone < totalTaskToDo)
+                    if (_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableMultiTask && ioFileNameArray.Length > 1)
                     {
-                        if (cancel || !result)
-                            break;
-
-                        if (cancellationIoCache != null)
+                        while (totalTaskDone < totalTaskToDo)
                         {
-                            try
-                            {
-                                await Task.Delay(_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskParallelTaskWaitDelay, cancellationIoCache.Token);
-                            }
-                            catch
-                            {
+                            if (cancel || !result)
                                 break;
+
+                            if (cancellationIoCache != null)
+                            {
+                                try
+                                {
+                                    await Task.Delay(_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskParallelTaskWaitDelay, cancellationIoCache.Token);
+                                }
+                                catch
+                                {
+                                    break;
+                                }
                             }
+                            else
+                                await Task.Delay(_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskParallelTaskWaitDelay);
                         }
-                        else
-                            await Task.Delay(_blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskParallelTaskWaitDelay);
                     }
+
+                    cancellation.Cancel();
+
+                    // Clean up.
+                    Array.Clear(ioFileNameArray, 0, ioFileNameArray.Length);
                 }
-
-                cancellation.Cancel();
-
-                // Clean up.
-                Array.Clear(ioFileNameArray, 0, ioFileNameArray.Length);
-                listBlockObject.Clear();
             }
 
             return result;

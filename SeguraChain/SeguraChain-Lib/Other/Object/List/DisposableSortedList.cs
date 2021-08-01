@@ -2,23 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 
+
 namespace SeguraChain_Lib.Other.Object.List
 {
-    public class DisposableDictionary<V, T> : IDisposable
+    public class DisposableSortedList<V, T> : IDisposable
     {
-        public DisposableDictionary(int capacity = 0, Dictionary<V, T> sourceDictionary = null)
+        public DisposableSortedList(int capacity = 0, SortedList<V, T> sourceDictionary = null)
         {
             if (sourceDictionary == null)
-                GetList = capacity > 0 ? new Dictionary<V, T>(capacity) : new Dictionary<V, T>();
+                GetList = capacity > 0 ? new SortedList<V, T>(capacity) : new SortedList<V, T>();
             else
-                GetList = new Dictionary<V, T>(sourceDictionary);
+                GetList = new SortedList<V, T>(sourceDictionary);
         }
 
         #region Dispose functions
 
         public bool Disposed;
 
-        ~DisposableDictionary()
+        ~DisposableSortedList()
         {
             Dispose(true);
         }
@@ -95,14 +96,12 @@ namespace SeguraChain_Lib.Other.Object.List
 
             GetList?.Clear();
 
-#if NET5_0_OR_GREATER
             GetList?.TrimExcess();
-#endif
         }
 
-        public ICollection<KeyValuePair<V,T>> GetAll => GetList;
+        public ICollection<KeyValuePair<V, T>> GetAll => GetList;
 
-        public Dictionary<V, T> GetList { get; set; }
+        public SortedList<V, T> GetList { get; set; }
 
     }
 

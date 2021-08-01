@@ -48,7 +48,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                                 lock(_blockObject)
                                 {
-                                    if (value.BlockFromMemory || value.BlockCloned)
+                                    if (value.BlockFromMemory || value.BlockCloned || !value.BlockFromCache)
                                         _blockObject = value.DirectCloneBlockObject();
                                     else
                                     {
@@ -65,7 +65,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                             }
                             else
                             {
-                                _blockObject = value.BlockFromMemory || value.BlockFromCache ? value.DirectCloneBlockObject() : value;
+                                _blockObject = value.BlockFromMemory || value.BlockCloned || !value.BlockFromCache ? value.DirectCloneBlockObject() : value;
                                 _blockObject.BlockFromMemory = false;
                                 _blockObject.BlockFromCache = true;
                                 _blockObject.BlockCloned = false;

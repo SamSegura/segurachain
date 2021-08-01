@@ -608,7 +608,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                     {
                                         if (ClassUtility.CheckPacketTimestamp(apiPeerPacketAsMemPoolTransactionByRange.PacketTimestamp, _peerNetworkSettingObject.PeerApiMaxPacketDelay, _peerNetworkSettingObject.PeerApiMaxEarlierPacketDelay))
                                         {
-                                            using (DisposableList<ClassTransactionObject> listMemPoolTransaction = new DisposableList<ClassTransactionObject>(false, 0, await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(apiPeerPacketAsMemPoolTransactionByRange.BlockHeight, true, _cancellationTokenApiClient)))
+                                            using (DisposableList<ClassTransactionObject> listMemPoolTransaction = await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(apiPeerPacketAsMemPoolTransactionByRange.BlockHeight, true, _cancellationTokenApiClient))
                                             {
                                                 if (!await SendApiResponse(BuildPacketResponse(new ClassApiPeerPacketSendMemPoolTransactionByRange()
                                                 {
@@ -910,6 +910,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
 
                 switch (packetReceived)
                 {
+                    case ClassPeerApiEnumGetRequest.GetAlive:
+                        {
+                            if (!await SendResponseType(typeResponse))
+                                return false;
+                        }
+                        break;
                     case ClassPeerApiEnumGetRequest.GetBlockTemplate:
                         {
                             long currentBlockHeight = ClassBlockchainStats.GetLastBlockHeight();
@@ -982,12 +988,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                         break;
                     case ClassPeerApiEnumGetRequest.GetMemPoolBlockHeights:
                         {
-                            if (!await SendApiResponse(BuildPacketResponse(new ClassApiPeerPacketSendMemPoolBlockHeights()
+                            using (DisposableList<long> listMemPoolBlockHeights = await ClassMemPoolDatabase.GetMemPoolListBlockHeight(_cancellationTokenApiClient))
                             {
-                                ListBlockHeights = await ClassMemPoolDatabase.GetMemPoolListBlockHeight(_cancellationTokenApiClient),
-                                PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
-                            }, ClassPeerApiPacketResponseEnum.SEND_MEMPOOL_TRANSACTION_COUNT)))
-                                return false;
+                                if (!await SendApiResponse(BuildPacketResponse(new ClassApiPeerPacketSendMemPoolBlockHeights()
+                                {
+                                    ListBlockHeights = listMemPoolBlockHeights.GetList,
+                                    PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
+                                }, ClassPeerApiPacketResponseEnum.SEND_MEMPOOL_TRANSACTION_COUNT)))
+                                    return false;
+                            }
                         }
                         break;
                     case ClassPeerApiEnumGetRequest.GetBlockchainExplorer:
@@ -1029,6 +1038,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
         /// Send an API Response to the client.
         /// </summary>
         /// <param name="packetToSend"></param>
+        /// <param name="htmlContentType">Html packet content, default json.</param>
         /// <returns></returns>
         private async Task<bool> SendApiResponse(string packetToSend, string htmlContentType = "text/json")
         {
@@ -1119,7 +1129,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
         /// <returns></returns>
         private string GetBlockchainExplorerContent()
         {
-            return ClassApiBlockchainExplorerHtmlContent.Content.Replace(ClassApiBlockchainExplorerHtmlContent.ContentCoinName, BlockchainSetting.CoinName);
+            return ClassApiBlockchainExplorerHtmlContent.Content.Replace(ClassApiBlockchainExplorerHtmlContent.ContentCoinName, BlockchainSetting.CoinName)
+                .Replace(ClassApiBlockchainExplorerHtmlContent.ContentApiHost, _peerNetworkSettingObject.ListenApiIp)
+                .Replace(ClassApiBlockchainExplorerHtmlContent.ContentApiPort, _peerNetworkSettingObject.ListenApiPort.ToString());
         }
 
         #endregion

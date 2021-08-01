@@ -32,6 +32,7 @@ using SeguraChain_Lib.Blockchain.Transaction.Utility;
 using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast;
 using SeguraChain_Lib.Instance.Node.Setting.Object;
 using SeguraChain_Lib.Log;
+using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Database
@@ -1600,14 +1601,17 @@ namespace SeguraChain_Lib.Blockchain.Database
             {
                 if (await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(blockHeight, false, cancellation) > 0)
                 {
-                    foreach (var txTransactionObject in await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, false, cancellation))
+                    using (DisposableList<ClassTransactionObject> listMemPoolTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, false, cancellation))
                     {
-                        ClassBlockTransactionInsertEnumStatus insertResult = InsertBlockTransaction(blockHeight, txTransactionObject, cancellation);
-
-                        if (insertResult != ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_INSERTED && insertResult != ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_HASH_ALREADY_EXIST)
+                        foreach (var txTransactionObject in listMemPoolTransactionObject.GetList)
                         {
-                            ClassLog.WriteLine("Can't insert tx in mempool who target the block height: " + blockHeight + ", try again later. Result: " + insertResult, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                            break;
+                            ClassBlockTransactionInsertEnumStatus insertResult = InsertBlockTransaction(blockHeight, txTransactionObject, cancellation);
+
+                            if (insertResult != ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_INSERTED && insertResult != ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_HASH_ALREADY_EXIST)
+                            {
+                                ClassLog.WriteLine("Can't insert tx in mempool who target the block height: " + blockHeight + ", try again later. Result: " + insertResult, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                                break;
+                            }
                         }
                     }
 

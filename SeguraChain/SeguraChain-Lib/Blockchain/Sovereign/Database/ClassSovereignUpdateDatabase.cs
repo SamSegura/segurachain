@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using LZ4;
 using Newtonsoft.Json;
@@ -14,6 +13,7 @@ using SeguraChain_Lib.Blockchain.Sovereign.Enum;
 using SeguraChain_Lib.Blockchain.Sovereign.Object;
 using SeguraChain_Lib.Blockchain.Wallet.Function;
 using SeguraChain_Lib.Log;
+using SeguraChain_Lib.Other.Object.List;
 using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Sovereign.Database
@@ -57,7 +57,6 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
             {
                 _sovereignDatabaseDirectoryPath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassSovereignUpdateDataSetting.SovereignUpdateDirectoryName);
                 _sovereignDatabaseFilePath = ClassUtility.ConvertPath(_sovereignDatabaseDirectoryPath + ClassSovereignUpdateDataSetting.SovereignUpdateDatabaseFilename);
-
             }
 
             if (_useEncryption)
@@ -91,16 +90,8 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
 
                     using (FileStream fileStream = new FileStream(_sovereignDatabaseFilePath, FileMode.Open))
                     {
-                        StreamReader reader;
+                        StreamReader reader = _useCompress ? new StreamReader(new LZ4Stream(fileStream, LZ4StreamMode.Decompress, LZ4StreamFlags.HighCompression)) : new StreamReader(fileStream);
 
-                        if (_useCompress)
-                        {
-                            reader = new StreamReader(new LZ4Stream(fileStream, LZ4StreamMode.Decompress, LZ4StreamFlags.HighCompression));
-                        }
-                        else
-                        {
-                            reader = new StreamReader(fileStream);
-                        }
 
                         string line;
 
@@ -109,9 +100,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                             if (_useEncryption)
                             {
                                 if (ClassAes.DecryptionProcess(Convert.FromBase64String(line), _sovereignDataStandardEncryptionKey, _sovereignDataStandardEncryptionKeyIv, out byte[] decryptedResult))
-                                {
                                     line = decryptedResult.GetStringFromByteArrayAscii();
-                                }
                                 else
                                 {
                                     ClassLog.WriteLine("[ERROR] Can't decrypt Sovereign Update line contained into the database file with the encryption key selected.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
@@ -124,7 +113,6 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                 ClassSovereignUpdateObject sovereignUpdateObject = JsonConvert.DeserializeObject<ClassSovereignUpdateObject>(line);
                                 totalSovereignUpdateFileLoaded++;
 
-
                                 ClassSovereignEnumUpdateCheckStatus sovereignUpdateCheckStatusResult = CheckSovereignUpdateObject(sovereignUpdateObject, out _);
 
                                 switch (sovereignUpdateCheckStatusResult)
@@ -134,13 +122,11 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                         {
                                             DictionarySovereignUpdateObject.Add(sovereignUpdateObject.SovereignUpdateHash, sovereignUpdateObject);
                                             if (!DictionarySortedSovereignUpdateList.ContainsKey(DictionarySovereignUpdateObject[sovereignUpdateObject.SovereignUpdateHash].SovereignUpdateType))
-                                            {
                                                 DictionarySortedSovereignUpdateList.Add(DictionarySovereignUpdateObject[sovereignUpdateObject.SovereignUpdateHash].SovereignUpdateType, new SortedList<long, string>());
-                                            }
+
                                             if (!DictionarySortedSovereignUpdateList[DictionarySovereignUpdateObject[sovereignUpdateObject.SovereignUpdateHash].SovereignUpdateType].ContainsValue(sovereignUpdateObject.SovereignUpdateHash))
-                                            {
                                                 DictionarySortedSovereignUpdateList[DictionarySovereignUpdateObject[sovereignUpdateObject.SovereignUpdateHash].SovereignUpdateType].Add(DictionarySovereignUpdateObject[sovereignUpdateObject.SovereignUpdateHash].SovereignUpdateTimestamp, sovereignUpdateObject.SovereignUpdateHash);
-                                            }
+                                            
                                             totalSovereignUpdateApplied++;
                                         }
                                         break;
@@ -156,20 +142,15 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
 
                     ClassLog.WriteLine(totalSovereignUpdateFileLoaded + " Sovereign update(s) file(s) loaded successfully.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Magenta);
                     ClassLog.WriteLine(totalSovereignUpdateApplied + " Sovereign update(s) applied successfully.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Magenta);
+                    
                     if (totalSovereignUpdateFailed > 0)
-                    {
                         ClassLog.WriteLine(totalSovereignUpdateFailed + " Sovereign update(s) failed.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-                    }
                     else
-                    {
                         ClassLog.WriteLine("No error on applying sovereign update(s).", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
-                    }
                 }
             }
             else
-            {
                 Directory.CreateDirectory(_sovereignDatabaseDirectoryPath);
-            }
 
             return true;
         }
@@ -184,9 +165,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
             try
             {
                 if (!Directory.Exists(_sovereignDatabaseDirectoryPath))
-                {
                     Directory.CreateDirectory(_sovereignDatabaseDirectoryPath);
-                }
 
                 File.Create(_sovereignDatabaseFilePath).Close();
 
@@ -207,19 +186,16 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
 
                             }
                             else
-                            {
                                 ClassLog.WriteLine("Failed to save encrypted sovereign update data into database.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-                            }
                         }
                         else
                         {
                             writerSovUpdate.WriteLine(ClassUtility.SerializeData(sovereignUpdateObject.Value, Formatting.None));
                             totalSaved++;
-
                         }
-
                     }
                 }
+
                 return true;
             }
             catch
@@ -238,10 +214,11 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
             if (!DictionarySovereignUpdateObject.ContainsKey(sovereignUpdateObject.SovereignUpdateHash))
             {
                 DictionarySovereignUpdateObject.Add(sovereignUpdateObject.SovereignUpdateHash, sovereignUpdateObject);
+
                 if (!DictionarySortedSovereignUpdateList.ContainsKey(sovereignUpdateObject.SovereignUpdateType))
-                {
                     DictionarySortedSovereignUpdateList.Add(sovereignUpdateObject.SovereignUpdateType, new SortedList<long, string>());
-                }
+                
+
                 DictionarySortedSovereignUpdateList[sovereignUpdateObject.SovereignUpdateType].Add(sovereignUpdateObject.SovereignUpdateTimestamp, sovereignUpdateObject.SovereignUpdateHash);
 
                 return true;
@@ -268,34 +245,22 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
             #region Basic check sovereign content.
 
             if (sovereignUpdateObject == null)
-            {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_OBJECT;
-            }
 
             if (sovereignUpdateObject.SovereignUpdateContent == null)
-            {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_CONTENT;
-            }
 
             if (sovereignUpdateObject.SovereignUpdateHash.IsNullOrEmpty(out _))
-            {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_HASH;
-            }
 
             if (sovereignUpdateObject.SovereignUpdateSignature.IsNullOrEmpty(out _))
-            {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_SIGNATURE;
-            }
 
             if (sovereignUpdateObject.SovereignUpdateDevWalletAddress.IsNullOrEmpty(out _))
-            {
                 return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS;
-            }
 
             if (sovereignUpdateObject.SovereignUpdateTimestamp <= 0)
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_TIMESTAMP;
-            }
 
             #endregion
 
@@ -318,28 +283,20 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
             #region Check sovereign content format.
 
             if (!ClassUtility.CheckHexStringFormat(sovereignUpdateObject.SovereignUpdateHash))
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_HASH_FORMAT;
-            }
 
             if (sovereignUpdateObject.SovereignUpdateDevWalletAddress.Length < BlockchainSetting.WalletAddressWifLengthMin || sovereignUpdateObject.SovereignUpdateDevWalletAddress.Length > BlockchainSetting.WalletAddressWifLengthMax)
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS_LENGTH;
-            }
 
             if (ClassBase58.DecodeWithCheckSum(sovereignUpdateObject.SovereignUpdateDevWalletAddress, true) == null)
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS_BASE58_FORMAT;
-            }
 
             #endregion
 
             #region Check Dev Wallet Address with the blockchain setting.
 
             if (BlockchainSetting.WalletAddressDev(sovereignUpdateObject.SovereignUpdateTimestamp) != sovereignUpdateObject.SovereignUpdateDevWalletAddress)
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS;
-            }
 
             #endregion
 
@@ -351,111 +308,75 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                 case ClassSovereignEnumUpdateType.SOVEREIGN_SEED_NODE_REVOKE_RANK_UPDATE:
                     {
                         if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_SEED_NODE_NUMERIC_PUBLIC_KEY_CONTENT;
-                        }
 
                         if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty(out _))
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_SEED_NODE_MAX_RANK_DELAY_CONTENT;
-                        }
 
                         if (ClassBase58.DecodeWithCheckSum(sovereignUpdateObject.SovereignUpdateContent.PossibleContent1, false) == null)
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_SEED_NODE_NUMERIC_PUBLIC_KEY;
-                        }
 
                         if (long.TryParse(sovereignUpdateObject.SovereignUpdateContent.PossibleContent2, out var maxDelay))
                         {
                             if (maxDelay <= 0)
-                            {
                                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_SEED_NODE_MAX_RANK_DELAY;
-                            }
                         }
                         else
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_SEED_NODE_MAX_RANK_DELAY;
-                        }
                     }
                     break;
                 case ClassSovereignEnumUpdateType.SOVEREIGN_DEV_SIGNATURE_CHANGE_UPDATE:
                     {
                         if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS_CONTENT;
-                        }
 
                         if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent2.IsNullOrEmpty(out _))
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_DEV_PUBLIC_KEY_CONTENT;
-                        }
 
                         if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.Length < BlockchainSetting.WalletAddressWifLengthMin || sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.Length > BlockchainSetting.WalletAddressWifLengthMax)
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS_CONTENT;
-                        }
 
                         if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent2.Length != BlockchainSetting.WalletPublicKeyWifLength)
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_PUBLIC_KEY_CONTENT;
-                        }
 
                         if (ClassBase58.DecodeWithCheckSum(sovereignUpdateObject.SovereignUpdateContent.PossibleContent1, true) == null)
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_WALLET_ADDRESS_CONTENT;
-                        }
 
                         if (ClassBase58.DecodeWithCheckSum(sovereignUpdateObject.SovereignUpdateContent.PossibleContent2, false) == null)
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_PUBLIC_KEY_CONTENT;
-                        }
 
                         if (ClassWalletUtility.GenerateWalletAddressFromPublicKey(sovereignUpdateObject.SovereignUpdateContent.PossibleContent2) != sovereignUpdateObject.SovereignUpdateContent.PossibleContent1)
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_DEV_PUBLIC_KEY_CONTENT;
-                        }
                     }
                     break;
                 case ClassSovereignEnumUpdateType.SOVEREIGN_MINING_POWAC_SETTING_UPDATE:
                     {
                         if (sovereignUpdateObject.SovereignUpdateContent.PossibleContent1.IsNullOrEmpty(out _))
-                        {
                             return ClassSovereignEnumUpdateCheckStatus.EMPTY_SOVEREIGN_UPDATE_MINING_POW_SETTING;
-                        }
+
                         try
                         {
                             if (long.TryParse(sovereignUpdateObject.SovereignUpdateContent.PossibleContent2, out long blockHeight))
                             {
-                                if (blockHeight <= 0)
-                                {
+                                if (blockHeight < BlockchainSetting.GenesisBlockHeight)
                                     return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_MINING_POWAC_SETTING_CONTENT;
-                                }
                             }
                             else
-                            {
                                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_MINING_POWAC_SETTING_CONTENT;
-                            }
+
                             if (ClassUtility.TryDeserialize(sovereignUpdateObject.SovereignUpdateContent.PossibleContent1, out ClassMiningPoWaCSettingObject miningPoWaCSettingObject, ObjectCreationHandling.Replace))
                             {
                                 if (!ClassMiningPoWaCUtility.CheckMiningPoWaCSetting(miningPoWaCSettingObject))
-                                {
                                     return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_MINING_POWAC_SETTING_CONTENT;
-                                }
+
                                 if (miningPoWaCSettingObject.BlockHeightStart != blockHeight)
-                                {
                                     return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_MINING_POWAC_SETTING_CONTENT;
-                                }
 
                                 if (GetLastDevWalletPublicKey(miningPoWaCSettingObject.MiningSettingTimestamp) != miningPoWaCSettingObject.MiningSettingContentDevPublicKey)
-                                {
                                     return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_MINING_POWAC_SETTING_CONTENT;
-                                }
                             }
                             else
-                            {
                                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_MINING_POWAC_SETTING_CONTENT;
-
-                            }
                         }
                         catch
                         {
@@ -473,29 +394,24 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
             #region Check sovereign content hash.
 
             if (DictionarySovereignUpdateObject.ContainsKey(sovereignUpdateObject.SovereignUpdateHash))
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_HASH_ALREADY_LISTED;
-            }
 
             GenerateSovereignHashUpdate(sovereignUpdateObject, out var testSovereignUpdateHash);
 
             if (!testSovereignUpdateHash.Equals(sovereignUpdateObject.SovereignUpdateHash))
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_HASH;
-            }
 
             #endregion
 
             #region Check sovereign update signature.
 
             if (!ClassWalletUtility.WalletCheckSignature(sovereignUpdateObject.SovereignUpdateHash, sovereignUpdateObject.SovereignUpdateSignature, BlockchainSetting.WalletAddressDevPublicKey(sovereignUpdateObject.SovereignUpdateTimestamp)))
-            {
                 return ClassSovereignEnumUpdateCheckStatus.INVALID_SOVEREIGN_UPDATE_SIGNATURE;
-            }
 
             #endregion
 
             sovereignUpdateType = sovereignUpdateObject.SovereignUpdateType;
+
             return ClassSovereignEnumUpdateCheckStatus.VALID_SOVEREIGN_UPDATE;
         }
 
@@ -565,17 +481,14 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                             return sovereignUpdateObject;
                                         }
                                     }
+
                                     Console.WriteLine("Input timestamp invalid.");
                                 }
                                 else
-                                {
                                     Console.WriteLine("Invalid public key address format.");
-                                }
                             }
                             else
-                            {
                                 Console.WriteLine("Invalid dev wallet address format.");
-                            }
                         }
                         break;
                     case (int)ClassSovereignEnumUpdateType.SOVEREIGN_SEED_NODE_REVOKE_RANK_UPDATE:
@@ -613,13 +526,10 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                     return sovereignUpdateObject;
 
                                 }
-
                                 Console.WriteLine("Invalid public key address format.");
                             }
                             else
-                            {
                                 Console.WriteLine("Invalid dev wallet address format.");
-                            }
                         }
                         break;
                     case (int)ClassSovereignEnumUpdateType.SOVEREIGN_DEV_SIGNATURE_CHANGE_UPDATE:
@@ -664,9 +574,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                 Console.WriteLine("Invalid public key address format.");
                             }
                             else
-                            {
                                 Console.WriteLine("Invalid dev wallet address format.");
-                            }
                         }
                         break;
                     case (int)ClassSovereignEnumUpdateType.SOVEREIGN_MINING_POWAC_SETTING_UPDATE:
@@ -770,9 +678,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                 }
             }
             else
-            {
                 Console.WriteLine("Invalid input type.");
-            }
 
             return null;
         }
@@ -821,22 +727,20 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
         /// <returns></returns>
         public static IList<string> GetSovereignUpdateListHash()
         {
-            SortedList<long, string> listSovereignUpdatesHash = new SortedList<long, string>();
-            if (DictionarySovereignUpdateObject?.Count > 0)
+            using (DisposableSortedList<long, string> listSovereignUpdatesHash = new DisposableSortedList<long, string>())
             {
-                foreach (var sovereignSortedList in DictionarySortedSovereignUpdateList.Values)
+
+                if (DictionarySovereignUpdateObject?.Count > 0)
                 {
-                    if (sovereignSortedList.Count > 0)
+                    foreach (var sovereignSortedList in DictionarySortedSovereignUpdateList.Values)
                     {
                         foreach (var sovereignUpdateHash in sovereignSortedList)
-                        {
                             listSovereignUpdatesHash.Add(sovereignUpdateHash.Key, sovereignUpdateHash.Value);
-                        }
                     }
                 }
-            }
 
-            return listSovereignUpdatesHash.Values;
+                return listSovereignUpdatesHash.GetList.Values;
+            }
         }
 
         /// <summary>
@@ -865,12 +769,10 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                         {
                                             if (long.TryParse(DictionarySovereignUpdateObject[sovereignUpdateHash.Value].SovereignUpdateContent.PossibleContent2, out long blockHeightUpdate))
                                             {
-                                                if (blockHeight > 0 && blockHeightUpdate == miningPowSettingObject.BlockHeightStart)
+                                                if (blockHeight >= BlockchainSetting.GenesisBlockHeight && blockHeightUpdate == miningPowSettingObject.BlockHeightStart)
                                                 {
                                                     if (blockHeight >= blockHeightUpdate)
-                                                    {
                                                         lastValidMiningPocSettingObject = miningPowSettingObject;
-                                                    }
                                                 }
                                             }
                                         }
@@ -880,12 +782,11 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                         }
 
                         if (lastValidMiningPocSettingObject != null)
-                        {
                             return lastValidMiningPocSettingObject;
-                        }
                     }
                 }
             }
+
             return BlockchainSetting.DefaultMiningPocSettingObject;
         }
 
@@ -913,9 +814,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                         if (timestampSovereignUpdate >= DictionarySovereignUpdateObject[sovereignHash.Value].SovereignUpdateTimestamp)
                                         {
                                             if (ClassBase58.DecodeWithCheckSum(DictionarySovereignUpdateObject[sovereignHash.Value].SovereignUpdateContent.PossibleContent1, true) != null)
-                                            {
                                                 lastWalletAddressDev = DictionarySovereignUpdateObject[sovereignHash.Value].SovereignUpdateContent.PossibleContent1;
-                                            }
                                         }
                                     }
                                 }
@@ -952,9 +851,7 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
                                         if (timestampSovereignUpdate >= DictionarySovereignUpdateObject[sovereignHash.Value].SovereignUpdateTimestamp)
                                         {
                                             if (ClassBase58.DecodeWithCheckSum(DictionarySovereignUpdateObject[sovereignHash.Value].SovereignUpdateContent.PossibleContent2, false) != null)
-                                            {
                                                 lastWalletAddressDevPublicKey = DictionarySovereignUpdateObject[sovereignHash.Value].SovereignUpdateContent.PossibleContent2;
-                                            }
                                         }
                                     }
                                 }
@@ -1078,10 +975,30 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
         #endregion
     }
 
+    /// <summary>
+    /// Obtain a sovereign update.
+    /// </summary>
     public class ClassSovereignUpdateGetter
     {
+        /// <summary>
+        /// Return a mining setting sovereign update, depending of the block height.
+        /// </summary>
+        /// <param name="blockHeight"></param>
+        /// <returns></returns>
         public ClassMiningPoWaCSettingObject GetLastSovereignUpdateMiningPocSettingObject(long blockHeight) => ClassSovereignUpdateDatabase.GetLastSovereignUpdateMiningPocSettingObject(blockHeight);
+        
+        /// <summary>
+        /// Return the dev wallet address from a sovereign update listed.
+        /// </summary>
+        /// <param name="timestampSovereignUpdate">The timestamp is usefull to get a sovereign update depending of his timestamp.</param>
+        /// <returns></returns>
         public string GetLastDevWalletAddress(long timestampSovereignUpdate) => ClassSovereignUpdateDatabase.GetLastDevWalletAddress(timestampSovereignUpdate);
+
+        /// <summary>
+        /// Return the latest dev wallet public key from a sovereign update listed.
+        /// </summary>
+        /// <param name="timestampSovereignUpdate">The timestamp is usefull to get a sovereign update depending of his timestamp.</param>
+        /// <returns></returns>
         public string GetLastDevWalletPublicKey(long timestampSovereignUpdate) => ClassSovereignUpdateDatabase.GetLastDevWalletPublicKey(timestampSovereignUpdate);
     }
 }

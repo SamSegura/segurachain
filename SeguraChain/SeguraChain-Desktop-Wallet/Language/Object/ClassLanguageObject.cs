@@ -20,6 +20,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public ClassWalletSetupFormLanguage WalletSetupFormLanguage;
         public ClassWalletSetupStepOneFormLanguage WalletSetupStepOneFormLanguage;
         public ClassWalletSetupStepFinalFormLanguage WalletSetupStepFinalFormLanguage;
+        public ClassWalletTransactionHistoryInformationLoadingFormLanguage WalletTransactionHistoryInformationLoadingFormLanguage;
 
         /// <summary>
         /// Default initialization.
@@ -38,6 +39,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
             WalletSetupFormLanguage = new ClassWalletSetupFormLanguage();
             WalletSetupStepOneFormLanguage = new ClassWalletSetupStepOneFormLanguage();
             WalletSetupStepFinalFormLanguage = new ClassWalletSetupStepFinalFormLanguage();
+            WalletTransactionHistoryInformationLoadingFormLanguage = new ClassWalletTransactionHistoryInformationLoadingFormLanguage();
         }
     }
 
@@ -198,7 +200,6 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
     /// </summary>
     public class ClassWalletCreateFormLanguage
     {
-
         #region Common texts.
 
         public string FORM_TITLE_CREATE_WALLET_TEXT = " - Create a wallet";
@@ -282,6 +283,8 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
     public class ClassWalletTransactionHistoryInformationFormLanguage
     {
         public string FORM_TITLE_TRANSACTION_HISTORY_INFORMATION_TEXT = "Details of the transaction";
+        public string FORM_TITLE_TRANSACTION_HISTORY_MULTI_INFORMATION_TEXT = "Details of %d transactions";
+
         public string LINE_TRANSACTION_INFORMATION_BLOCK_HEIGHT_TEXT = "Block height: ";
         public string LINE_TRANSACTION_INFORMATION_BLOCK_HEIGHT_TARGET_TEXT = "Block height confirmation target: ";
         public string LINE_TRANSACTION_INFORMATION_CONFIRMATIONS_COUNT_TEXT = "Confirmations: ";
@@ -303,6 +306,15 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
 
         public string BUTTON_TRANSACTION_INFORMATION_COPY_TEXT = "Copy";
         public string BUTTON_TRANSACTION_INFORMATION_CLOSE_TEXT = "Close";
+    }
+
+    /// <summary>
+    /// Transaction history informations loading form.
+    /// </summary>
+    public class ClassWalletTransactionHistoryInformationLoadingFormLanguage
+    {
+        public string FORM_TITLE_TRANSACTION_HISTORY_INFORMATION_LOADING_TEXT = "Loading transaction informations";
+        public string LABEL_LOADING_BLOCK_TRANSACTION_INFORMATIONS_TEXT = "Loading transaction informations, please wait a moment.  %s/%e Loaded.";
     }
 
     /// <summary>
@@ -390,6 +402,4 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
         public string LABEL_COPY_ADDRESS_EVENT = "copied.";
         public string TEXT_SPACE = " ";
     }
-
-
 }

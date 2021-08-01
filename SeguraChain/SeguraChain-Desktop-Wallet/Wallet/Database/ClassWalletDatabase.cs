@@ -46,9 +46,7 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
             _semaphoreGetWalletFileData = new SemaphoreSlim(1, 1);
             _cancellationTokenTaskWallet = new CancellationTokenSource();
             if (!Directory.Exists(ClassDesktopWalletCommonData.WalletSettingObject.WalletDirectoryPath))
-            {
                 Directory.CreateDirectory(ClassDesktopWalletCommonData.WalletSettingObject.WalletDirectoryPath);
-            }
         }
 
         #region Manage wallet database.
@@ -138,7 +136,10 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                                     long totalTransactions = DictionaryWalletData[walletFileName].WalletTotalTransaction + DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction;
 
                                                     if (ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache[DictionaryWalletData[walletFileName].WalletAddress].TotalTransactions < totalTransactions)
+                                                    {
                                                         DictionaryWalletData[walletFileName].WalletEnableRescan = true;
+                                                        ResetWalletSync(walletFileName, cancellation);
+                                                    }
                                                 }
                                             }
 
@@ -382,6 +383,31 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
 
             return false;
         }
+
+        /// <summary>
+        /// Reset the wallet sync.
+        /// </summary>
+        /// <param name="walletFileName"></param>
+        /// <param name="cancellation"></param>
+        private void ResetWalletSync(string walletFileName, CancellationTokenSource cancellation)
+        {
+
+            DictionaryWalletData[walletFileName].WalletTransactionList.Clear();
+            DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Clear();
+            DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction = 0;
+            DictionaryWalletData[walletFileName].WalletTotalTransaction = 0;
+            DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = 0;
+            ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(DictionaryWalletData[walletFileName].WalletAddress, cancellation);
+            DictionaryWalletData[walletFileName].WalletBalanceCalculated = false;
+
+            if (DictionaryWalletData[walletFileName].WalletBalanceObject != null)
+            {
+                DictionaryWalletData[walletFileName].WalletBalanceObject.WalletAvailableBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
+                DictionaryWalletData[walletFileName].WalletBalanceObject.WalletPendingBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
+                DictionaryWalletData[walletFileName].WalletBalanceObject.WalletTotalBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
+            }
+
+        }
         
         #endregion
 
@@ -572,23 +598,8 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
 
             if (DictionaryWalletData[walletFileName].WalletEnableRescan)
             {
-                DictionaryWalletData[walletFileName].WalletTransactionList.Clear();
-                DictionaryWalletData[walletFileName].WalletMemPoolTransactionList.Clear();
-                DictionaryWalletData[walletFileName].WalletTotalMemPoolTransaction = 0;
-                DictionaryWalletData[walletFileName].WalletTotalTransaction = 0;
-                DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced = 0;
-                ClassDesktopWalletCommonData.WalletSyncSystem.CleanSyncCacheOfWalletAddressTarget(DictionaryWalletData[walletFileName].WalletAddress, cancellation);
-                DictionaryWalletData[walletFileName].WalletBalanceCalculated = false;
-
-                if (DictionaryWalletData[walletFileName].WalletBalanceObject != null)
-                {
-                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletAvailableBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
-                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletPendingBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
-                    DictionaryWalletData[walletFileName].WalletBalanceObject.WalletTotalBalance = ClassTransactionUtility.GetFormattedAmountFromBigInteger(0);
-                }
-
-
-               await ClassDesktopWalletCommonData.WalletSyncSystem.UpdateWalletSync(walletFileName, _cancellationTokenTaskWallet);
+                ResetWalletSync(walletFileName, cancellation);
+                await ClassDesktopWalletCommonData.WalletSyncSystem.UpdateWalletSync(walletFileName, _cancellationTokenTaskWallet);
 
                 DictionaryWalletData[walletFileName].WalletEnableRescan = false;
                 requireSave = true;

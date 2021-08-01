@@ -2,6 +2,7 @@
 {
     public class ClassPeerApiEnumGetRequest
     {
+        public const string GetAlive = "get_alive";
         public const string GetBlockTemplate = "get_block_template";
         public const string GetNetworkStats = "get_network_stats";
         public const string GetLastBlockHeightUnlocked = "get_last_block_height_unlocked";

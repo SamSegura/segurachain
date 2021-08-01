@@ -32,9 +32,7 @@ namespace SeguraChain_Lib.Algorithm
                         long lengthToProceed = SizeSplitData;
 
                         if (lengthToProceed + lengthProceed > data.Length)
-                        {
                             lengthToProceed = data.Length - lengthProceed;
-                        }
 
                         byte[] dataToProceed = new byte[lengthToProceed];
 
@@ -43,12 +41,13 @@ namespace SeguraChain_Lib.Algorithm
                         hash += ClassUtility.GetHexStringFromByteArray(shaObject.Compute(dataToProceed));
 
                         lengthProceed += lengthToProceed;
+
+                        // Clean up.
+                        Array.Clear(dataToProceed, 0, dataToProceed.Length);
                     }
                 }
                 else
-                {
                     hash = ClassUtility.GetHexStringFromByteArray(shaObject.Compute(data));
-                }
 
                 shaObject.Reset();
             }

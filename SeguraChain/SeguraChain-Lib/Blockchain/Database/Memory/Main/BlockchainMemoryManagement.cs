@@ -320,7 +320,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                             {
                                 _dictionaryBlockObjectMemory[blockHeight].Content = value;
                                 _dictionaryBlockObjectMemory[blockHeight].CacheUpdated = false;
-                                _dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                                 _dictionaryBlockObjectMemory[blockHeight].ObjectCacheType = CacheBlockMemoryEnumState.IN_ACTIVE_MEMORY;
                             }
                             else
@@ -339,7 +338,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                     {
                                         _dictionaryBlockObjectMemory[blockHeight].Content = value;
                                         _dictionaryBlockObjectMemory[blockHeight].CacheUpdated = false;
-                                        _dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                                         _dictionaryBlockObjectMemory[blockHeight].ObjectCacheType = CacheBlockMemoryEnumState.IN_ACTIVE_MEMORY;
                                         result = true;
                                     }
@@ -395,7 +393,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                     {
                                         _dictionaryBlockObjectMemory[blockHeight].Content = value;
                                         _dictionaryBlockObjectMemory[blockHeight].CacheUpdated = false;
-                                        _dictionaryBlockObjectMemory[blockHeight].Content.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                                         _dictionaryBlockObjectMemory[blockHeight].ObjectCacheType = CacheBlockMemoryEnumState.IN_ACTIVE_MEMORY;
                                         result = true;
                                     }
@@ -521,7 +518,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         /// <returns></returns>
         public async Task<bool> InsertOrUpdateBlockObjectToCache(ClassBlockObject blockObject, bool keepAlive, CancellationTokenSource cancellation)
         {
-            blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
             if (!ContainsKey(blockObject.BlockHeight))
             {
@@ -1534,7 +1530,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                             blockObjectUpdated.BlockLastHeightTransactionConfirmationDone = lastBlockHeightUnlockedChecked;
                                                             blockObjectUpdated.BlockUnlockValid = true;
                                                             blockObjectUpdated.BlockNetworkAmountConfirmations = BlockchainSetting.BlockAmountNetworkConfirmations;
-                                                            blockObjectUpdated.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                                                             blockObjectUpdated.TotalTransaction = blockObject.BlockTransactions.Count;
                                                             blockObjectUpdated.TotalCoinConfirmed = 0;
                                                             blockObjectUpdated.TotalFee = 0;
@@ -1565,6 +1560,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                                                     }
                                                                 }
                                                             }
+
+                                                            blockObjectUpdated.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
+
 
                                                             changeDone = true;
 
@@ -1744,7 +1742,6 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         blockObjectUpdated.BlockLastHeightTransactionConfirmationDone = lastBlockHeightTransactionConfirmationDone;
                         blockObjectUpdated.BlockUnlockValid = true;
                         blockObjectUpdated.BlockNetworkAmountConfirmations = BlockchainSetting.BlockAmountNetworkConfirmations;
-                        blockObjectUpdated.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                         blockObjectUpdated.TotalTransaction = blockObjectUpdated.BlockTransactions.Count;
                         blockObjectUpdated.TotalCoinConfirmed = 0;
                         blockObjectUpdated.TotalFee = 0;
@@ -1786,12 +1783,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                         if (cancelConfirmations)
                             break;
 
+                        blockObjectUpdated.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
+
+
                         // Update the active memory if this one is available on the active memory.
                         if (_dictionaryBlockObjectMemory[blockHeight].Content != null)
                             _dictionaryBlockObjectMemory[blockHeight].Content = blockObjectUpdated;
 
-
-                        blockObjectUpdated.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
                         if (!await AddOrUpdateMemoryDataToCache(blockObjectUpdated, false, cancellation))
                         {
@@ -2483,22 +2481,25 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                 if (containDevFee || containBlockReward)
                     return true;
 
-                foreach (var tx in await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, false, cancellation))
+                using (DisposableList<ClassTransactionObject> listMemPoolTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxObjectFromBlockHeight(blockHeight, false, cancellation))
                 {
-
-                    cancellation.Token.ThrowIfCancellationRequested();
-
-                    if (tx.TransactionType == ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                    foreach (var tx in listMemPoolTransactionObject.GetList)
                     {
-                        containBlockReward = true;
-                        if (containDevFee)
-                            return true;
-                    }
-                    if (tx.TransactionType == ClassTransactionEnumType.DEV_FEE_TRANSACTION)
-                    {
-                        containDevFee = true;
-                        if (containBlockReward)
-                            return true;
+
+                        cancellation.Token.ThrowIfCancellationRequested();
+
+                        if (tx.TransactionType == ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                        {
+                            containBlockReward = true;
+                            if (containDevFee)
+                                return true;
+                        }
+                        if (tx.TransactionType == ClassTransactionEnumType.DEV_FEE_TRANSACTION)
+                        {
+                            containDevFee = true;
+                            if (containBlockReward)
+                                return true;
+                        }
                     }
                 }
             }
@@ -3208,20 +3209,23 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     // Take in count mem pool transaction indexed only sending.
                     if (ClassMemPoolDatabase.GetCountMemPoolTx > 0)
                     {
-                        foreach (var memPoolTransactionIndexed in await ClassMemPoolDatabase.GetMemPoolTxFromWalletAddressTargetAsync(walletAddress, maxBlockHeightTarget, cancellation))
+                        using (DisposableList<ClassTransactionObject> listMemPoolTransactionObject = await ClassMemPoolDatabase.GetMemPoolTxFromWalletAddressTargetAsync(walletAddress, maxBlockHeightTarget, cancellation))
                         {
-                            cancellation?.Token.ThrowIfCancellationRequested();
-
-                            if (memPoolTransactionIndexed != null)
+                            foreach (var memPoolTransactionIndexed in listMemPoolTransactionObject.GetList)
                             {
-                                if (memPoolTransactionIndexed.WalletAddressSender == walletAddress)
+                                cancellation?.Token.ThrowIfCancellationRequested();
+
+                                if (memPoolTransactionIndexed != null)
                                 {
-                                    blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Amount;
-                                    if (memPoolTransactionIndexed.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
-                                        blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Fee;
+                                    if (memPoolTransactionIndexed.WalletAddressSender == walletAddress)
+                                    {
+                                        blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Amount;
+                                        if (memPoolTransactionIndexed.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                                            blockchainWalletBalance.WalletBalance -= memPoolTransactionIndexed.Fee;
+                                    }
+                                    else if (memPoolTransactionIndexed.WalletAddressReceiver == walletAddress)
+                                        blockchainWalletBalance.WalletPendingBalance += memPoolTransactionIndexed.Amount;
                                 }
-                                else if (memPoolTransactionIndexed.WalletAddressReceiver == walletAddress)
-                                    blockchainWalletBalance.WalletPendingBalance += memPoolTransactionIndexed.Amount;
                             }
                         }
                     }
@@ -3619,7 +3623,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
         private async Task<bool> AddOrUpdateMemoryDataToCache(ClassBlockObject blockObject, bool keepAlive, CancellationTokenSource cancellation)
         {
 
-            bool updateAddResult = false;
+            bool updateAddResult = !_blockchainDatabaseSetting.BlockchainCacheSetting.EnableCacheDatabase;
+
+            if (GetLastBlockHeight < blockObject.BlockHeight)
+                _dictionaryBlockObjectMemory.Add(blockObject.BlockHeight, new BlockchainMemoryObject());
+
+            if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].Content != null)
+                _dictionaryBlockObjectMemory[blockObject.BlockHeight].Content = blockObject;
 
             if (_blockchainDatabaseSetting.BlockchainCacheSetting.EnableCacheDatabase)
             {
@@ -3628,13 +3638,14 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                     case CacheEnumName.IO_CACHE:
                         {
                             updateAddResult = await _cacheIoSystem.PushOrUpdateIoBlockObject(blockObject, keepAlive, cancellation);
-
-                            if (updateAddResult && blockObject?.BlockStatus == ClassBlockEnumStatus.UNLOCKED)
-                                AddOrUpdateBlockMirrorObject(blockObject);
                         }
                         break;
                 }
             }
+
+            if (updateAddResult)
+                await UpdateListBlockTransactionCache(blockObject.BlockTransactions.Values.ToList(), cancellation, true);
+
             return updateAddResult;
         }
 
@@ -3823,12 +3834,27 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main
                                     if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].Content != null)
                                         _dictionaryBlockObjectMemory[blockObject.BlockHeight].Content = blockObject;
 
+                                    AddOrUpdateBlockMirrorObject(blockObject);
+
                                     if (keepAliveData)
                                         await UpdateListBlockTransactionCache(blockObject.BlockTransactions.Values.ToList(), cancellation, true);
                                 }
                             }
                         }
                         break;
+                }
+            }
+            else
+            {
+                foreach (ClassBlockObject blockObject in listBlockObjects)
+                {
+                    cancellation.Token.ThrowIfCancellationRequested();
+
+                    if (_dictionaryBlockObjectMemory[blockObject.BlockHeight].Content != null)
+                        _dictionaryBlockObjectMemory[blockObject.BlockHeight].Content = blockObject;
+
+                    if (keepAliveData)
+                        await UpdateListBlockTransactionCache(blockObject.BlockTransactions.Values.ToList(), cancellation, true);
                 }
             }
 

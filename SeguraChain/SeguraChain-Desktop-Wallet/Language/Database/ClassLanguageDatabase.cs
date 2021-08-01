@@ -33,16 +33,12 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
             string languageDirectoryPath = ClassUtility.ConvertPath(AppContext.BaseDirectory + ClassWalletDefaultSetting.DefaultLanguageDirectoryFilePath);
 
             if (!Directory.Exists(languageDirectoryPath))
-            {
                 Directory.CreateDirectory(languageDirectoryPath);
-            }
 
             string[] languageFileList = Directory.GetFiles(languageDirectoryPath, ClassWalletDefaultSetting.LanguageFileFormat);
 
             if (languageFileList.Length == 0)
-            {
                 InitializeDefaultLanguage(languageDirectoryPath);
-            }
             else
             {
                 foreach (var languageFilePath in languageFileList)
@@ -165,6 +161,10 @@ namespace SeguraChain_Desktop_Wallet.Language.Database
                 case ClassLanguageEnumType.LANGUAGE_TYPE_WALLET_SETUP_STEP_FINAL_FORM:
                     {
                         return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletSetupStepFinalFormLanguage, typeof(T));
+                    }
+                case ClassLanguageEnumType.LANGUAGE_TYPE_TRANSACTION_HISTORY_INFORMATION_LOADING_FORM:
+                    {
+                        return (T)Convert.ChangeType(_dictionaryLanguageObjects[_currentLanguage].WalletTransactionHistoryInformationLoadingFormLanguage, typeof(T));
                     }
             }
 
