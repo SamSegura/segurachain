@@ -625,7 +625,10 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
                             else
                             {
                                 if (_syncCacheDatabase[blockHeight][transactionHash].IsSender)
+                                {
+                                    availableBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
                                     pendingBalance -= (_syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount + _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Fee);
+                                }
                                 else
                                     pendingBalance += _syncCacheDatabase[blockHeight][transactionHash].BlockTransaction.TransactionObject.Amount;
 
