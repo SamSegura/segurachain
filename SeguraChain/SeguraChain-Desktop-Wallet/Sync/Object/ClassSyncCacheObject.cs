@@ -1,4 +1,4 @@
-using SeguraChain_Lib.Blockchain.Block.Object.Structure;
+﻿using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Other.Object.List;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

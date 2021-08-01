@@ -254,6 +254,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                         bool failed = true;
                         bool semaphoreUsed = false;
 
+                        bool resultHandleRequest = false;
+
                         try
                         {
                             try
@@ -269,7 +271,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                                     semaphoreUsed = false;
                                     failed = false;
 
-                                    await _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[randomId].HandleApiClientConnection();
+                                    resultHandleRequest = await _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[randomId].HandleApiClientConnection();
 
                                     _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[randomId].Dispose();
                                 }
@@ -294,6 +296,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
 
                         if (failed)
                             return ClassPeerApiHandleIncomingConnectionEnum.TOO_MUCH_ACTIVE_CONNECTION_CLIENT;
+
+                        if (!resultHandleRequest)
+                            return ClassPeerApiHandleIncomingConnectionEnum.HANDLE_CLIENT_EXCEPTION;
 
                     }
                     else

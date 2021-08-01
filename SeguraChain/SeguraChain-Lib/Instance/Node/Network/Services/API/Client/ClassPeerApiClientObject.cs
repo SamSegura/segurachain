@@ -106,7 +106,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
         /// Handle a new incoming connection from a client to the API.
         /// </summary>
         /// <returns></returns>
-        public async Task HandleApiClientConnection()
+        public async Task<bool> HandleApiClientConnection()
         {
 
             try
@@ -265,6 +265,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
             {
                 // Ignored.
             }
+
+            return PacketResponseSent;
         }
 
         /// <summary>
@@ -1066,7 +1068,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                 sendResult = false;
             }
 
-            PacketResponseSent = true;
+            PacketResponseSent = sendResult;
 
             // Clean up.
             builder.Clear();

@@ -1,4 +1,4 @@
-using SeguraChain_Lib.Blockchain.Block.Enum;
+﻿using SeguraChain_Lib.Blockchain.Block.Enum;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Mining.Enum;
 using SeguraChain_Lib.Blockchain.Mining.Object;
