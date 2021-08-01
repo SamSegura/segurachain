@@ -490,7 +490,9 @@ namespace SeguraChain_Desktop_Wallet.Sync
                 {
                     if (blockTransaction.TransactionObject.WalletAddressSender == walletAddress)
                     {
-                        DatabaseSyncCache[walletAddress].AvailableBalance -= (blockTransaction.TransactionObject.Amount + blockTransaction.TransactionObject.Fee);
+                        if (DatabaseSyncCache[walletAddress].AvailableBalance - (blockTransaction.TransactionObject.Amount + blockTransaction.TransactionObject.Fee) >= 0)
+                            DatabaseSyncCache[walletAddress].AvailableBalance -= (blockTransaction.TransactionObject.Amount + blockTransaction.TransactionObject.Fee);
+
                         DatabaseSyncCache[walletAddress].PendingBalance -= (blockTransaction.TransactionObject.Amount + blockTransaction.TransactionObject.Fee);
                     }
                     else
@@ -723,9 +725,6 @@ namespace SeguraChain_Desktop_Wallet.Sync
                 if (containAddress)
                 {
                     availableBalance = DatabaseSyncCache[walletAddress].AvailableBalance;
-                    if (DatabaseSyncCache[walletAddress].PendingBalance < 0)
-                        availableBalance += DatabaseSyncCache[walletAddress].PendingBalance;
-
                     totalBalance = DatabaseSyncCache[walletAddress].AvailableBalance + DatabaseSyncCache[walletAddress].PendingBalance;
                     pendingBalance = DatabaseSyncCache[walletAddress].PendingBalance;
                 }
@@ -760,11 +759,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                     containAddress = true;
 
                 if (containAddress)
-                {
                     availableBalance = DatabaseSyncCache[walletAddress].AvailableBalance;
-                    if (DatabaseSyncCache[walletAddress].PendingBalance < 0)
-                        availableBalance += DatabaseSyncCache[walletAddress].PendingBalance;
-                }
             }
 
             return availableBalance;
