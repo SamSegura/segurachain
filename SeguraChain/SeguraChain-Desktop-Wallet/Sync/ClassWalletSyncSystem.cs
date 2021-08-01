@@ -936,7 +936,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
             {
                 case ClassWalletSettingEnumSyncMode.INTERNAL_PEER_SYNC_MODE:
                     {
-                        return ClassBlockchainStats.GetBlockchainNetworkStatsObject;
+                        return ClassBlockchainStats.BlockchainNetworkStatsObject;
                     }
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {

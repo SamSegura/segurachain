@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using SeguraChain_Lib.Blockchain.Block.Enum;
+﻿using System.Collections.Concurrent;
 using SeguraChain_Lib.Blockchain.Block.Object.Structure;
 using SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Disk.Object;
 using SeguraChain_Lib.Blockchain.Database.Memory.Main.Enum;
-using SeguraChain_Lib.Utility;
 
 namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
 {
@@ -19,7 +17,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
         /// <summary>
         /// Store the block transaction cache.
         /// </summary>
-        public Dictionary<string, ClassCacheIoBlockTransactionObject> BlockTransactionCache;
+        public ConcurrentDictionary<string, ClassCacheIoBlockTransactionObject> BlockTransactionCache;
 
 
         /// <summary>
@@ -27,7 +25,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Main.Object
         /// </summary>
         public BlockchainMemoryObject()
         {
-            BlockTransactionCache = new Dictionary<string, ClassCacheIoBlockTransactionObject>();
+            BlockTransactionCache = new ConcurrentDictionary<string, ClassCacheIoBlockTransactionObject>();
         }
 
         /// <summary>

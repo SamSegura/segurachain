@@ -20,7 +20,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// Semaphore(s).
         /// </summary>
         private static SemaphoreSlim SemaphoreUpdateBlockchainNetworkStats = new SemaphoreSlim(1, 1);
-        public static ClassBlockchainNetworkStatsObject GetBlockchainNetworkStatsObject = new ClassBlockchainNetworkStatsObject();
+        public static ClassBlockchainNetworkStatsObject BlockchainNetworkStatsObject = new ClassBlockchainNetworkStatsObject();
 
         #region Functions to get/update network sync status.
 
@@ -46,9 +46,9 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
                 {
                     if (BlockCount > 0)
                     {
-                        GetBlockchainNetworkStatsObject = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockchainNetworkStatsObjectAsync(GetBlockchainNetworkStatsObject, cancellation);
-                        GetBlockchainNetworkStatsObject.NetworkHashrateEstimated = await GetNetworkHashrate(GetBlockchainNetworkStatsObject.LastBlockHeight, cancellation);
-                        GetBlockchainNetworkStatsObject.FormatBlockchainStats();
+                        BlockchainNetworkStatsObject = await ClassBlockchainDatabase.BlockchainMemoryManagement.GetBlockchainNetworkStatsObjectAsync(BlockchainNetworkStatsObject, cancellation);
+                        BlockchainNetworkStatsObject.NetworkHashrateEstimated = await GetNetworkHashrate(BlockchainNetworkStatsObject.LastBlockHeight, cancellation);
+                        BlockchainNetworkStatsObject.FormatBlockchainStats();
                     }
                 }
             }
@@ -82,8 +82,8 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <param name="lastNetworkBlockHeight"></param>
         public static void UpdateLastNetworkBlockHeight(long lastNetworkBlockHeight)
         {
-            if (GetBlockchainNetworkStatsObject != null)
-                GetBlockchainNetworkStatsObject.LastNetworkBlockHeight = lastNetworkBlockHeight;
+            if (BlockchainNetworkStatsObject != null)
+                BlockchainNetworkStatsObject.LastNetworkBlockHeight = lastNetworkBlockHeight;
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <param name="lastBlockHeightSynced"></param>
         public static void UpdateLastBlockHeightSynced(long lastBlockHeightSynced)
         {
-            GetBlockchainNetworkStatsObject.LastBlockHeight = lastBlockHeightSynced;
+            BlockchainNetworkStatsObject.LastBlockHeight = lastBlockHeightSynced;
         }
 
         #endregion

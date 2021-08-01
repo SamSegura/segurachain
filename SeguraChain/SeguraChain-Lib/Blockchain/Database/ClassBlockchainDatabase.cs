@@ -439,7 +439,7 @@ namespace SeguraChain_Lib.Blockchain.Database
 
             ClassLog.WriteLine("Building blockchain network stats, please wait a momment..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             await ClassBlockchainStats.UpdateBlockchainNetworkStats(true, _cancellationTokenStopBlockchain);
-            ClassLog.WriteLine("Done. Total tx(s) synced: " + ClassBlockchainStats.GetBlockchainNetworkStatsObject.TotalTransactions + " | Total block(s) synced: " + ClassBlockchainStats.GetBlockchainNetworkStatsObject.LastBlockHeight, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+            ClassLog.WriteLine("Done. Total tx(s) synced: " + ClassBlockchainStats.BlockchainNetworkStatsObject.TotalTransactions + " | Total block(s) synced: " + ClassBlockchainStats.BlockchainNetworkStatsObject.LastBlockHeight, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
             #endregion
 
@@ -1507,8 +1507,8 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                         if (await BlockchainMemoryManagement.Add(newBlockHeight, new ClassBlockObject(newBlockHeight, newBlockDifficulty, newBlockHash, timestampFound, 0, ClassBlockEnumStatus.LOCKED, false, false), CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, cancellation))
                         {
-                            if (ClassBlockchainStats.GetBlockchainNetworkStatsObject != null)
-                                ClassLog.WriteLine("New block " + newBlockHeight + "/" + ClassBlockchainStats.GetBlockchainNetworkStatsObject.LastNetworkBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+                            if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
+                                ClassLog.WriteLine("New block " + newBlockHeight + "/" + ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
 
                             else
                                 ClassLog.WriteLine("New block " + newBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
@@ -1751,13 +1751,41 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                     if (!CheckBlockObjectTransactionConfirmationsProgressDone(blockObject, lastBlockHeightUnlockedChecked))
                         needConfirmAgainTx = true;
-
-                    foreach (var tx in blockObject.BlockTransactions)
+                    else
                     {
-                        if (!CheckBlockTransactionConfirmationDone(blockObject.BlockStatus, tx.Value, blockObject.BlockHeight, lastBlockHeightUnlockedChecked))
+                        BigInteger totalConfirmed = 0;
+                        BigInteger totalFee = 0;
+                        BigInteger totalPending = 0;
+
+                        foreach (var tx in blockObject.BlockTransactions)
                         {
-                            needConfirmAgainTx = true;
-                            break;
+                            if (!CheckBlockTransactionConfirmationDone(blockObject.BlockStatus, tx.Value, blockObject.BlockHeight, lastBlockHeightUnlockedChecked))
+                            {
+                                needConfirmAgainTx = true;
+                                break;
+                            }
+                            else
+                            {
+                                if (tx.Value.TransactionStatus)
+                                {
+                                    if (tx.Value.IsConfirmed)
+                                        totalConfirmed += (tx.Value.TransactionObject.Amount - tx.Value.TotalSpend);
+                                    else
+                                        totalPending += tx.Value.TransactionObject.Amount;
+
+                                    if (tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
+                                        tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
+                                        totalPending += tx.Value.TransactionObject.Fee;
+                                }
+                            }
+                        }
+
+                        if (!needConfirmAgainTx)
+                        {
+                            blockObject.TotalCoinConfirmed = totalConfirmed;
+                            blockObject.TotalCoinPending = totalPending;
+                            blockObject.TotalFee = totalFee;
+                            blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
                         }
                     }
                 }

@@ -942,7 +942,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                         {
                             if (!await SendApiResponse(BuildPacketResponse(new ClassApiPeerPacketSendNetworkStats()
                             {
-                                BlockchainNetworkStatsObject = ClassBlockchainStats.GetBlockchainNetworkStatsObject,
+                                BlockchainNetworkStatsObject = ClassBlockchainStats.BlockchainNetworkStatsObject,
                                 PacketTimestamp = ClassUtility.GetCurrentTimestampInSecond()
                             }, ClassPeerApiPacketResponseEnum.SEND_NETWORK_STATS)))
                                 return false;

@@ -152,7 +152,7 @@ namespace SeguraChain_Peer.CommandLine
                                 if (ClassBlockchainStats.BlockCount > 0)
                                 {
                                     long lastBlockHeight = ClassBlockchainStats.GetLastBlockHeight();
-                                    ClassBlockchainNetworkStatsObject blockchainNetworkStatsObjectObject = ClassBlockchainStats.GetBlockchainNetworkStatsObject;
+                                    ClassBlockchainNetworkStatsObject blockchainNetworkStatsObjectObject = ClassBlockchainStats.BlockchainNetworkStatsObject;
                                     ClassLog.SimpleWriteLine("Current Block Height: Sync: " + lastBlockHeight + " | Network: " + blockchainNetworkStatsObjectObject.LastNetworkBlockHeight);
                                     ClassLog.SimpleWriteLine("[INFO] All stats displayed come from your data synced.", ConsoleColor.Yellow);
                                     ClassLog.SimpleWriteLine("Current Block Difficulty: " + blockchainNetworkStatsObjectObject.LastBlockDifficulty);
@@ -179,7 +179,7 @@ namespace SeguraChain_Peer.CommandLine
                                 else
                                 {
                                     ClassLog.SimpleWriteLine("No data synced.", ConsoleColor.DarkRed);
-                                    ClassBlockchainNetworkStatsObject blockchainNetworkStatsObjectObject = ClassBlockchainStats.GetBlockchainNetworkStatsObject;
+                                    ClassBlockchainNetworkStatsObject blockchainNetworkStatsObjectObject = ClassBlockchainStats.BlockchainNetworkStatsObject;
                                     if (blockchainNetworkStatsObjectObject != null)
                                     {
                                         if (blockchainNetworkStatsObjectObject.LastNetworkBlockHeight > 0)

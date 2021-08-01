@@ -150,10 +150,10 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         [JsonIgnore]
         public bool IsConfirmedByNetwork => BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations &&
-                BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED && _blockTransactions != null;
+                BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED;
 
         [JsonIgnore]
-        public bool IsChecked => IsConfirmedByNetwork && BlockTransactionConfirmationCheckTaskDone && _blockTransactions != null;
+        public bool IsChecked => IsConfirmedByNetwork && BlockTransactionConfirmationCheckTaskDone;
 
 
 
