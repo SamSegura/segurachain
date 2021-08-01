@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -1058,11 +1058,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
                 case ClassWalletSettingEnumSyncMode.EXTERNAL_PEER_SYNC_MODE:
                     {
                         if (_apiIsAlive)
-                        {
                             calculationFeeCostConfirmation = await ClassApiClientUtility.GetFeeCostTransactionFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, lastBlockHeightUnlocked, blockHeightConfirmationStart, blockHeightConfirmationTarget, cancellation);
-                            if (calculationFeeCostConfirmation == null)
-                                return new Tuple<BigInteger, bool>(0, false);
-                        }
                     }
                     break;
             }
@@ -1373,7 +1369,7 @@ namespace SeguraChain_Desktop_Wallet.Sync
 
                     if (countMemPoolTransaction > 0)
                     {
-                        using (DisposableList<long> listBlockHeight = new DisposableList<long>(true, 0, await ClassApiClientUtility.GetMemPoolListBlockHeights(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation)))
+                        using (DisposableList<long> listBlockHeight = await ClassApiClientUtility.GetMemPoolListBlockHeights(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, cancellation))
                         {
                             if (listBlockHeight.Count > 0)
                             {
@@ -1405,14 +1401,16 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                                     break;
                                             }
 
-
-                                            foreach (ClassTransactionObject memPoolTransactionObject in await ClassApiClientUtility.GetMemPoolTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
+                                            using (DisposableList<ClassTransactionObject> listMemPoolTransaction = await ClassApiClientUtility.GetMemPoolTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
                                             {
-                                                if (memPoolTransactionObject?.WalletAddressSender == walletAddress || memPoolTransactionObject?.WalletAddressReceiver == walletAddress)
-                                                    listTransactionObject.Add(memPoolTransactionObject);
+                                                foreach (ClassTransactionObject memPoolTransactionObject in listMemPoolTransaction.GetList)
+                                                {
+                                                    if (memPoolTransactionObject?.WalletAddressSender == walletAddress || memPoolTransactionObject?.WalletAddressReceiver == walletAddress)
+                                                        listTransactionObject.Add(memPoolTransactionObject);
 
-                                                startRange++;
-                                                totalRetrieved++;
+                                                    startRange++;
+                                                    totalRetrieved++;
+                                                }
                                             }
 
                                             if (totalRetrieved >= transactionCount)
@@ -1568,14 +1566,16 @@ namespace SeguraChain_Desktop_Wallet.Sync
                                                     break;
                                             }
 
-
-                                            foreach (ClassBlockTransaction blockTransactionObject in await ClassApiClientUtility.GetBlockTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
+                                            using (DisposableList<ClassBlockTransaction> listBlockTransactionFetch = await ClassApiClientUtility.GetBlockTransactionByRangeFromExternalSyncMode(ClassDesktopWalletCommonData.WalletSettingObject.ApiHost, ClassDesktopWalletCommonData.WalletSettingObject.ApiPort, ClassDesktopWalletCommonData.WalletSettingObject.WalletInternalSyncNodeSetting.PeerNetworkSettingObject.PeerApiMaxConnectionDelay, blockHeight, startRange, endRange, cancellation))
                                             {
-                                                if (blockTransactionObject?.TransactionObject.WalletAddressSender == walletAddress || blockTransactionObject?.TransactionObject.WalletAddressReceiver == walletAddress)
-                                                    listBlockTransaction.Add(blockTransactionObject);
+                                                foreach (ClassBlockTransaction blockTransactionObject in listBlockTransactionFetch.GetList)
+                                                {
+                                                    if (blockTransactionObject?.TransactionObject.WalletAddressSender == walletAddress || blockTransactionObject?.TransactionObject.WalletAddressReceiver == walletAddress)
+                                                        listBlockTransaction.Add(blockTransactionObject);
 
-                                                startRange++;
-                                                totalRetrieved++;
+                                                    startRange++;
+                                                    totalRetrieved++;
+                                                }
                                             }
 
                                             if (totalRetrieved >= blockObjectInformation.TotalTransaction)
