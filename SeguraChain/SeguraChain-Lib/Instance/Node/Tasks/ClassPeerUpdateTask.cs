@@ -28,14 +28,16 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
         /// <summary>
         /// Intervals of tasks.
         /// </summary>
+#if !NET5_0_OR_GREATER
         private const int CheckOpenNatPublicIpInterval = 5 * 1000;
+#endif
         private const int ManageApiFirewallInterval = 2 * 1000;
         private const int CleanUpApiDeadConnectionInterval = 10 * 1000;
         private const int CleanUpPeerDeadConnectionInterval = 10 * 1000;
         private const int UpdateBlockTransactionConfirmationInterval = 1 * 1000;
         private const int UpdateNodeInternalStats = 1 * 1000;
         private const int UpdateBlockchainStatsInterval = 1 * 1000;
-
+        private const int CleanUpGcInterval = 60 * 1000;
 
         /// <summary>
         /// Indicate to the task of block transactions confirmations to stop once a task is complete instead to force to stop the process in pending.
@@ -61,6 +63,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
         {
             _cancellationTokenSourceUpdateTask = new CancellationTokenSource();
 
+#if !NET5_0_OR_GREATER
 
             if (_nodeInstance.PeerSettingObject.PeerNetworkSettingObject.PublicPeer)
             {
@@ -72,6 +75,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                         ClassLog.WriteLine("Can't start the task who manage the OpenNAT because the initialization of the port by OpenNAT have failed.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                 }
             }
+#endif
 
             StartTaskConfirmBlockTransaction();
             StartTaskCleanUpClosedApiClientConnection();
@@ -82,6 +86,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
 
             StartTaskUpdateBlockchainNetworkStats();
             StartTaskUpdateNodeInternalStats();
+            StartTaskUpdateGarbageCollection();
         }
 
         /// <summary>
@@ -123,6 +128,8 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
         #endregion
 
         #region Tasks functions
+
+#if !NET5_0_OR_GREATER
 
         /// <summary>
         /// Start a task for change public IP get from OpenNAT.
@@ -169,6 +176,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
             }
         }
 
+#endif
         /// <summary>
         /// Start a task who manage the API Firewall.
         /// </summary>
@@ -178,7 +186,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
             {
                 Task.Factory.StartNew(async () =>
                 {
-                    while(_nodeInstance.PeerToolStatus)
+                    while (_nodeInstance.PeerToolStatus)
                     {
                         _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
 
@@ -186,9 +194,9 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                         {
                             ClassPeerFirewallManager.ManageFirewallLink(_nodeInstance.PeerSettingObject.PeerFirewallSettingObject.PeerFirewallName, _nodeInstance.PeerSettingObject.PeerFirewallSettingObject.PeerFirewallChainName);
                         }
-                        catch(Exception error)
+                        catch (Exception error)
                         {
-                            ClassLog.WriteLine("Error on the task who manage the Firewall of the API. Exception: "+error.Message, ClassEnumLogLevelType.LOG_LEVEL_FIREWALL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                            ClassLog.WriteLine("Error on the task who manage the Firewall of the API. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_FIREWALL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                         }
                         await Task.Delay(ManageApiFirewallInterval, _cancellationTokenSourceUpdateTask.Token);
 
@@ -215,12 +223,12 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                         _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
 
                         try
-                        { 
+                        {
 
                             long totalClosed = _nodeInstance.PeerApiServerObject.CleanUpAllIncomingClosedConnection(out int totalIp);
 
                             if (totalClosed > 0)
-                                ClassLog.WriteLine("Total incoming dead api connection cleaned: " + totalClosed + " | Total IP: "+totalIp, ClassEnumLogLevelType.LOG_LEVEL_API_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
+                                ClassLog.WriteLine("Total incoming dead api connection cleaned: " + totalClosed + " | Total IP: " + totalIp, ClassEnumLogLevelType.LOG_LEVEL_API_SERVER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
                         }
                         catch
                         {
@@ -245,7 +253,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
             {
                 Task.Factory.StartNew(async () =>
                 {
-                    while(_nodeInstance.PeerToolStatus)
+                    while (_nodeInstance.PeerToolStatus)
                     {
                         _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
 
@@ -271,8 +279,6 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                 // Ignored, catch the exception once the task is cancelled.
             }
         }
-
-
 
         /// <summary>
         /// Start a task who automatically update blockchain network stats from data synced.
@@ -343,7 +349,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
                                                 {
                                                     if (blockConfirmationResultObject.ListBlockHeightConfirmed.Count > 0)
                                                     {
-                                                        while (!await ClassBlockchainDatabase.BlockchainMemoryManagement.IncrementBlockTransactionConfirmationOnBlockFullyConfirmed(blockConfirmationResultObject.ListBlockHeightConfirmed, lastBlockHeightUnlockedChecked, _cancellationTokenSourceUpdateTask))
+                                                        while (!await ClassBlockchainDatabase.BlockchainMemoryManagement.IncrementBlockTransactionConfirmationOnBlockFullyConfirmed(blockConfirmationResultObject.ListBlockHeightConfirmed.GetList, lastBlockHeightUnlockedChecked, _cancellationTokenSourceUpdateTask))
                                                         {
                                                             _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
 
@@ -382,7 +388,7 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
 #endif
                                 break;
                             }
-                            
+
 
                             await Task.Delay(UpdateBlockTransactionConfirmationInterval, _cancellationTokenSourceUpdateTask.Token);
                         }
@@ -432,6 +438,31 @@ namespace SeguraChain_Lib.Instance.Node.Tasks
 
 
                         await Task.Delay(UpdateNodeInternalStats, _cancellationTokenSourceUpdateTask.Token);
+                    }
+                }, _cancellationTokenSourceUpdateTask.Token, TaskCreationOptions.PreferFairness, TaskScheduler.Current).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignored, catch the exception once the task is cancelled.
+            }
+        }
+
+        /// <summary>
+        /// Start a task to clear the garbage collection.
+        /// </summary>
+        private void StartTaskUpdateGarbageCollection()
+        {
+            try
+            {
+                Task.Factory.StartNew(async () =>
+                {
+                    while (_nodeInstance.PeerToolStatus)
+                    {
+                        _cancellationTokenSourceUpdateTask.Token.ThrowIfCancellationRequested();
+
+                        ClassUtility.CleanGc();
+
+                        await Task.Delay(CleanUpGcInterval, _cancellationTokenSourceUpdateTask.Token);
                     }
                 }, _cancellationTokenSourceUpdateTask.Token, TaskCreationOptions.PreferFairness, TaskScheduler.Current).ConfigureAwait(false);
             }

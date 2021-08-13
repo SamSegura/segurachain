@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +10,7 @@ using SeguraChain_Lib.Blockchain.Mining.Function;
 using SeguraChain_Lib.Blockchain.Mining.Object;
 using SeguraChain_Lib.Blockchain.Setting;
 using SeguraChain_Lib.Blockchain.Stats.Function;
+using SeguraChain_Lib.Instance.Node.Network.Services.P2P.Broadcast;
 using SeguraChain_Lib.Instance.Node.Setting.Object;
 using SeguraChain_Lib.Log;
 using SeguraChain_Lib.Other.Object.SHA3;
@@ -512,16 +512,18 @@ namespace SeguraChain_Peer.Mining.Instance
                                         // Submit the share if this one reach the difficulty of the block or if this one is higher.
                                         if (pocShareObject.PoWaCShareDifficulty >= _currentBlockDifficulty)
                                         {
-                                            ClassBlockEnumMiningShareVoteStatus unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, true, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenMiningTasks);
+                                            ClassBlockEnumMiningShareVoteStatus unlockResult = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(_currentBlockHeight, pocShareObject, false, _apiServerIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenMiningTasks);
                                          
                                             switch (unlockResult)
                                             {
                                                 case ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED:
                                                     _totalUnlockShare[idThread]++;
+                                                    await ClassPeerNetworkBroadcastFunction.BroadcastMiningShareAsync(_apiServerIp, _apiServerOpenNatIp, string.Empty, pocShareObject, _peerNetworkSettingObject, _peerFirewallSettingObject);
                                                     break;
                                                 case ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOCONSENSUS:
                                                 case ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ALREADY_FOUND:
                                                     _totalAlreadyShare[idThread]++;
+                                                    await ClassPeerNetworkBroadcastFunction.BroadcastMiningShareAsync(_apiServerIp, _apiServerOpenNatIp, string.Empty, pocShareObject, _peerNetworkSettingObject, _peerFirewallSettingObject);
                                                     break;
                                                 case ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_REFUSED:
                                                     _totalRefusedShare[idThread]++;

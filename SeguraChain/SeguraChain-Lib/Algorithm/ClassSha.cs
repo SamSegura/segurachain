@@ -7,7 +7,7 @@ namespace SeguraChain_Lib.Algorithm
 {
     public class ClassSha
     {
-        private const int SizeSplitData = 1024;
+        private const int ShaSplitDataSizeLimit = 1024; // Max length supported by SHA3-512.
 
         /// <summary>
         /// Make a big sha3-512 hash representation depending of the size of the data.
@@ -21,7 +21,7 @@ namespace SeguraChain_Lib.Algorithm
 
             using (ClassSha3512DigestDisposable shaObject = new ClassSha3512DigestDisposable())
             {
-                if (data.Length > SizeSplitData)
+                if (data.Length > ShaSplitDataSizeLimit)
                 {
                     long lengthProceed = 0;
 
@@ -29,7 +29,7 @@ namespace SeguraChain_Lib.Algorithm
                     {
                         cancellation?.Token.ThrowIfCancellationRequested();
 
-                        long lengthToProceed = SizeSplitData;
+                        long lengthToProceed = ShaSplitDataSizeLimit;
 
                         if (lengthToProceed + lengthProceed > data.Length)
                             lengthToProceed = data.Length - lengthProceed;
@@ -41,9 +41,6 @@ namespace SeguraChain_Lib.Algorithm
                         hash += ClassUtility.GetHexStringFromByteArray(shaObject.Compute(dataToProceed));
 
                         lengthProceed += lengthToProceed;
-
-                        // Clean up.
-                        Array.Clear(dataToProceed, 0, dataToProceed.Length);
                     }
                 }
                 else

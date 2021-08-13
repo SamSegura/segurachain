@@ -683,10 +683,10 @@ namespace SeguraChain_Desktop_Wallet.MainForm.System
                             {
                                 _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage--;
                                 _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed -= ClassWalletDefaultSetting.DefaultWalletMaxTransactionInHistoryPerPage;
+
                                 if (_dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed < 0)
-                                {
                                     _dictionaryTransactionHistory[walletFileOpened].TotalTransactionShowed = 0;
-                                }
+
                                 currentPage = _dictionaryTransactionHistory[walletFileOpened].CurrentTransactionHistoryPage;
                                 _dictionaryTransactionHistory[walletFileOpened].EnableEventDrawPage = true;
                             }

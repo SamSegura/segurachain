@@ -94,7 +94,7 @@ namespace SeguraChain_Desktop_Wallet.Language.Object
 
         #region Overview.
 
-        public string LABEL_MAIN_INTERFACE_CURRENT_BALANCE_TEXT = "Current balance:";
+        public string LABEL_MAIN_INTERFACE_CURRENT_BALANCE_TEXT = "Current balance (scanned at %d1/%d2):";
         public string LABEL_MAIN_INTERFACE_AVAILABLE_BALANCE_AMOUNT_TEXT = "Available: ";
         public string LABEL_MAIN_INTERFACE_PENDING_BALANCE_AMOUNT_TEXT = "Pending: ";
         public string LABEL_MAIN_INTERFACE_TOTAL_BALANCE_AMOUNT_TEXT = "Total: ";

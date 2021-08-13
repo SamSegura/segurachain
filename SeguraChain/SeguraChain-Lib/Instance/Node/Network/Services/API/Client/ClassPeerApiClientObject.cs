@@ -140,7 +140,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                             {
                                 while (continueReading && ClientConnectionStatus)
                                 {
-                                    byte[] packetBuffer = new byte[BlockchainSetting.PeerMaxPacketBufferSize];
+                                    byte[] packetBuffer = new byte[_peerNetworkSettingObject.PeerMaxPacketBufferSize];
 
                                     int packetLength = await networkStream.ReadAsync(packetBuffer, 0, packetBuffer.Length, _cancellationTokenApiClient.Token);
 
@@ -720,23 +720,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                             {
                                                 if (await ClassBlockchainStats.CheckTransaction(apiPeerPacketPushWalletTransaction.TransactionObject, null, false, null, _cancellationTokenApiClient, true) == ClassTransactionEnumStatus.VALID_TRANSACTION)
                                                 {
-                                                    Debug.WriteLine("Transaction received: "+JsonConvert.SerializeObject(apiPeerPacketPushWalletTransaction.TransactionObject));
 
-                                                    var transactionStatus = await ClassPeerNetworkBroadcastFunction.AskMemPoolTxVoteToPeerListsAsync(_peerNetworkSettingObject.ListenApiIp, _apiServerOpenNatIp, _clientIp, new List<ClassTransactionObject>() { apiPeerPacketPushWalletTransaction.TransactionObject }, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenApiClient, true);
+                                                    Dictionary<string, ClassTransactionEnumStatus> transactionStatus = await ClassPeerNetworkBroadcastFunction.AskMemPoolTxVoteToPeerListsAsync(_peerNetworkSettingObject.ListenApiIp, _apiServerOpenNatIp, _clientIp, new List<ClassTransactionObject>() { apiPeerPacketPushWalletTransaction.TransactionObject }, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenApiClient, true);
 
+                                                    bool broadcastComplete = transactionStatus.ContainsKey(apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash) ? 
+                                                        transactionStatus[apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash] == ClassTransactionEnumStatus.VALID_TRANSACTION : false;
 
-                                                    bool broadcastComplete = false;
-
-                                                    if (transactionStatus.ContainsKey(apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash))
-                                                    {
-                                                        if (transactionStatus[apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash] == ClassTransactionEnumStatus.VALID_TRANSACTION)
-                                                            broadcastComplete = true;
-                                                    }
 
                                                     if (broadcastComplete)
                                                     {
-                                                        Debug.WriteLine("Broadcast complete.");
-
                                                         ClassBlockTransactionInsertEnumStatus blockTransactionInsertStatus = ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_INVALID;
 
                                                         if (!await ClassMemPoolDatabase.CheckTxHashExist(apiPeerPacketPushWalletTransaction.TransactionObject.TransactionHash, _cancellationTokenApiClient))
@@ -756,11 +748,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                                             return false;
                                                         }
                                                     }
-                                                    else
-                                                        Debug.WriteLine("Broadcast failed.");
                                                 }
-                                                else
-                                                    Debug.Write("Invalid transaction checked.");
                                             }
                                         }
                                     }
@@ -803,13 +791,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
                                                     {
                                                         // Unlock the current block if everything is okay with other peers.
                                                         case ClassMiningPoWaCEnumStatus.VALID_UNLOCK_BLOCK_SHARE:
-                                                            ClassBlockEnumMiningShareVoteStatus miningShareVoteStatus = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(lastBlockHeight, apiPeerPacketSendMiningShare.MiningPowShareObject, true, _peerNetworkSettingObject.ListenIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenApiClient);
+                                                            ClassBlockEnumMiningShareVoteStatus miningShareVoteStatus = await ClassBlockchainDatabase.UnlockCurrentBlockAsync(lastBlockHeight, apiPeerPacketSendMiningShare.MiningPowShareObject, false, _peerNetworkSettingObject.ListenIp, _apiServerOpenNatIp, false, false, _peerNetworkSettingObject, _peerFirewallSettingObject, _cancellationTokenApiClient);
 
                                                             switch (miningShareVoteStatus)
                                                             {
                                                                 case ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED:
                                                                     miningPowShareStatus = ClassMiningPoWaCEnumStatus.VALID_UNLOCK_BLOCK_SHARE;
-                                                                    await Task.Factory.StartNew(() => ClassPeerNetworkBroadcastFunction.BroadcastMiningShareAsync(_peerNetworkSettingObject.ListenIp, _apiServerOpenNatIp, _clientIp, apiPeerPacketSendMiningShare.MiningPowShareObject, _peerNetworkSettingObject, _peerFirewallSettingObject)).ConfigureAwait(false);
+                                                                    await ClassPeerNetworkBroadcastFunction.BroadcastMiningShareAsync(_peerNetworkSettingObject.ListenIp, _apiServerOpenNatIp, _clientIp, apiPeerPacketSendMiningShare.MiningPowShareObject, _peerNetworkSettingObject, _peerFirewallSettingObject);
                                                                     break;
                                                                 case ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ALREADY_FOUND:
                                                                     // That's can happen sometimes when the broadcast of the share to other nodes is very fast and return back the data of the block unlocked to the synced data before to retrieve back every votes done.
@@ -1050,14 +1038,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Client
 
             try
             {
+
+                builder.AppendLine(@"HTTP/1.1 200 OK");
+                builder.AppendLine(@"Content-Type: " + htmlContentType);
+                builder.AppendLine(@"Content-Length: " + packetToSend.Length);
+                builder.AppendLine(@"Access-Control-Allow-Origin: *");
+                builder.AppendLine(@"");
+                builder.AppendLine(@"" + packetToSend);
+
                 using (NetworkStream networkStream = new NetworkStream(_clientTcpClient.Client))
                 {
-                    builder.AppendLine(@"HTTP/1.1 200 OK");
-                    builder.AppendLine(@"Content-Type: "+htmlContentType);
-                    builder.AppendLine(@"Content-Length: " + packetToSend.Length);
-                    builder.AppendLine(@"Access-Control-Allow-Origin: *");
-                    builder.AppendLine(@"");
-                    builder.AppendLine(@"" + packetToSend);
 
                     if (!await networkStream.TrySendSplittedPacket(ClassUtility.GetByteArrayFromStringAscii(builder.ToString()), _cancellationTokenApiClient, _peerNetworkSettingObject.PeerMaxPacketSplitedSendSize))
                         sendResult = false;

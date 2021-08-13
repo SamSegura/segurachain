@@ -69,7 +69,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         public ClassBlockTransaction Clone()
         {
-           ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(this), out ClassBlockTransaction blockTransaction);
+            ClassTransactionUtility.StringToBlockTransaction(ClassTransactionUtility.SplitBlockTransactionObject(this), out ClassBlockTransaction blockTransaction);
 
             return blockTransaction;
         }

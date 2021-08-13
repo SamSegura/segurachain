@@ -21,10 +21,7 @@ namespace SeguraChain_Desktop_Wallet.Sync.Object
         /// </summary>
         private ConcurrentDictionary<long, ConcurrentDictionary<string, ClassSyncCacheBlockTransactionObject>> _syncCacheDatabase;
 
-        /// <summary>
-        /// Cancellation Token of the sync cache update.
-        /// </summary>
-        public CancellationTokenSource cancellationTokenSyncCacheUpdate;
+
 
 
         /// <summary>

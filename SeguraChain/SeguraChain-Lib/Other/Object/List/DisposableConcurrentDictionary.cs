@@ -1,24 +1,25 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace SeguraChain_Lib.Other.Object.List
 {
-    public class DisposableDictionary<V, T> : IDisposable
+    public class DisposableConcurrentDictionary<V, T> : IDisposable
     {
-        public DisposableDictionary(int capacity = 0, Dictionary<V, T> sourceDictionary = null)
+        public DisposableConcurrentDictionary(ConcurrentDictionary<V, T> sourceDictionary = null)
         {
             if (sourceDictionary == null)
-                GetList = capacity > 0 ? new Dictionary<V, T>(capacity) : new Dictionary<V, T>();
+                GetList = new ConcurrentDictionary<V, T>();
             else
-                GetList = new Dictionary<V, T>(sourceDictionary);
+                GetList = new ConcurrentDictionary<V, T>(sourceDictionary);
         }
 
         #region Dispose functions
 
         public bool Disposed;
 
-        ~DisposableDictionary()
+        ~DisposableConcurrentDictionary()
         {
             Dispose(true);
         }
@@ -48,21 +49,14 @@ namespace SeguraChain_Lib.Other.Object.List
 
         public int Count => GetList.Count;
 
-        public void Add(V key, T data) => GetList.Add(key, data);
+        public bool TryAdd(V key, T data) => GetList.TryAdd(key, data);
 
         public bool ContainsKey(V key) => GetList.ContainsKey(key);
 
 
-        public bool Remove(V key)
+        public bool TryRemove(V key)
         {
-            try
-            {
-                return GetList.Remove(key);
-            }
-            catch
-            {
-                return false;
-            }
+            return GetList.TryRemove(key, out _);
         }
 
 
@@ -83,7 +77,7 @@ namespace SeguraChain_Lib.Other.Object.List
                         foreach (V key in GetList.Keys.ToArray())
                         {
                             GetList[key] = default(T);
-                            GetList.Remove(key);
+                            GetList.TryRemove(key, out _);
                         }
                     }
                 }
@@ -94,16 +88,11 @@ namespace SeguraChain_Lib.Other.Object.List
             }
 
             GetList?.Clear();
-
-#if NET5_0_OR_GREATER
-            GetList?.TrimExcess();
-#endif
-
         }
 
-        public ICollection<KeyValuePair<V,T>> GetAll => GetList;
+        public ICollection<KeyValuePair<V, T>> GetAll => GetList;
 
-        public Dictionary<V, T> GetList { get; set; }
+        public ConcurrentDictionary<V, T> GetList { get; set; }
 
     }
 

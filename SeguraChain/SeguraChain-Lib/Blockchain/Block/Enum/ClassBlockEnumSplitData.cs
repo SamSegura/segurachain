@@ -1,5 +1,8 @@
 ﻿namespace SeguraChain_Lib.Blockchain.Block.Enum
 {
+    /// <summary>
+    /// Split character used on no-json block data.
+    /// </summary>
     public class ClassBlockSplitDataConfig
     {
         public const string BlockSplitDataCharacterSeparator = "|";
@@ -28,6 +31,5 @@
         INDEX_BLOCK_TOTAL_COIN_FEE = 18,
         INDEX_BLOCK_TOTAL_TRANSACTION = 19,
         INDEX_BLOCK_TOTAL_TRANSACTION_CONFIRMED = 20,
-
     }
 }

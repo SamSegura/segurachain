@@ -21,6 +21,7 @@ namespace SeguraChain_Desktop_Wallet.Settings.Object
         public ClassWalletSettingEnumSyncMode WalletSyncMode;
         public string ApiHost;
         public int ApiPort;
+        public int ApiMaxRetry = 10;
 
         /// <summary>
         /// Constructor with default value.

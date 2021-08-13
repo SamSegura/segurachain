@@ -61,12 +61,11 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
             string blockHash = ClassUtility.GetHexStringFromByteArray(blockHashBytes).ToLower();
 
-            // Clean up.
-            Array.Clear(blockHeightBytes, 0, blockHeightBytes.Length);
+            // Clear.
+            Array.Clear(blockHashBytes, 0, blockHashBytes.Length);
             Array.Clear(blockDifficultyBytes, 0, blockDifficultyBytes.Length);
             Array.Clear(blockCountTransactionBytes, 0, blockCountTransactionBytes.Length);
             Array.Clear(blockFinalTransactionHashBytes, 0, blockFinalTransactionHashBytes.Length);
-            Array.Clear(blockHashBytes, 0, blockHashBytes.Length);
             Array.Clear(previousWalletAddressWinnerBytes, 0, previousWalletAddressWinnerBytes.Length);
 
             return blockHash;
@@ -94,11 +93,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 byte[] blockHashBytes = ClassUtility.GetByteArrayFromHexString(blockHash);
 
                 if (blockHashBytes.Length != BlockchainSetting.BlockHashByteArraySize)
-                {
-                    // Clean up.
-                    Array.Clear(blockHashBytes, 0, blockHashBytes.Length);
                     return ClassBlockEnumCheckStatus.INVALID_BLOCK_HASH_LENGTH;
-                }
 
                 byte[] blockHeightBytes = new byte[BlockchainSetting.BlockHeightByteArrayLengthOnBlockHash];
                 byte[] blockDifficultyBytes = new byte[BlockchainSetting.BlockDifficultyByteArrayLengthOnBlockHash];
@@ -138,9 +133,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     }
                 }
 
-
                 // Clean up.
-                Array.Clear(blockHashBytes, 0, blockHashBytes.Length);
                 Array.Clear(blockHeightBytes, 0, blockHeightBytes.Length);
                 Array.Clear(blockDifficultyBytes, 0, blockDifficultyBytes.Length);
                 Array.Clear(blockCountTransactionBytes, 0, blockCountTransactionBytes.Length);
@@ -209,7 +202,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     };
 
                     // Clean up.
-                    Array.Clear(blockHashBytes, 0, blockHashBytes.Length);
                     Array.Clear(blockHeightBytes, 0, blockHeightBytes.Length);
                     Array.Clear(blockDifficultyBytes, 0, blockDifficultyBytes.Length);
                     Array.Clear(blockCountTransactionBytes, 0, blockCountTransactionBytes.Length);
@@ -219,8 +211,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     return true;
                 }
 
-                // Clean up.
-                Array.Clear(blockHashBytes, 0, blockHashBytes.Length);
                 blockTemplateObject = null;
             }
             catch
@@ -246,8 +236,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
         /// <returns></returns>
         public static async Task<BigInteger> GenerateNextBlockDifficulty(long previousBlockHeight, long timestampBlockStart, long timestampBlockFound, BigInteger previousBlockDifficulty, CancellationTokenSource cancellation)
         {
-
-
             if (previousBlockHeight > BlockchainSetting.GenesisBlockHeight)
             {
 
@@ -258,6 +246,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 BigInteger sumDifficulty = 0;
                 int totalTravel = 0;
                 long startHeight = (previousBlockHeight - BlockchainSetting.BlockDifficultyRangeCalculation);
+
                 if (startHeight <= 0)
                     startHeight = BlockchainSetting.GenesisBlockHeight;
 
@@ -297,7 +286,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
                 if (averageTimespendExpected <= 0d)
                     averageTimespendExpected = 1;
-                
+
                 if (sumDifficulty < 1)
                     sumDifficulty = 1;
 
@@ -313,7 +302,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
                 // Calculate the new block difficulty.
                 var newBlockDifficulty = ((sumDifficulty * difficultyFactor) / BlockchainSetting.BlockDifficultyPrecision);
-               
+
                 #region Do not let the next block difficulty lower than the min difficulty accepted by the chain.
 
                 if (newBlockDifficulty < BlockchainSetting.MiningMinDifficulty)
@@ -321,9 +310,9 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
 
                 #endregion
 
-
                 return newBlockDifficulty;
             }
+
             return BlockchainSetting.MiningMinDifficulty;
         }
 
@@ -387,8 +376,8 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
             }
 
             if (blockTemplateObject.BlockHeight != blockObject.BlockHeight ||
-            blockTemplateObject.BlockDifficulty != blockObject.BlockDifficulty ||
-            blockTemplateObject.BlockHash != blockObject.BlockHash)
+                blockTemplateObject.BlockDifficulty != blockObject.BlockDifficulty ||
+                blockTemplateObject.BlockHash != blockObject.BlockHash)
             {
                 return false;
             }
@@ -453,7 +442,8 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 if (blockObject.BlockWalletAddressWinner.IsNullOrEmpty(out _))
                     return false;
 
-                if (blockObject.BlockWalletAddressWinner.Length < BlockchainSetting.WalletAddressWifLengthMin || blockObject.BlockWalletAddressWinner.Length > BlockchainSetting.WalletAddressWifLengthMax)
+                if (blockObject.BlockWalletAddressWinner.Length < BlockchainSetting.WalletAddressWifLengthMin ||
+                    blockObject.BlockWalletAddressWinner.Length > BlockchainSetting.WalletAddressWifLengthMax)
                     return false;
 
                 if (blockObject.BlockHeight > BlockchainSetting.GenesisBlockHeight)
@@ -620,16 +610,12 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
             string miningShareJson = "empty";
 
             if (blockObject.BlockMiningPowShareUnlockObject != null)
-            {
                 miningShareJson = ClassUtility.SerializeData(blockObject.BlockMiningPowShareUnlockObject);
-            }
 
             string finalTransactionHash = "empty";
 
             if (!blockObject.BlockFinalHashTransaction.IsNullOrEmpty(out _) && blockObject.BlockFinalHashTransaction != "empty")
-            {
                 finalTransactionHash = blockObject.BlockFinalHashTransaction;
-            }
 
             return blockObject.BlockHeight + ClassBlockSplitDataConfig.BlockSplitDataCharacterSeparator +
                    blockObject.BlockDifficulty + ClassBlockSplitDataConfig.BlockSplitDataCharacterSeparator +
@@ -652,7 +638,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                    blockObject.TotalFee + ClassBlockSplitDataConfig.BlockSplitDataCharacterSeparator +
                    blockObject.TotalTransaction + ClassBlockSplitDataConfig.BlockSplitDataCharacterSeparator +
                    blockObject.TotalTransactionConfirmed + ClassBlockSplitDataConfig.BlockSplitDataCharacterSeparator;
-
         }
 
         /// <summary>
@@ -672,8 +657,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     long blockHeight = long.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_HEIGHT]);
                     BigInteger blockDifficulty = BigInteger.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_DIFFICULTY]);
                     string blockHash = blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_HASH];
-
-
                     long timestampCreate = long.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_TIMESTAMP_CREATE]);
                     long timestampFound = long.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_TIMESTAMP_FOUND]);
                     string blockWalletAddressWinner = blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_WALLET_ADDRESS_WINNER];
@@ -722,9 +705,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                     string blockFinalTransactionHash = blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_FINAL_TRANSACTION_HASH];
 
                     if (blockFinalTransactionHash == "empty")
-                    {
                         blockFinalTransactionHash = null;
-                    }
 
                     long blockLastBlockHeightTransactionConfirmationDone = long.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_LAST_BLOCK_HEIGHT_TRANSACTION_CONFIRMATION_DONE]);
 
@@ -745,10 +726,9 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                         blockTotalFee = BigInteger.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_TOTAL_COIN_FEE]);
                         blockTotalTransaction = int.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_TOTAL_TRANSACTION]);
                         blockTotalTransactionConfirmed = int.Parse(blockObjectLineSplit[(int)ClassBlockEnumSplitData.INDEX_BLOCK_TOTAL_TRANSACTION_CONFIRMED]);
-
                     }
 
-                    blockObject = new ClassBlockObject(blockHeight, blockDifficulty, blockHash, timestampCreate, timestampFound,blockStatus, blockUnlockValid, blockTransactionConfirmationTaskDone)
+                    blockObject = new ClassBlockObject(blockHeight, blockDifficulty, blockHash, timestampCreate, timestampFound, blockStatus, blockUnlockValid, blockTransactionConfirmationTaskDone)
                     {
                         BlockMiningPowShareUnlockObject = blockMiningPowShareObject,
                         BlockLastChangeTimestamp = blockLastChangeTimestamp,
@@ -791,9 +771,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
             yield return BlockDataBegin;
 
             if (!isJson)
-            {
                 yield return SplitBlockObject(blockObject);
-            }
             else
             {
                 blockObject.DeepCloneBlockObject(false, out ClassBlockObject blockObjectCopy);
@@ -828,14 +806,18 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 }
 
                 if (!transactionLine.IsNullOrEmpty(out _))
-                {
                     yield return transactionLine;
-                }
             }
 
             yield return BlockDataEnd;
         }
 
+        /// <summary>
+        /// Convert a block transaction into a string format or into json string format.
+        /// </summary>
+        /// <param name="blockTransactionLine"></param>
+        /// <param name="isJson"></param>
+        /// <returns></returns>
         public static IEnumerable<ClassBlockTransaction> BlockTransactionLineSplit(string blockTransactionLine, bool isJson)
         {
             foreach (var transactionLine in blockTransactionLine.DisposableSplit(StringBlockDataCharacterSeperator).GetList.ToArray())
@@ -843,16 +825,12 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 if (isJson)
                 {
                     if (ClassUtility.TryDeserialize(transactionLine, out ClassBlockTransaction blockTransactionObject, ObjectCreationHandling.Reuse))
-                    {
                         yield return blockTransactionObject;
-                    }
                 }
                 else
                 {
-                    if(ClassTransactionUtility.StringToBlockTransaction(transactionLine, out ClassBlockTransaction blockTransactionObject))
-                    {
+                    if (ClassTransactionUtility.StringToBlockTransaction(transactionLine, out ClassBlockTransaction blockTransactionObject))
                         yield return blockTransactionObject;
-                    }
                 }
             }
         }
@@ -971,7 +949,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
                 }
             }
 #if DEBUG
-            catch(Exception error)
+            catch (Exception error)
             {
                 Debug.WriteLine("Error on calculating block object memory size. Exception: " + error.Message);
             }
@@ -984,7 +962,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Function
             return totalMemoryUsage;
         }
 
-
-#endregion
+        #endregion
     }
 }

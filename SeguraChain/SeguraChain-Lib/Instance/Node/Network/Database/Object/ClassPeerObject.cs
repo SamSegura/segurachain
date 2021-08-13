@@ -55,9 +55,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Object
         public bool OnUpdateAuthKeys;
 
         [JsonIgnore]
-        public SemaphoreSlim SemaphoreUpdateEncryptionStream = new SemaphoreSlim(1, 1);
-
-        [JsonIgnore]
         public ClassPeerCryptoStreamObject GetClientCryptoStreamObject { get; set; }
 
         [JsonIgnore]

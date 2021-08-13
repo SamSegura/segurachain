@@ -23,7 +23,8 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         public void Dispose()
         {
-            Dispose(true); 
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -37,7 +38,6 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
                 _blockTransactions?.Clear();
                 _blockTransactions?.TrimExcess();
 
-                GC.SuppressFinalize(this);
                 Disposed = true;
             }
         }
@@ -150,12 +150,10 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
 
         [JsonIgnore]
         public bool IsConfirmedByNetwork => BlockNetworkAmountConfirmations >= BlockchainSetting.BlockAmountNetworkConfirmations &&
-                BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED;
+                                            BlockUnlockValid && BlockStatus == ClassBlockEnumStatus.UNLOCKED;
 
         [JsonIgnore]
         public bool IsChecked => IsConfirmedByNetwork && BlockTransactionConfirmationCheckTaskDone;
-
-
 
         #endregion
 
@@ -241,6 +239,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
         {
             ClassBlockObject blockObjectCopy = null;
             bool locked = false;
+
             try
             {
                 locked = Monitor.TryEnter(this);
@@ -252,6 +251,7 @@ namespace SeguraChain_Lib.Blockchain.Block.Object.Structure
                 if (locked)
                     Monitor.Exit(this);
             }
+
             return blockObjectCopy;
         }
 

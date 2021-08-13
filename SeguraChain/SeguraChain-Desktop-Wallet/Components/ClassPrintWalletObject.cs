@@ -23,6 +23,7 @@ namespace SeguraChain_Desktop_Wallet.Components
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -36,7 +37,6 @@ namespace SeguraChain_Desktop_Wallet.Components
             {
                 _bitmapQrCodePrivateKey.Dispose();
                 _bitmapQrCodeWalletAddress.Dispose();
-                GC.SuppressFinalize(this);
             }
         }
 

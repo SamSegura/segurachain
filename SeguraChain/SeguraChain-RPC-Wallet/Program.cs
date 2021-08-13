@@ -6,7 +6,7 @@ namespace SeguraChain_RPC_Wallet
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Nothing is done yet.");
+            Console.WriteLine("The development has been started.");
 			Console.ReadLine();
         }
     }

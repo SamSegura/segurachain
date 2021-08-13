@@ -697,6 +697,50 @@ namespace SeguraChain_Lib.Blockchain.MemPool.Database
             return result;
         }
 
+        /// <summary>
+        /// Get the list of block height with their tx count.
+        /// </summary>
+        /// <param name="exceptBlockReward"></param>
+        /// <param name="cancellation"></param>
+        /// <returns></returns>
+        public static async Task<DisposableSortedList<long, int>> GetListCountMemPoolTx(bool exceptBlockReward, CancellationTokenSource cancellation)
+        {
+            DisposableSortedList<long, int> listTxCount = new DisposableSortedList<long, int>();
+
+            bool semaphoreUsed = false;
+
+            try
+            {
+                await _semaphoreMemPoolAccess.WaitAsync(cancellation.Token);
+                semaphoreUsed = true;
+
+                if (_dictionaryMemPoolTransactionObjects.Count > 0)
+                {
+                    using (DisposableList<long> listBlockHeight = new DisposableList<long>(false, 0, _dictionaryMemPoolTransactionObjects.Keys.ToList()))
+                    {
+                        foreach (long blockHeight in listBlockHeight.GetList)
+                        {
+                            int count = 0;
+
+                            if (exceptBlockReward)
+                                count = _dictionaryMemPoolTransactionObjects[blockHeight].Count(x => x.Value.TransactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION && x.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION);
+                            else
+                                count = _dictionaryMemPoolTransactionObjects[blockHeight].Count;
+
+                            listTxCount.Add(blockHeight, count);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if (semaphoreUsed)
+                    _semaphoreMemPoolAccess.Release();
+            }
+
+            return listTxCount;
+        }
+
         #endregion
 
 

@@ -89,8 +89,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
             BigInteger pocShareDifficulty = CalculateDifficultyShare(pocShareData, blockDifficulty);
 
-            // Clean up.
-            Array.Clear(pocShareData, 0, pocShareData.Length);
 
             return new ClassMiningPoWaCShareObject()
             {
@@ -434,16 +432,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
             #endregion
 
-            #region Clean up old data.
-
-            // Clean up.
-            Array.Clear(finalBlockTransactionHashMiningKey, 0, finalBlockTransactionHashMiningKey.Length);
-            Array.Clear(pocShareIv, 0, pocShareIv.Length);
-            Array.Clear(pocShareBytes, 0, pocShareBytes.Length);
-            Array.Clear(pocShareDecryptedBytes, 0, pocShareDecryptedBytes.Length);
-
-            #endregion
-
             #region Determine the final result of the share.
 
             if (validDifficulty)
@@ -517,7 +505,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                     {
                         #region the Poc random data = Random numbers + random data.
 
-
                         // Initialize poc random data.
                         byte[] pocRandomData = new byte[currentMiningSetting.RandomDataShareSize];
 
@@ -528,9 +515,7 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
                         // Fill Poc random data with random data on the checksum part.
                         using (RNGCryptoServiceProvider rngCrypto = new RNGCryptoServiceProvider())
-                        {
                             rngCrypto.GetBytes(pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize, currentMiningSetting.RandomDataShareChecksum);
-                        }
 
                         // Copy wallet address decoded.
                         Array.Copy(walletAddressDecoded, 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum, currentMiningSetting.WalletAddressDataSize);
@@ -540,9 +525,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
 
                         // Copy the nonce.
                         Array.Copy(BitConverter.GetBytes(nonce), 0, pocRandomData, currentMiningSetting.RandomDataShareNumberSize + currentMiningSetting.RandomDataShareTimestampSize + currentMiningSetting.RandomDataShareChecksum + currentMiningSetting.WalletAddressDataSize + currentMiningSetting.RandomDataShareBlockHeightSize, currentMiningSetting.RandomDataShareNumberSize);
-
-                        // Clean up.
-                        Array.Clear(timestampSecondBytes, 0, timestampSecondBytes.Length);
 
                         return pocRandomData;
 
@@ -683,9 +665,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
                     if (newNonceGenerated)
                         break;
 
-                    // Clean up.
-                    Array.Clear(pocShareWorkToDoBytes, 0, pocShareWorkToDoBytes.Length);
-
                     // On this case we do another sha3-512 computation.
                     pocShareIv = sha3512Digest.Compute(pocShareIv);
                     sha3512Digest.Reset();
@@ -758,13 +737,6 @@ namespace SeguraChain_Lib.Blockchain.Mining.Function
             timestampShare = BitConverter.ToInt64(timestampBytes, 0);
             blockHeightShare = BitConverter.ToInt64(blockHeightBytes, 0);
             nonce = BitConverter.ToInt64(nonceBytes, 0);
-
-            // Clean up.
-            Array.Clear(numberOneBytes, 0, numberOneBytes.Length);
-            Array.Clear(numberTwoBytes, 0, numberTwoBytes.Length);
-            Array.Clear(timestampBytes, 0, timestampBytes.Length);
-            Array.Clear(blockHeightBytes, 0, blockHeightBytes.Length);
-            Array.Clear(nonceBytes, 0, nonceBytes.Length);
         }
 
         /// <summary>

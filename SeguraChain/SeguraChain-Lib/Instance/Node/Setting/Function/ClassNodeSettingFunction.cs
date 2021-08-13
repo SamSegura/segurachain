@@ -31,7 +31,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
                 {
                     using (StreamReader reader = new StreamReader(PeerSettingFilePath))
                     {
-                        if(!ClassUtility.TryDeserialize(reader.ReadToEnd(), out peerSettingObject, ObjectCreationHandling.Reuse))
+                        if (!ClassUtility.TryDeserialize(reader.ReadToEnd(), out peerSettingObject, ObjectCreationHandling.Reuse))
                         {
                             return false;
                         }
@@ -67,14 +67,10 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
             while (peerPort < BlockchainSetting.PeerMinPort || peerPort > BlockchainSetting.PeerMaxPort)
             {
                 while (!int.TryParse(Console.ReadLine(), out peerPort))
-                {
                     Console.WriteLine("Invalid input for the port, please try again:");
-                }
 
                 if (peerPort < BlockchainSetting.PeerMinPort || peerPort > BlockchainSetting.PeerMaxPort)
-                {
                     Console.WriteLine("Invalid input for the port, the port is lower or higher than the average allowed, please try again.");
-                }
             }
 
             Console.WriteLine("Write your peer API port, it's usually for Wallets and web API client (exchanges and more): ");
@@ -85,14 +81,10 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
             while (peerApiPort < BlockchainSetting.PeerMinPort || peerApiPort > BlockchainSetting.PeerMaxPort)
             {
                 while (!int.TryParse(Console.ReadLine(), out peerApiPort))
-                {
                     Console.WriteLine("Invalid input for the API port, please try again:");
-                }
 
                 if (peerApiPort < BlockchainSetting.PeerMinPort || peerApiPort > BlockchainSetting.PeerMaxPort)
-                {
                     Console.WriteLine("Invalid input for the API port, the port is lower or higher than the average allowed, please try again.");
-                }
 
                 if (peerApiPort == peerPort)
                 {
@@ -160,7 +152,7 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
 
                 firewallChainName = Console.ReadLine() ?? string.Empty;
 
-                while(firewallChainName.IsNullOrEmpty(out _))
+                while (firewallChainName.IsNullOrEmpty(out _))
                 {
                     Console.Clear();
 
@@ -173,7 +165,11 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
 
             Console.WriteLine("Do you want to put your Peer has a public Peer? [Y/N]");
             Console.ForegroundColor = ConsoleColor.Red;
+#if NET5_0_OR_GREATER
+            Console.WriteLine("Notice: OpenNAT doesn't work with NET5, if your host is not a dedicated server or a VPS. You need open the P2P port and target the host IP to your router.");
+#else
             Console.WriteLine("Notice: OpenNAT will be used to open the Peer port to the public and require the UPnP protocol available and actived to your router.");
+#endif
             Console.ForegroundColor = ConsoleColor.White;
             choose = Console.ReadLine() ?? string.Empty;
 
@@ -217,13 +213,11 @@ namespace SeguraChain_Lib.Instance.Node.Setting.Function
             try
             {
                 using (StreamWriter writer = new StreamWriter(PeerSettingFilePath))
-                {
                     writer.WriteLine(ClassUtility.SerializeData(peerSettingObject, Formatting.Indented));
-                }
             }
-            catch(Exception error)
+            catch (Exception error)
             {
-                ClassLog.WriteLine("Can't save peer setting initialized. Exception: "+error.Message, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                ClassLog.WriteLine("Can't save peer setting initialized. Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                 return false;
             }
 

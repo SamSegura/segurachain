@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using SeguraChain_Lib.Blockchain.Sovereign.Database;
 using SeguraChain_Lib.Blockchain.Wallet.Function;
 using SeguraChain_Lib.Instance.Node.Network.Enum.P2P.Status;
@@ -148,30 +147,31 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         public static bool CheckPeerClientWhitelistStatus(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject)
         {
             if (peerUniqueId.IsNullOrEmpty(out _))
+                return false;
+
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+                return false;
+
+            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats < ClassUtility.GetCurrentTimestampInSecond())
             {
-                peerUniqueId = string.Empty;
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
+                return false;
             }
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+
+            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist >= ClassUtility.GetCurrentTimestampInSecond())
+                return true;
+
+            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket >= peerNetworkSettingObject.PeerMinValidPacket)
             {
-                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats >= ClassUtility.GetCurrentTimestampInSecond())
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature++;
+                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature >= peerNetworkSettingObject.PeerMaxWhiteListPacket)
                 {
-                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket >= peerNetworkSettingObject.PeerMinValidPacket)
-                    {
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature++;
-                        if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature >= peerNetworkSettingObject.PeerMaxWhiteListPacket)
-                        {
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = ClassUtility.GetCurrentTimestampInSecond() + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats;
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket = 0;
-                        }
-                        return true;
-                    }
-                }
-                else
-                {
-                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = ClassUtility.GetCurrentTimestampInSecond() + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket = 0;
                 }
+                return true;
             }
 
             return false;
@@ -185,44 +185,22 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <returns></returns>
         public static bool CheckPeerClientInitializationStatus(string peerIp, string peerUniqueId)
         {
-            if (ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(peerIp))
-            {
-                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
-                {
-                    if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIp.IsNullOrEmpty(out _))
-                    {
-                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId.IsNullOrEmpty(out _))
-                        {
-                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort != 0)
-                            {
-                                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey != null)
-                                {
-                                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv != null)
-                                    {
-                                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey.IsNullOrEmpty(out _))
-                                        {
-                                            if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey.IsNullOrEmpty(out _))
-                                            {
-                                                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKey != null)
-                                                {
-                                                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKeyIv != null)
-                                                    {
-                                                        if (!ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey.IsNullOrEmpty(out _))
-                                                        {
-                                                            return true;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return false;
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+                return false;
+
+            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIp.IsNullOrEmpty(out _) ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId.IsNullOrEmpty(out _) ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort <= 0 ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey == null ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv == null ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey.IsNullOrEmpty(out _) ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey.IsNullOrEmpty(out _) ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKey == null ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKeyIv == null ||
+                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey.IsNullOrEmpty(out _))
+                return false;
+
+            return true;
         }
 
         /// <summary>
@@ -234,18 +212,11 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <returns></returns>
         public static bool ComparePeerPacketPublicKey(string peerIp, string peerUniqueId, string peerPublicKeyReceived)
         {
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
-            {
-                if (!peerPublicKeyReceived.IsNullOrEmpty(out _))
-                {
-                    if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey == peerPublicKeyReceived)
-                    {
-                        return true;
-                    }
-                }
-            }
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId) ||
+                peerPublicKeyReceived.IsNullOrEmpty(out _))
+                return false;
 
-            return false;
+            return ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey == peerPublicKeyReceived;
         }
 
         #endregion
@@ -261,29 +232,24 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="peerFirewallSettingObject"></param>
         public static void InputPeerClientInvalidPacket(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject, ClassPeerFirewallSettingObject peerFirewallSettingObject)
         {
-            bool exist = false;
             long currentTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
-                exist = true;
+                if (peerFirewallSettingObject.PeerEnableFirewallLink)
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
+            }
+            else
+            {
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastBadStatePacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= currentTimestamp)
-                {
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket = 0;
-                }
+
                 UpdatePeerLastBadStatePacket(peerIp, peerUniqueId, peerFirewallSettingObject);
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket++;
 
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket >= peerNetworkSettingObject.PeerMaxInvalidPacket)
-                {
                     SetPeerBanState(peerIp, peerUniqueId, peerNetworkSettingObject, peerFirewallSettingObject);
-                }
-            }
-            if (!exist)
-            {
-                if (peerFirewallSettingObject.PeerEnableFirewallLink)
-                {
-                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
-                }
+
             }
         }
 
@@ -297,34 +263,22 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         public static void InputPeerClientNoPacketConnectionOpened(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject, ClassPeerFirewallSettingObject peerFirewallSettingObject)
         {
 
-            bool exist = false;
-            long currentTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-
-
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
-                exist = true;
-                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastBadStatePacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= currentTimestamp)
-                {
+                if (peerFirewallSettingObject.PeerEnableFirewallLink)
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
+            }
+            else
+            {
+                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastBadStatePacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= ClassUtility.GetCurrentTimestampInSecond())
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt = 0;
-                }
 
                 UpdatePeerLastBadStatePacket(peerIp, peerUniqueId, peerFirewallSettingObject);
 
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt++;
+
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt >= peerNetworkSettingObject.PeerMaxNoPacketPerConnectionOpened)
-                {
                     SetPeerDeadState(peerIp, peerUniqueId, peerNetworkSettingObject, peerFirewallSettingObject);
-                }
-
-            }
-
-            if (!exist)
-            {
-                if (peerFirewallSettingObject.PeerEnableFirewallLink)
-                {
-                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
-                }
             }
         }
 
@@ -337,32 +291,21 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="peerFirewallSettingObject"></param>
         public static void InputPeerClientAttemptConnect(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject, ClassPeerFirewallSettingObject peerFirewallSettingObject)
         {
-            bool exist = false;
-            long currentTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
-                exist = true;
-                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastBadStatePacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= currentTimestamp)
-                {
+                if (peerFirewallSettingObject.PeerEnableFirewallLink)
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
+            }
+            else
+            {
+                if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastBadStatePacket + peerNetworkSettingObject.PeerMaxDelayKeepAliveStats <= ClassUtility.GetCurrentTimestampInSecond())
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalAttemptConnection = 0;
-                }
 
                 UpdatePeerLastBadStatePacket(peerIp, peerUniqueId, peerFirewallSettingObject);
 
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalAttemptConnection++;
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalAttemptConnection >= peerNetworkSettingObject.PeerMaxAttemptConnection)
-                {
                     SetPeerDeadState(peerIp, peerUniqueId, peerNetworkSettingObject, peerFirewallSettingObject);
-                }
-
-            }
-            if (!exist)
-            {
-                if (peerFirewallSettingObject.PeerEnableFirewallLink)
-                {
-                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
-                }
             }
         }
 
@@ -382,13 +325,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket >= peerNetworkSettingObject.PeerMaxInvalidPacket)
                 {
                     if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket > 0)
-                    {
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket--;
-                    }
                     else if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket < 0)
-                    {
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalInvalidPacket = 0;
-                    }
                 }
             }
         }
@@ -400,11 +339,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="peerUniqueId"></param>
         public static void UpdatePeerClientLastPacketReceived(string peerIp, string peerUniqueId)
         {
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
-            {
-                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastPacketReceivedTimestamp = ClassUtility.GetCurrentTimestampInSecond();
-                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt = 0;
-            }
+            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastPacketReceivedTimestamp = ClassUtility.GetCurrentTimestampInSecond();
+            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerTotalNoPacketConnectionAttempt = 0;
         }
 
         #endregion
@@ -450,10 +386,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="peerFirewallSettingObject"></param>
         public static void SetPeerBanState(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject, ClassPeerFirewallSettingObject peerFirewallSettingObject)
         {
-            bool exist = false;
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
-                exist = true;
+                if (peerFirewallSettingObject.PeerEnableFirewallLink)
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
+            }
+            else
+            {
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus != ClassPeerEnumStatus.PEER_BANNED)
                 {
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus = ClassPeerEnumStatus.PEER_BANNED;
@@ -465,14 +404,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     ClassLog.WriteLine("Peer: " + peerIp + " | Unique ID: " + peerUniqueId + " state has been set to banned temporaly.", ClassEnumLogLevelType.LOG_LEVEL_PEER_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
                 }
             }
-            if (!exist)
-            {
-                if (peerFirewallSettingObject.PeerEnableFirewallLink)
-                {
-                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
-                }
-            }
-
 
         }
 
@@ -485,11 +416,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="peerFirewallSettingObject"></param>
         public static void SetPeerDeadState(string peerIp, string peerUniqueId, ClassPeerNetworkSettingObject peerNetworkSettingObject, ClassPeerFirewallSettingObject peerFirewallSettingObject)
         {
-
-            bool exist = false;
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
-                exist = true;
+                if (!peerFirewallSettingObject.PeerEnableFirewallLink)
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
+            }
+            else
+            {
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus != ClassPeerEnumStatus.PEER_DEAD)
                 {
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerStatus = ClassPeerEnumStatus.PEER_DEAD;
@@ -499,14 +432,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
 
                     ClassLog.WriteLine("Peer: " + peerIp + " | Unique ID: " + peerUniqueId + " state has been set to dead temporaly.", ClassEnumLogLevelType.LOG_LEVEL_PEER_MANAGER, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-                }
-
-            }
-            if (!exist)
-            {
-                if (peerFirewallSettingObject.PeerEnableFirewallLink)
-                {
-                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
                 }
             }
         }
@@ -521,19 +446,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <returns></returns>
         public static bool PeerHasSeedRank(string peerIp, string peerUniqueId, out string numericPublicKeyOut, out long timestampRankDelay)
         {
-            if (ClassPeerDatabase.GetPeerNumericPublicKey(peerIp, peerUniqueId, out numericPublicKeyOut))
-            {
-                if (!numericPublicKeyOut.IsNullOrEmpty(out _))
-                {
-                    if (ClassSovereignUpdateDatabase.CheckIfNumericPublicKeyPeerIsRanked(numericPublicKeyOut, out timestampRankDelay))
-                    {
-                        return true;
-                    }
-                }
-            }
-
             timestampRankDelay = 0;
-            return false;
+
+            if (!ClassPeerDatabase.GetPeerNumericPublicKey(peerIp, peerUniqueId, out numericPublicKeyOut))
+                return false;
+
+            if (numericPublicKeyOut.IsNullOrEmpty(out _))
+                return false;
+
+            return ClassSovereignUpdateDatabase.CheckIfNumericPublicKeyPeerIsRanked(numericPublicKeyOut, out timestampRankDelay);
         }
 
         /// <summary>
@@ -546,18 +467,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <returns></returns>
         public static bool CheckPeerSeedNumericPacketSignature(string data, string packetNumericHash, string packetNumericSignature, string peerNumericPublicKey, CancellationTokenSource cancellation)
         {
-            if (!packetNumericHash.IsNullOrEmpty(out _) && !packetNumericSignature.IsNullOrEmpty(out _) && !peerNumericPublicKey.IsNullOrEmpty(out _))
-            {
-                if (ClassUtility.GenerateSha3512FromString(data) == packetNumericHash)
-                {
-                    if (ClassWalletUtility.WalletCheckSignature(packetNumericHash, packetNumericSignature, peerNumericPublicKey))
-                    {
-                        return true;
-                    }
-                }
-            }
+            if (packetNumericHash.IsNullOrEmpty(out _) || packetNumericSignature.IsNullOrEmpty(out _) || peerNumericPublicKey.IsNullOrEmpty(out _))
+                return false;
 
-            return false;
+            if (ClassUtility.GenerateSha3512FromString(data) != packetNumericHash)
+                return false;
+
+            return ClassWalletUtility.WalletCheckSignature(packetNumericHash, packetNumericSignature, peerNumericPublicKey);
         }
 
         #endregion
@@ -573,23 +489,19 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// 
         public static void UpdatePeerLastBadStatePacket(string peerIp, string peerUniqueId, ClassPeerFirewallSettingObject peerFirewallSettingObject)
         {
-            bool exist = false;
-            if (ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
+            if (!ClassPeerDatabase.ContainsPeer(peerIp, peerUniqueId))
             {
-                exist = true;
+                if (peerFirewallSettingObject.PeerEnableFirewallLink)
+                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
+            }
+            else
+            {
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastBadStatePacket = ClassUtility.GetCurrentTimestampInSecond();
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalValidPacket = 0;
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientTotalPassedPeerPacketSignature = 0;
                 ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientLastTimestampPeerPacketSignatureWhitelist = 0;
             }
 
-            if (!exist)
-            {
-                if (peerFirewallSettingObject.PeerEnableFirewallLink)
-                {
-                    ClassPeerFirewallManager.InsertInvalidPacket(peerIp);
-                }
-            }
         }
 
         #endregion

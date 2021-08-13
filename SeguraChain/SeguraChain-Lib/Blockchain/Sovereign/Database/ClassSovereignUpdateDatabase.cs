@@ -725,21 +725,21 @@ namespace SeguraChain_Lib.Blockchain.Sovereign.Database
         /// Generate a list of hash of sovereign update(s).
         /// </summary>
         /// <returns></returns>
-        public static IList<string> GetSovereignUpdateListHash()
+        public static DisposableList<string> GetSovereignUpdateListHash()
         {
             using (DisposableSortedList<long, string> listSovereignUpdatesHash = new DisposableSortedList<long, string>())
             {
 
                 if (DictionarySovereignUpdateObject?.Count > 0)
                 {
-                    foreach (var sovereignSortedList in DictionarySortedSovereignUpdateList.Values)
+                    foreach (var sovereignSortedList in DictionarySortedSovereignUpdateList.Values.ToArray())
                     {
                         foreach (var sovereignUpdateHash in sovereignSortedList)
                             listSovereignUpdatesHash.Add(sovereignUpdateHash.Key, sovereignUpdateHash.Value);
                     }
                 }
 
-                return listSovereignUpdatesHash.GetList.Values;
+                return new DisposableList<string>(false, 0, listSovereignUpdatesHash.GetList.Values.ToList());
             }
         }
 

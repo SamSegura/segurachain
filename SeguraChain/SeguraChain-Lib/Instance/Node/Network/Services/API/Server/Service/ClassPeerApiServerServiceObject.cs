@@ -119,17 +119,16 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
 
                                         switch (await HandleIncomingConnection(clientIp, clientApiTcp))
                                         {
-                                            case ClassPeerApiHandleIncomingConnectionEnum.HANDLE_CLIENT_EXCEPTION:
-                                                CloseTcpClient(clientApiTcp);
-                                                break;
+           
                                             case ClassPeerApiHandleIncomingConnectionEnum.INSERT_CLIENT_IP_EXCEPTION:
                                             case ClassPeerApiHandleIncomingConnectionEnum.TOO_MUCH_ACTIVE_CONNECTION_CLIENT:
                                                 if (_firewallSettingObject.PeerEnableFirewallLink)
                                                     ClassPeerFirewallManager.InsertInvalidPacket(clientIp);
 
-                                                CloseTcpClient(clientApiTcp);
                                                 break;
                                         }
+                                        CloseTcpClient(clientApiTcp);
+
                                     }, _cancellationTokenSourcePeerApiServer.Token, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
                                 }
                                 catch
@@ -225,19 +224,19 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
 
                         long randomId = ClassUtility.GetRandomBetweenInt(0, int.MaxValue - 1);
 
-                        while (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.ContainsKey(randomId))
+                        while (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.ContainsKey(randomId))
                             randomId = ClassUtility.GetRandomBetweenInt(0, int.MaxValue - 1);
 
-                        if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count < _peerNetworkSettingObject.PeerMaxApiConnectionPerIp)
+                        if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count < _peerNetworkSettingObject.PeerMaxApiConnectionPerIp)
                         {
-                            if (!_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.TryAdd(randomId, new ClassPeerApiClientObject(clientApiTcp, clientIp, _peerNetworkSettingObject, _firewallSettingObject, _peerIpOpenNatServer, _cancellationTokenSourcePeerApiServer)))
+                            if (!_listApiIncomingConnectionObject[clientIp].ListApiClientObject.TryAdd(randomId, new ClassPeerApiClientObject(clientApiTcp, clientIp, _peerNetworkSettingObject, _firewallSettingObject, _peerIpOpenNatServer, _cancellationTokenSourcePeerApiServer)))
                                 return ClassPeerApiHandleIncomingConnectionEnum.HANDLE_CLIENT_EXCEPTION;
                         }
                         else
                         {
-                            if (CleanUpInactiveConnectionFromClientIp(clientIp) > 0 || _listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count < _peerNetworkSettingObject.PeerMaxApiConnectionPerIp)
+                            if (CleanUpInactiveConnectionFromClientIp(clientIp) > 0 || _listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count < _peerNetworkSettingObject.PeerMaxApiConnectionPerIp)
                             {
-                                if (!_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.TryAdd(randomId, new ClassPeerApiClientObject(clientApiTcp, clientIp, _peerNetworkSettingObject, _firewallSettingObject, _peerIpOpenNatServer, _cancellationTokenSourcePeerApiServer)))
+                                if (!_listApiIncomingConnectionObject[clientIp].ListApiClientObject.TryAdd(randomId, new ClassPeerApiClientObject(clientApiTcp, clientIp, _peerNetworkSettingObject, _firewallSettingObject, _peerIpOpenNatServer, _cancellationTokenSourcePeerApiServer)))
                                     return ClassPeerApiHandleIncomingConnectionEnum.HANDLE_CLIENT_EXCEPTION;
                             }
                             else
@@ -258,33 +257,25 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
 
                         try
                         {
-                            try
+
+
+                            semaphoreUsed = await _listApiIncomingConnectionObject[clientIp].SemaphoreHandleConnection.WaitAsync(_peerNetworkSettingObject.PeerApiSemaphoreDelay, _cancellationTokenSourcePeerApiServer.Token);
+
+                            #region Handle the incoming connection to the api.
+
+                            if (semaphoreUsed)
                             {
+                                _listApiIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
+                                semaphoreUsed = false;
+                                failed = false;
 
-                                semaphoreUsed = await _listApiIncomingConnectionObject[clientIp].SemaphoreHandleConnection.WaitAsync(_peerNetworkSettingObject.PeerApiSemaphoreDelay, _cancellationTokenSourcePeerApiServer.Token);
-
-                                #region Handle the incoming connection to the api.
-
-                                if (semaphoreUsed)
-                                {
-                                    _listApiIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
-                                    semaphoreUsed = false;
-                                    failed = false;
-
-                                    resultHandleRequest = await _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[randomId].HandleApiClientConnection();
-
-                                    _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[randomId].Dispose();
-                                }
-                                else
-                                    _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[randomId].Dispose();
-
-                                #endregion
+                                resultHandleRequest = await _listApiIncomingConnectionObject[clientIp].ListApiClientObject[randomId].HandleApiClientConnection();
 
                             }
-                            catch
-                            {
-                                _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[randomId].Dispose();
-                            }
+
+                            #endregion
+
+
                         }
                         finally
                         {
@@ -292,7 +283,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                                 _listApiIncomingConnectionObject[clientIp].SemaphoreHandleConnection.Release();
                         }
 
-                        _listApiIncomingConnectionObject[clientIp].ListeApiClientObject.TryRemove(randomId, out _);
+                        _listApiIncomingConnectionObject[clientIp].ListApiClientObject[randomId].Dispose();
+
+                        _listApiIncomingConnectionObject[clientIp].ListApiClientObject.TryRemove(randomId, out _);
+
 
                         if (failed)
                             return ClassPeerApiHandleIncomingConnectionEnum.TOO_MUCH_ACTIVE_CONNECTION_CLIENT;
@@ -368,17 +362,17 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                 {
                     if (_listApiIncomingConnectionObject.ContainsKey(clientIp))
                     {
-                        if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count > 0)
+                        if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count > 0)
                         {
-                            lock (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject)
+                            lock (_listApiIncomingConnectionObject[clientIp].ListApiClientObject)
                             {
-                                foreach (long id in _listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Keys.ToArray())
+                                foreach (long id in _listApiIncomingConnectionObject[clientIp].ListApiClientObject.Keys.ToArray())
                                 {
                                     try
                                     {
-                                        if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.ContainsKey(id))
+                                        if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.ContainsKey(id))
                                         {
-                                            if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].ClientConnectionStatus)
+                                            if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].ClientConnectionStatus)
                                                 totalActiveConnection++;
                                         }
                                     }
@@ -416,7 +410,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                     {
                         try
                         {
-                            if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count > 0)
+                            if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count > 0)
                                 totalActiveConnection += GetTotalActiveConnectionFromClientIp(clientIp);
                         }
                         catch
@@ -442,43 +436,40 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
             {
                 if (_listApiIncomingConnectionObject.ContainsKey(clientIp))
                 {
-                    if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count > 0)
+                    if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count > 0)
                     {
-
-                        _listApiIncomingConnectionObject[clientIp].OnCleanUp = true;
-
 
                         long currentTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
-                        lock (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject)
+                        lock (_listApiIncomingConnectionObject[clientIp].ListApiClientObject)
                         {
-                            using (DisposableList<long> listIds = new DisposableList<long>(false, 0, _listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Keys.ToList()))
+                            using (DisposableList<long> listIds = new DisposableList<long>(false, 0, _listApiIncomingConnectionObject[clientIp].ListApiClientObject.Keys.ToList()))
                             {
                                 foreach (var id in listIds.GetList)
                                 {
                                     try
                                     {
-                                        if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.ContainsKey(id))
+                                        if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.ContainsKey(id))
                                         {
                                             bool remove = false;
-                                            if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id] == null)
+                                            if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject[id] == null)
                                                 remove = true;
                                             else
                                             {
-                                                if (!_listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].ClientConnectionStatus ||
-                                                    _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].PacketResponseSent ||
-                                                     (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].ClientConnectionStatus &&
-                                                            !_listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].OnHandlePacket &&
-                                                             _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].ClientConnectTimestamp + _peerNetworkSettingObject.PeerApiMaxConnectionDelay < currentTimestamp))
+                                                if (!_listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].ClientConnectionStatus ||
+                                                    _listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].PacketResponseSent ||
+                                                     (_listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].ClientConnectionStatus &&
+                                                            !_listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].OnHandlePacket &&
+                                                             _listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].ClientConnectTimestamp + _peerNetworkSettingObject.PeerApiMaxConnectionDelay < currentTimestamp))
                                                     remove = true;
 
-                                                if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id]._cancellationTokenApiClient.IsCancellationRequested)
+                                                if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject[id]._cancellationTokenApiClient.IsCancellationRequested)
                                                     remove = true;
                                             }
 
                                             if (remove)
                                             {
-                                                _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].Dispose();
+                                                _listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].Dispose();
                                                 totalClosed++;
                                             }
                                         }
@@ -490,9 +481,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                                 }
                             }
                         }
-
-
-                        _listApiIncomingConnectionObject[clientIp].OnCleanUp = false;
                     }
                 }
             }
@@ -519,7 +507,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                         {
                             if (_listApiIncomingConnectionObject[clientIp] != null)
                             {
-                                if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count > 0)
+                                if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count > 0)
                                 {
                                     long totalClosed = CleanUpInactiveConnectionFromClientIp(clientIp);
 
@@ -555,23 +543,21 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                         {
                             if (_listApiIncomingConnectionObject[clientIp] != null)
                             {
-                                if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count > 0)
+                                if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count > 0)
                                 {
-                                    _listApiIncomingConnectionObject[clientIp].OnCleanUp = true;
-
-                                    using (DisposableList<long> idsList = new DisposableList<long>(false, 0, _listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Keys.ToList()))
+                                    using (DisposableList<long> idsList = new DisposableList<long>(false, 0, _listApiIncomingConnectionObject[clientIp].ListApiClientObject.Keys.ToList()))
                                     {
-                                        lock (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject)
+                                        lock (_listApiIncomingConnectionObject[clientIp].ListApiClientObject)
                                         {
                                             foreach (var id in idsList.GetList)
                                             {
                                                 try
                                                 {
 
-                                                    _listApiIncomingConnectionObject[clientIp].ListeApiClientObject[id].CloseApiClientConnection(false);
-                                                    _listApiIncomingConnectionObject[clientIp].ListeApiClientObject.TryRemove(id, out _);
+                                                    _listApiIncomingConnectionObject[clientIp].ListApiClientObject[id].CloseApiClientConnection(false);
+                                                    _listApiIncomingConnectionObject[clientIp].ListApiClientObject.TryRemove(id, out _);
 
-                                                    if (_listApiIncomingConnectionObject[clientIp].ListeApiClientObject.Count == 0)
+                                                    if (_listApiIncomingConnectionObject[clientIp].ListApiClientObject.Count == 0)
                                                         _listApiIncomingConnectionObject.TryRemove(clientIp, out _);
                                                     totalConnectionClosed++;
 
@@ -582,15 +568,6 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service
                                                 }
                                             }
                                         }
-                                    }
-
-                                    try
-                                    {
-                                        _listApiIncomingConnectionObject[clientIp].OnCleanUp = false;
-                                    }
-                                    catch
-                                    {
-                                        // Ignored.
                                     }
                                 }
                             }

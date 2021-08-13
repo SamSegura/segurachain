@@ -437,67 +437,83 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Utility
 
             try
             {
-                if (packetType != ClassPeerApiPostPacketSendEnum.ASK_FEE_COST_TRANSACTION)
+                using (CancellationTokenSource cancellationTokenTimeout = CancellationTokenSource.CreateLinkedTokenSource(new CancellationTokenSource(peerApiMaxConnectionDelay * 1000).Token, cancellation.Token))
                 {
-                    using (HttpClient httpClient = new HttpClient())
+                    if (packetType != ClassPeerApiPostPacketSendEnum.ASK_FEE_COST_TRANSACTION)
                     {
-                        httpClient.Timeout = new TimeSpan(0, 0, peerApiMaxConnectionDelay);
-                        var response = await httpClient.PostAsync("http://" + peerApiIp + ":" + peerApiPort, new StringContent(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
+                        using (HttpClient httpClient = new HttpClient())
                         {
-                            PacketType = packetType,
-                            PacketContentObjectSerialized = packetContent
-                        })), cancellation.Token);
+                            httpClient.Timeout = new TimeSpan(0, 0, peerApiMaxConnectionDelay);
 
+                            var response = await httpClient.PostAsync("http://" + peerApiIp + ":" + peerApiPort, new StringContent(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
+                            {
+                                PacketType = packetType,
+                                PacketContentObjectSerialized = packetContent
+                            })), cancellation.Token);
+
+                            if (response.Content.Headers.ContentLength > 0)
+                            {
 #if NET5_0_OR_GREATER
-                        using (StreamReader reader = new StreamReader(await response.Content.ReadAsStreamAsync(cancellation.Token)))
+                                using (StreamReader reader = new StreamReader(await response.Content.ReadAsStreamAsync(cancellationTokenTimeout.Token)))
 #else
-                        using (StreamReader reader = new StreamReader(await response.Content.ReadAsStreamAsync()))
+                                using (StreamReader reader = new StreamReader(await response.Content.ReadAsStreamAsync()))
 #endif
-                        {
-                            string line;
+                                {
+                                    string line;
 
-                            while ((line = reader.ReadLine()) != null)
-                                content += line;
+                                    while ((line = reader.ReadLine()) != null)
+                                    {
+                                        content += line;
+                                        if (content.Length >= response.Content.Headers.ContentLength)
+                                            break;
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-                else
-                {
-                    WebRequest request = WebRequest.Create("http://" + peerApiIp + ":" + peerApiPort);
-                    request.Method = "POST";
-                    request.Proxy = null;
-                    request.Timeout = peerApiMaxConnectionDelay;
-                    request.ContentType = "text/json";
-
-                    using (DisposableList<byte[]> disposableData = new DisposableList<byte[]>(false))
+                    else
                     {
-                        disposableData.Add(ClassUtility.GetByteArrayFromStringAscii(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
+
+                        WebRequest request = WebRequest.Create("http://" + peerApiIp + ":" + peerApiPort);
+                        request.Method = "POST";
+                        request.Proxy = null;
+                        request.Timeout = peerApiMaxConnectionDelay;
+                        request.ContentType = "text/json";
+
+                        using (DisposableList<byte[]> disposableData = new DisposableList<byte[]>(false))
                         {
-                            PacketType = packetType,
-                            PacketContentObjectSerialized = packetContent
-                        })));
-
-                        request.ContentLength = disposableData[0].Length;
-
-
-                        using (Stream dataStream = request.GetRequestStream())
-                            dataStream.Write(disposableData[0], 0, disposableData[0].Length);
-
-                        using (WebResponse response = request.GetResponse())
-                        {
-                            using (Stream stream = response.GetResponseStream())
+                            disposableData.Add(ClassUtility.GetByteArrayFromStringAscii(ClassUtility.SerializeData(new ClassApiPeerPacketObjectSend()
                             {
-                                if (stream != null)
+                                PacketType = packetType,
+                                PacketContentObjectSerialized = packetContent
+                            })));
+
+                            request.ContentLength = disposableData[0].Length;
+
+
+                            using (Stream dataStream = request.GetRequestStream())
+                                dataStream.Write(disposableData[0], 0, disposableData[0].Length);
+
+                            using (WebResponse response = request.GetResponse())
+                            {
+                                if (response.ContentLength > 0)
                                 {
-                                    using (StreamReader reader = new StreamReader(stream))
+                                    using (Stream stream = response.GetResponseStream())
                                     {
-                                        string line;
+                                        if (stream != null)
+                                        {
+                                            using (StreamReader reader = new StreamReader(stream))
+                                            {
+                                                string line;
 
-                                        while ((line = reader.ReadLine()) != null)
-                                            content += line;
-
-                                        if (packetType == ClassPeerApiPostPacketSendEnum.ASK_BLOCK_TRANSACTION_BY_RANGE)
-                                            Debug.WriteLine(content);
+                                                while ((line = reader.ReadLine()) != null)
+                                                {
+                                                    content += line;
+                                                    if (content.Length >= response.ContentLength)
+                                                        break;
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

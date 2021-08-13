@@ -102,7 +102,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int BlockDifficultyPrecision = 100000; // The precision put on the difficulty factor calculated.
         public const int GenesisBlockHeight = 1; // The genesis block height.
         public static readonly BigInteger GenesisBlockAmount = 2973370 * CoinDecimal; // The genesis block amount reward has pre-mining.
-        public const string GenesisBlockFinalTransactionHash = "B45A50DDA90021DC1BF3DA3AF216E1902A9F177502E2FEC55D152577EA4ED056164A18D0BAEA0864BE2E4F481BA479D333C8F83532BF923EA2A810D60FA85FB2"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
+        public const string GenesisBlockFinalTransactionHash = "ECE38F85D9E300AF3382EE3C5550F449737EEEE4FFB3FBC480D0D01102678238E218C3DF7B1B78ABBD1C1A9A576EEA8AB686053360154F52EB2BBE2E45C5C67D"; // The mandatory final block transaction hash to retrieve back from tx's contained inside the genesis block.
         public const int GenesisBlockTransactionCount = 1; // The maximum of transaction inserted on the genesis block.
         public const int BlockAmountNetworkConfirmations = 2; // The minimum amount of network checks on blocks to do with peers, before to enable the task of confirmations on the block.
         public const int BlockAmountSlowNetworkConfirmations = 5; // This amount increment another amount of network checks, once this one is reach, the network counter increment and this one return back to 0.
@@ -160,7 +160,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerMaxInvalidPacket = 60; // Banned after 60 invalid packets.
         public const int PeerMaxDelayAwaitResponse = 60; // Await a response from a peer target pending maximum 30 seconds per requests sent.
         public const int PeerMaxDelayConnection = 30; // A maximum of 30 seconds on receive a packet.
-        public const int PeerMaxTimestampDelayPacket = 180; // Await a maximum of 180 seconds on the timestamp of a packet, above the packet is considered has expired.
+        public const int PeerMaxTimestampDelayPacket = 360; // Await a maximum of 360 seconds on the timestamp of a packet, above the packet is considered has expired.
         public const int PeerMaxDelayKeepAliveStats = 60; // Keep alive packet stats of a peer pending 60 seconds.
         public const int PeerMaxEarlierPacketDelay = 600; // A maximum of 600 seconds is accepted on timestamp of packets.
         public const int PeerMaxDelayToConnectToTarget = 10; // A maximum of 10 seconds delay on connect to a peer.
@@ -169,9 +169,9 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerDeadDelay = 15; // Dead delay pending 15 seconds.
         public const int PeerMinValidPacket = 2; // Do not check packet signature after 2 valid packets sent.
         public const int PeerMaxWhiteListPacket = 1000; // Empty valid packet counter of a peer after to have ignoring packet signature 1000 of a peer.
-        public const int PeerTaskSyncDelay = 1000;
+        public const int PeerTaskSyncDelay = 10;
         public const int MaxPeerPerSyncTask = 50;
-        public const int PeerMinAvailablePeerSync = 2; // Require at minimum 2 available peers.
+        public const int PeerMinAvailablePeerSync = 1; // The minimum of required peer(s).
         public const int PeerMaxAuthKeysExpire = 86400 * 7; // Each week, internal auth keys of a peer are renewed.
         public const int PeerMaxPacketBufferSize = 65535;
         public const int PeerMaxPacketSplitedSendSize = 1024;
@@ -179,7 +179,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerMinPort = 1;
         public const int PeerMaxPort = 65535;
         public const int PeerMaxNodeConnectionPerIp = 1000;
-        public const int PeerMaxSemaphoreConnectAwaitDelay = 5000;
+        public const int PeerMaxSemaphoreConnectAwaitDelay = 30000;
         public const int PeerMaxRangeBlockToSyncPerRequest = 5; // Amount of blocks to sync per range.
         public const int PeerMaxRangeTransactionToSyncPerRequest = 5; // Amount of transactions to sync per range.
         public const bool PeerEnableSyncTransactionByRange = true;
@@ -191,7 +191,7 @@ namespace SeguraChain_Lib.Blockchain.Setting
         public const int PeerDefaultPort = 2400;
         public static readonly Dictionary<string, Dictionary<string, int>> BlockchainStaticPeerList = new Dictionary<string, Dictionary<string, int>>()
         {
-            {"127.0.0.1", new Dictionary<string, int>(){ { "F6B426571EBD02EF4B45045EFEA743F2DA75E114AC57E2DADCB8AE976BC07544D28DCA7FA6CD38FA960E19AE85C9A7828EE211F64570AD7338AC1C1B20C0D2EC", PeerDefaultPort } }}
+            {"127.0.0.1", new Dictionary<string, int>(){ { "F6B426571EBD02EF4B45045EFEA743F2DA75E114AC57E2DADCB8AE976BC07544D28DCA7FA6CD38FA960E19AE85C9A7828EE211F64570AD7338AC1C1B20C0D2EC", PeerDefaultPort } }},
         }; // This is a static peer list who can't be updated, it's usually used once a peer don't have any peer list saved.
 
 

@@ -38,12 +38,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             {
                 using (DisposableList<string> dataList = ioData.DisposableSplit(Environment.NewLine))
                 {
-                    foreach (var ioDataLine in dataList.GetAll)
+                    foreach (var ioDataLine in dataList.GetList)
                     {
-                        if (cancellation != null)
-                        {
-                            if (cancellation.IsCancellationRequested) return false;
-                        }
+                        cancellation?.Token.ThrowIfCancellationRequested();
 
                         if (!ioDataLine.StartsWith(IoDataBeginBlockString) && !ioDataLine.StartsWith(IoDataEndBlockString))
                         {
@@ -52,29 +49,21 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 if (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData)
                                 {
                                     if (!ClassBlockUtility.StringToBlockObject(Utf8Encoding.GetString(ClassUtility.DecompressDataLz4(Convert.FromBase64String(ioDataLine))), out blockObject))
-                                    {
                                         return false;
-                                    }
                                 }
                                 else
                                 {
                                     if (!ClassBlockUtility.StringToBlockObject(ioDataLine, out blockObject))
-                                    {
                                         return false;
-                                    }
                                 }
 
                                 if (blockObject == null)
-                                {
                                     return false;
-                                }
 
                                 blockMetadataFound = true;
 
                                 if (blockInformationsOnly)
-                                {
                                     break;
-                                }
                             }
                             else
                             {
@@ -82,22 +71,15 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 {
                                     using (DisposableList<string> transactionList = Utf8Encoding.GetString(ClassUtility.DecompressDataLz4(Convert.FromBase64String(ioDataLine))).DisposableSplit(IoDataCharacterSeperator))
                                     {
-                                        foreach (var transaction in transactionList.GetAll)
+                                        foreach (var transaction in transactionList.GetList)
                                         {
-                                            if (cancellation != null)
-                                            {
-                                                if (cancellation.IsCancellationRequested) return false;
-                                            }
+                                            cancellation?.Token.ThrowIfCancellationRequested();
 
                                             if (!ClassTransactionUtility.StringToBlockTransaction(transaction, out ClassBlockTransaction blockTransaction))
-                                            {
                                                 return false;
-                                            }
 
                                             if (blockTransaction?.TransactionObject == null)
-                                            {
                                                 return false;
-                                            }
 
                                             blockObject.BlockTransactions.Add(blockTransaction.TransactionObject.TransactionHash, blockTransaction);
                                         }
@@ -107,22 +89,15 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 {
                                     using (DisposableList<string> transactionList = ioDataLine.DisposableSplit(IoDataCharacterSeperator))
                                     {
-                                        foreach (var transaction in transactionList.GetAll)
+                                        foreach (var transaction in transactionList.GetList)
                                         {
-                                            if (cancellation != null)
-                                            {
-                                                if (cancellation.IsCancellationRequested) return false;
-                                            }
+                                            cancellation?.Token.ThrowIfCancellationRequested();
 
                                             if (!ClassTransactionUtility.StringToBlockTransaction(transaction, out ClassBlockTransaction blockTransaction))
-                                            {
                                                 return false;
-                                            }
 
                                             if (blockTransaction?.TransactionObject == null)
-                                            {
                                                 return false;
-                                            }
 
                                             blockObject.BlockTransactions.Add(blockTransaction.TransactionObject.TransactionHash, blockTransaction);
                                         }
@@ -136,15 +111,10 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             catch
             {
                 blockObject = null;
-                return false;
             }
 
-            if (blockObject != null)
-            {
-                return true;
-            }
 
-            return false;
+            return blockObject != null ? true : false;
         }
 
 
@@ -167,12 +137,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             {
                 using (DisposableList<string> dataList = ioData.DisposableSplit(Environment.NewLine))
                 {
-                    foreach (var ioDataLine in dataList.GetAll)
+                    foreach (var ioDataLine in dataList.GetList)
                     {
-                        if (cancellation != null)
-                        {
-                            if (cancellation.IsCancellationRequested) return false;
-                        }
+                        cancellation?.Token.ThrowIfCancellationRequested();
 
                         if (!ioDataLine.StartsWith(IoDataBeginBlockString) && !ioDataLine.StartsWith(IoDataEndBlockString))
                         {
@@ -181,16 +148,12 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 if (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData)
                                 {
                                     if (!ClassBlockUtility.StringToBlockObject(Utf8Encoding.GetString(ClassUtility.DecompressDataLz4(Convert.FromBase64String(ioDataLine))), out _))
-                                    {
                                         return false;
-                                    }
                                 }
                                 else
                                 {
                                     if (!ClassBlockUtility.StringToBlockObject(ioDataLine, out _))
-                                    {
                                         return false;
-                                    }
                                 }
 
                                 blockMetadataFound = true;
@@ -201,27 +164,18 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 {
                                     using (DisposableList<string> transactionList = Utf8Encoding.GetString(ClassUtility.DecompressDataLz4(Convert.FromBase64String(ioDataLine))).DisposableSplit(IoDataCharacterSeperator))
                                     {
-                                        foreach (var transaction in transactionList.GetAll)
+                                        foreach (var transaction in transactionList.GetList)
                                         {
-                                            if (cancellation != null)
-                                            {
-                                                if (cancellation.IsCancellationRequested) return false;
-                                            }
+                                            cancellation?.Token.ThrowIfCancellationRequested();
 
                                             if (!ClassTransactionUtility.StringToBlockTransaction(transaction, out blockTransaction))
-                                            {
                                                 return false;
-                                            }
 
                                             if (blockTransaction?.TransactionObject == null)
-                                            {
                                                 return false;
-                                            }
 
                                             if (blockTransaction.TransactionObject.TransactionHash == transactionHash)
-                                            {
                                                 return true;
-                                            }
                                         }
                                     }
                                 }
@@ -229,26 +183,18 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 {
                                     using (DisposableList<string> transactionList = ioDataLine.DisposableSplit(IoDataCharacterSeperator))
                                     {
-                                        foreach (var transaction in transactionList.GetAll)
+                                        foreach (var transaction in transactionList.GetList)
                                         {
-                                            if (cancellation != null)
-                                            {
-                                                if (cancellation.IsCancellationRequested) return false;
-                                            }
+                                            cancellation?.Token.ThrowIfCancellationRequested();
+
                                             if (!ClassTransactionUtility.StringToBlockTransaction(transaction, out blockTransaction))
-                                            {
                                                 return false;
-                                            }
 
                                             if (blockTransaction == null)
-                                            {
                                                 return false;
-                                            }
 
                                             if (blockTransaction.TransactionObject.TransactionHash == transactionHash)
-                                            {
                                                 return true;
-                                            }
                                         }
                                     }
                                 }
@@ -260,15 +206,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             catch
             {
                 blockTransaction = null;
-                return false;
             }
 
-            if (blockTransaction != null)
-            {
-                return true;
-            }
-
-            return false;
+            return blockTransaction != null ? true : false;
         }
 
         /// <summary>
@@ -283,13 +223,9 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             yield return IoDataBeginBlockString + blockObject.BlockHeight + IoDataBeginBlockStringClose + Environment.NewLine;
 
             if (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData)
-            {
                 yield return Convert.ToBase64String(ClassUtility.CompressDataLz4(Utf8Encoding.GetBytes(ClassBlockUtility.SplitBlockObject(blockObject)))) + Environment.NewLine;
-            }
             else
-            {
                 yield return ClassBlockUtility.SplitBlockObject(blockObject) + Environment.NewLine;
-            }
 
 
             if (blockObject.BlockTransactions.Count > 0)
@@ -299,10 +235,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
                 foreach (KeyValuePair<string, ClassBlockTransaction> blockObjectBlockTransaction in blockObject.BlockTransactions)
                 {
-                    if (cancellation != null)
-                    {
-                        if (cancellation.IsCancellationRequested) break;
-                    }
+                    cancellation?.Token.ThrowIfCancellationRequested();
 
                     ioDataLineTransaction += ClassTransactionUtility.SplitBlockTransactionObject(blockObjectBlockTransaction.Value) + IoDataCharacterSeperator;
 
@@ -314,15 +247,11 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                             Convert.ToBase64String(ClassUtility.CompressDataLz4(Utf8Encoding.GetBytes(ioDataLineTransaction))) : ioDataLineTransaction) + Environment.NewLine;
 
                         totalIoTransactionDataInLine = 0;
-                        ioDataLineTransaction.Clear();
                     }
                 }
 
                 yield return (blockchainDatabaseSetting.BlockchainCacheSetting.IoCacheDiskEnableCompressBlockData ?
                     Convert.ToBase64String(ClassUtility.CompressDataLz4(Utf8Encoding.GetBytes(ioDataLineTransaction))) : ioDataLineTransaction) + Environment.NewLine;
-
-                ioDataLineTransaction.Clear();
-
             }
 
             yield return IoDataEndBlockString;
@@ -343,9 +272,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                     if (ioDataLine.StartsWith(IoDataBeginBlockString))
                     {
                         if (long.TryParse(ioDataLine.GetStringBetweenTwoStrings(IoDataBeginBlockString, IoDataBeginBlockStringClose), out long blockHeight))
-                        {
                             return blockHeight;
-                        }
                     }
                 }
             }
@@ -367,9 +294,7 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
             try
             {
                 if (ExtractBlockHeight(ioDataLine) == blockHeight)
-                {
                     return true;
-                }
             }
             catch
             {

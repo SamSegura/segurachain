@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Open.Nat;
 using SeguraChain_Lib.Blockchain.Database;
 using SeguraChain_Lib.Blockchain.MemPool.Database;
+#if !NET5_0_OR_GREATER
 using SeguraChain_Lib.Blockchain.Setting;
+#endif
 using SeguraChain_Lib.Blockchain.Sovereign.Database;
 using SeguraChain_Lib.Instance.Node.Network.Database;
 using SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Service;
@@ -64,7 +66,6 @@ namespace SeguraChain_Lib.Instance.Node
         /// <returns></returns>
         public bool NodeStart(bool fromWallet)
         {
-            
             PeerToolStatus = true;
 
             string encryptionKey = string.Empty;
@@ -93,6 +94,10 @@ namespace SeguraChain_Lib.Instance.Node
                             {
                                 if (!PeerSettingObject.PeerNetworkSettingObject.IsDedicatedServer)
                                 {
+#if NET5_0_OR_GREATER
+                                    ClassLog.WriteLine("You setting indicate it's a not a dedicated server, remember to open the P2P port and target the host IP to your router", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Yellow);
+                                    PeerOpenNatPublicIp = PeerSettingObject.PeerNetworkSettingObject.ListenIp;
+#else
                                     Task<bool> openNatTask = PeerOpenNatPort();
                                     openNatTask.Wait();
 
@@ -106,12 +111,10 @@ namespace SeguraChain_Lib.Instance.Node
                                         PeerSettingObject.PeerNetworkSettingObject.PublicPeer = false;
                                         ClassLog.WriteLine("Can't open peer port with OpenNAT to the public network. Disable public mode.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                                     }
+#endif
                                 }
                                 else
-                                {
                                     PeerOpenNatPublicIp = PeerSettingObject.PeerNetworkSettingObject.ListenIp;
-                                    ClassLog.WriteLine("Dedicated server(s) don't require OpenNAT to open ports to the public.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                                }
                             }
 
                             #endregion
@@ -155,28 +158,26 @@ namespace SeguraChain_Lib.Instance.Node
                                 }
 
                                 PeerApiServerObject.Dispose();
+#if !NET5_0_OR_GREATER
                                 if (PeerSettingObject.PeerNetworkSettingObject.PublicPeer)
-                                {
                                     ClosePortOpenNat();
-                                }
+#endif
+
                                 ClassLog.WriteLine("Can't start peer api server. Press a key to exit.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                                 if (!fromWallet)
-                                {
                                     Console.ReadLine();
-                                }
                             }
                             else
                             {
                                 PeerNetworkServerObject.Dispose();
+#if !NET5_0_OR_GREATER
                                 if (PeerSettingObject.PeerNetworkSettingObject.PublicPeer)
-                                {
                                     ClosePortOpenNat();
-                                }
+#endif
+
                                 ClassLog.WriteLine("Can't start peer network server. Press a key to exit.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                                 if (!fromWallet)
-                                {
                                     Console.ReadLine();
-                                }
                             }
 
 
@@ -185,37 +186,30 @@ namespace SeguraChain_Lib.Instance.Node
                         {
                             ClassLog.WriteLine("Can't load Blockchain database. Press a key to exit.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                             if (!fromWallet)
-                            {
                                 Console.ReadLine();
-                            }
                         }
                     }
                     else
                     {
                         ClassLog.WriteLine("Can't load Wallet MemPool database. Press a key to exit.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                         if (!fromWallet)
-                        {
                             Console.ReadLine();
-                        }
                     }
                 }
                 else
                 {
                     ClassLog.WriteLine("Can't load Peer Database. Press a key to exit.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                     if (!fromWallet)
-                    {
                         Console.ReadLine();
-                    }
                 }
             }
             else
             {
                 ClassLog.WriteLine("Can't load and apply Sovereign Update Database. Press a key to exit.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                 if (!fromWallet)
-                {
                     Console.ReadLine();
-                }
             }
+
             return false;
         }
 
@@ -237,7 +231,9 @@ namespace SeguraChain_Lib.Instance.Node
 
             #region Close OpenNAT port.
 
+#if !NET5_0_OR_GREATER
             ClosePortOpenNat();
+#endif
 
             #endregion
 
@@ -281,9 +277,11 @@ namespace SeguraChain_Lib.Instance.Node
             #endregion
 
             #region Save peer list.
+
             ClassLog.WriteLine("Save peer list..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             ClassPeerDatabase.SavePeers(string.Empty, true);
             ClassLog.WriteLine("Peer list saved.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+
             #endregion
 
             #region Save Sovereign update Data.
@@ -291,13 +289,9 @@ namespace SeguraChain_Lib.Instance.Node
             ClassLog.WriteLine("Save Sovereign Update(s) data..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
             if (ClassSovereignUpdateDatabase.SaveSovereignUpdateObjectData(out int totalSaved))
-            {
                 ClassLog.WriteLine("Save " + totalSaved + " Sovereign Update(s) data successfully done.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-            }
             else
-            {
                 ClassLog.WriteLine("Save Sovereign Update(s) data failed.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-            }
 
             #endregion
 
@@ -316,13 +310,11 @@ namespace SeguraChain_Lib.Instance.Node
             ClassLog.WriteLine("Blockchain data saved.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             #endregion
 
-
             if (!forceClose)
             {
                 if (!isWallet)
                 {
                     ClassLog.CloseLogStreams();
-
                     ClassLog.WriteLine("Peer tool successfully closed. Press a key to exit.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                     Console.ReadLine();
                 }
@@ -330,9 +322,7 @@ namespace SeguraChain_Lib.Instance.Node
             else
             {
                 if (!isWallet)
-                {
                     Process.GetCurrentProcess().Kill();
-                }
             }
         }
 
@@ -359,25 +349,21 @@ namespace SeguraChain_Lib.Instance.Node
                     {
                         loadPeerSetting = ClassPeerNodeSettingFunction.InitializePeerSetting(out PeerSettingObject);
                         if (loadPeerSetting)
-                        {
                             return true;
-                        }
                     }
                     else
-                    {
                         break;
-                    }
                 }
                 else
-                {
                     break;
-                }
             }
 
             return loadPeerSetting;
         }
 
         #region OpenNAT.
+
+#if !NET5_0_OR_GREATER
 
         /// <summary>
         /// Open Peer port with NAT to get the port available to the public network.
@@ -446,6 +432,7 @@ namespace SeguraChain_Lib.Instance.Node
             }
 
         }
+#endif
 
         #endregion
 

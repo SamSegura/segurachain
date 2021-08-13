@@ -115,7 +115,10 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
                                             long lastBlockHeightSynced = await ClassDesktopWalletCommonData.WalletSyncSystem.GetLastBlockHeightSynced(cancellation, true);
 
                                             if (lastBlockHeightSynced > 0 && DictionaryWalletData[walletFileName].WalletLastBlockHeightSynced > lastBlockHeightSynced)
+                                            {
                                                 DictionaryWalletData[walletFileName].WalletEnableRescan = true;
+                                                ResetWalletSync(walletFileName, cancellation);
+                                            }
                                             else
                                             {
                                                 if (!ClassDesktopWalletCommonData.WalletSyncSystem.DatabaseSyncCache.ContainsKey(DictionaryWalletData[walletFileName].WalletAddress))
@@ -607,7 +610,12 @@ namespace SeguraChain_Desktop_Wallet.Wallet.Database
             else
                 requireSave = await ClassDesktopWalletCommonData.WalletSyncSystem.UpdateWalletSync(walletFileName, _cancellationTokenTaskWallet);
 
-
+            if (DictionaryWalletData[walletFileName].WalletEnableRescan)
+            {
+                ResetWalletSync(walletFileName, cancellation);
+                DictionaryWalletData[walletFileName].WalletEnableRescan = false;
+                requireSave = true;
+            }
 
             if (requireSave || !DictionaryWalletData[walletFileName].WalletBalanceCalculated)
             {

@@ -10,4 +10,13 @@
     <ProjectReference Include="..\SeguraChain-Lib\SeguraChain-Lib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="API\Packet\Send\" />
+    <Folder Include="API\Packet\Receive\" />
+    <Folder Include="API\Service\Client\" />
+    <Folder Include="API\Service\Server\" />
+    <Folder Include="Sync\" />
+    <Folder Include="Task\Object\" />
+  </ItemGroup>
+
 </Project>

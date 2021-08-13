@@ -166,22 +166,16 @@ namespace SeguraChain_Lib.Blockchain.Database
                                             if (blockchainDatabaseSetting.DataSetting.DataFormatIsJson)
                                             {
                                                 if (!ClassUtility.TryDeserialize(line, out blockObject, ObjectCreationHandling.Reuse))
-                                                {
                                                     return false;
-                                                }
                                             }
                                             else
                                             {
                                                 if (!ClassBlockUtility.StringToBlockObject(line, out blockObject))
-                                                {
                                                     return false;
-                                                }
                                             }
 
                                             if (blockObject == null)
-                                            {
                                                 return false;
-                                            }
                                         }
                                         else
                                         {
@@ -325,12 +319,15 @@ namespace SeguraChain_Lib.Blockchain.Database
                 ClassLog.WriteLine("Reset blockchain data. Please wait a moment..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
                 // Remove all blocks, expect the genesis block.
-                foreach (var blockKey in BlockchainMemoryManagement.ListBlockHeight.ToArray())
+                using (DisposableList<long> listBlockHeight = BlockchainMemoryManagement.ListBlockHeight)
                 {
-                    if (!await BlockchainMemoryManagement.Remove(blockKey, _cancellationTokenStopBlockchain))
+                    foreach (long blockHeight in listBlockHeight.GetList)
                     {
-                        ClassLog.WriteLine("Failed to reset the blockchain database. If it's not work after another attempt, it's suggested to do it manually.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                        return false;
+                        if (!await BlockchainMemoryManagement.Remove(blockHeight, _cancellationTokenStopBlockchain))
+                        {
+                            ClassLog.WriteLine("Failed to reset the blockchain database. If it's not work after another attempt, it's suggested to do it manually.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                            return false;
+                        }
                     }
                 }
 
@@ -424,10 +421,8 @@ namespace SeguraChain_Lib.Blockchain.Database
                         {
                             long newBlockHeight = lastBlockHeight + 1;
 
-                            if (await GenerateNewMiningBlockObject(lastBlockHeight, newBlockHeight, lastBlockObject.TimestampFound, lastBlockObject.BlockWalletAddressWinner, true, _cancellationTokenStopBlockchain))
-                            {
+                            if (await GenerateNewMiningBlockObject(lastBlockHeight, newBlockHeight, lastBlockObject.TimestampFound, lastBlockObject.BlockWalletAddressWinner, true, false, _cancellationTokenStopBlockchain))
                                 ClassLog.WriteLine("Generate new block " + newBlockHeight + ". Previous block height: " + lastBlockHeight, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-                            }
                         }
                     }
                 }
@@ -488,51 +483,33 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                         long blockHeight = i + 1;
 
-                        ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
+                        ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, true, _cancellationTokenStopBlockchain);
 
-                        while (blockObject == null)
-                            blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
+                        while (blockObject == null || blockObject?.BlockTransactions == null || blockObject?.BlockTransactions.Count != blockObject?.TotalTransaction)
+                            blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, true, _cancellationTokenStopBlockchain);
 
-                        bool blockIsLocked = false;
-
-                        try
+                        foreach (string blockDataLine in ClassBlockUtility.BlockObjectToStringBlockData(blockObject, blockchainDatabaseSetting.DataSetting.DataFormatIsJson))
                         {
+                            byte[] blockDataLineCopy = utf8Encoding.GetBytes(blockDataLine);
 
-                            while (!blockIsLocked)
-                            {
-                                blockIsLocked = Monitor.TryEnter(blockObject);
-                            }
+                            if (blockchainDatabaseSetting.DataSetting.EnableEncryptionDatabase)
+                                ClassAes.EncryptionProcess(blockDataLineCopy, _blockchainDataStandardEncryptionKey, _blockchainDataStandardEncryptionKeyIv, out blockDataLineCopy);
 
-                            foreach (string blockDataLine in ClassBlockUtility.BlockObjectToStringBlockData(blockObject, blockchainDatabaseSetting.DataSetting.DataFormatIsJson))
-                            {
-                                byte[] blockDataLineCopy = utf8Encoding.GetBytes(blockDataLine);
+                            writerBlock.WriteLine(utf8Encoding.GetString(blockDataLineCopy));
 
-                                if (blockchainDatabaseSetting.DataSetting.EnableEncryptionDatabase)
-                                {
-                                    ClassAes.EncryptionProcess(blockDataLineCopy, _blockchainDataStandardEncryptionKey, _blockchainDataStandardEncryptionKeyIv, out blockDataLineCopy);
-                                }
+                            // Clean up.
+                            Array.Clear(blockDataLineCopy, 0, blockDataLineCopy.Length);
 
-                                writerBlock.WriteLine(utf8Encoding.GetString(blockDataLineCopy));
-
-                                // Clean up.
-                                Array.Clear(blockDataLineCopy, 0, blockDataLineCopy.Length);
-
-                            }
-
-                            totalBlockSaved++;
-                            totalTxSaved += blockObject.BlockTransactions.Count;
-                        }
-                        finally
-                        {
-                            if (blockIsLocked)
-                                Monitor.Exit(blockObject);
                         }
 
+                        totalBlockSaved++;
+                        totalTxSaved += blockObject.BlockTransactions.Count;
                     }
+
+                    writerBlock.Flush();
                 }
                 
                 ClassUtility.CleanGc();
-
 
             }
 
@@ -563,7 +540,6 @@ namespace SeguraChain_Lib.Blockchain.Database
             {
                 ClassLog.WriteLine("Close and clear blockchain database cache..", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
                 await BlockchainMemoryManagement.CloseCache();
-
                 ClassLog.WriteLine("Blockchain database cache cleaned and closed.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
             }
 
@@ -583,7 +559,6 @@ namespace SeguraChain_Lib.Blockchain.Database
 
             BlockchainMemoryManagement.BlockchainWalletIndexMemoryCacheObject.Clear();
 
-
             DictionaryCheckpointObjects.Clear();
 
             ClassUtility.CleanGc();
@@ -598,9 +573,7 @@ namespace SeguraChain_Lib.Blockchain.Database
         private static bool LoadCheckpointData(ClassBlockchainDatabaseSetting blockchainDatabaseSetting)
         {
             if (!File.Exists(blockchainDatabaseSetting.GetCheckpointDatabaseFilePath))
-            {
                 File.Create(blockchainDatabaseSetting.GetCheckpointDatabaseFilePath).Close();
-            }
 
             using (FileStream fileStream = new FileStream(blockchainDatabaseSetting.GetCheckpointDatabaseFilePath, FileMode.Open))
             {
@@ -617,23 +590,15 @@ namespace SeguraChain_Lib.Blockchain.Database
                                 if (ClassAes.DecryptionProcess(Convert.FromBase64String(line), _blockchainDataStandardEncryptionKey, _blockchainDataStandardEncryptionKeyIv, out var result))
                                 {
                                     if (result != null)
-                                    {
                                         line = result.GetStringFromByteArrayAscii();
-                                    }
                                     else
-                                    {
                                         return false;
-                                    }
                                 }
                                 else
-                                {
                                     return false;
-                                }
                             }
                             else
-                            {
                                 return false;
-                            }
                         }
 
                         if (!line.IsNullOrEmpty(out line))
@@ -644,14 +609,10 @@ namespace SeguraChain_Lib.Blockchain.Database
                                 {
                                     bool result = true;
                                     if (!DictionaryCheckpointObjects.ContainsKey(checkpointObject.CheckpointType))
-                                    {
                                         result = DictionaryCheckpointObjects.TryAdd(checkpointObject.CheckpointType, new List<ClassCheckpointObject>());
-                                    }
 
                                     if (result)
-                                    {
                                         DictionaryCheckpointObjects[checkpointObject.CheckpointType].Add(checkpointObject);
-                                    }
 
                                 }
                             }
@@ -673,9 +634,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             try
             {
                 if (!File.Exists(blockchainDatabaseSetting.GetCheckpointDatabaseFilePath))
-                {
                     File.Create(blockchainDatabaseSetting.GetCheckpointDatabaseFilePath).Close();
-                }
 
                 long totalCheckpointSaved = 0;
 
@@ -699,16 +658,12 @@ namespace SeguraChain_Lib.Blockchain.Database
                                         if (ClassAes.EncryptionProcess(ClassUtility.GetByteArrayFromStringAscii(checkpointLineToWrite), _blockchainDataStandardEncryptionKey, _blockchainDataStandardEncryptionKeyIv, out byte[] result))
                                         {
                                             if (result == null)
-                                            {
                                                 continue;
-                                            }
 
                                             checkpointLineToWrite = Convert.ToBase64String(result);
                                         }
                                         else
-                                        {
                                             continue;
-                                        }
                                     }
 
                                     writerCheckpoint.WriteLine(checkpointLineToWrite);
@@ -747,9 +702,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             if (!DictionaryCheckpointObjects.ContainsKey(checkpointType))
             {
                 if (!DictionaryCheckpointObjects.TryAdd(checkpointType, new List<ClassCheckpointObject>()))
-                {
                     result = false;
-                }
             }
 
             if (result)
@@ -777,9 +730,7 @@ namespace SeguraChain_Lib.Blockchain.Database
             if (DictionaryCheckpointObjects.ContainsKey(ClassCheckpointEnumType.BLOCK_HEIGHT_TRANSACTION_CHECKPOINT))
             {
                 if (DictionaryCheckpointObjects[ClassCheckpointEnumType.BLOCK_HEIGHT_TRANSACTION_CHECKPOINT].Count > 0)
-                {
                     return DictionaryCheckpointObjects[ClassCheckpointEnumType.BLOCK_HEIGHT_TRANSACTION_CHECKPOINT].Max(x => x.BlockHeight);
-                }
             }
 
             return 0;
@@ -953,13 +904,6 @@ namespace SeguraChain_Lib.Blockchain.Database
             if (blockHeight > BlockchainMemoryManagement.GetLastBlockHeight)
                 return ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOT_SYNCED;
 
-            if (enableBroadcast)
-            {
-                // Do not allow unlock test and not allow from sync data enabled on broadcast.
-                unlockTest = false;
-                fromSync = false;
-            }
-
             bool useSemaphore = false;
 
             try
@@ -1028,7 +972,8 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                             // Check if the block is still locked.
                                                                             if (BlockchainMemoryManagement[blockHeight, cancellation].BlockStatus == ClassBlockEnumStatus.LOCKED)
                                                                             {
-                                                                                // Broadcast the share to other peers, wait final vote from peers, if the result is ok the peer unlock the block.
+                                                                                #region Broadcast the share to other peers, wait final vote from peers, if the result is ok the peer unlock the block.
+
                                                                                 if (enableBroadcast)
                                                                                 {
                                                                                     Tuple<ClassBlockEnumMiningShareVoteStatus, bool> blockMiningShareVoteStatus = await ClassPeerNetworkBroadcastFunction.AskBlockMiningShareVoteToPeerListsAsync(apiServerIp, apiServerOpenNatIp, string.Empty, blockHeight, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject, cancellation, true);
@@ -1061,14 +1006,19 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                                             await InsertWholeMemPoolTransactionFromBlockHeight(blockHeight, cancellation);
                                                                                                             long newBlockHeight = blockHeight + 1;
 
-                                                                                                            if (await GenerateNewMiningBlockObject(blockHeight, newBlockHeight, miningPowShareObject.Timestamp, miningPowShareObject.WalletAddress, false, cancellation))
+                                                                                                            if (await GenerateNewMiningBlockObject(blockHeight, newBlockHeight, miningPowShareObject.Timestamp, miningPowShareObject.WalletAddress, false, false, cancellation))
                                                                                                             {
                                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].TimestampFound = miningPowShareObject.Timestamp;
                                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject = miningPowShareObject;
                                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].BlockUnlockValid = false;
                                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].BlockStatus = ClassBlockEnumStatus.UNLOCKED;
                                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
-                                                                                                                ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
+                                                                                                                
+                                                                                                                if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
+                                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, blockHeight < ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight, ConsoleColor.Cyan);
+                                                                                                                else
+                                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
+
                                                                                                                 resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
                                                                                                             }
                                                                                                             else
@@ -1087,11 +1037,12 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                                         }
                                                                                                         else
                                                                                                         {
-
-
                                                                                                             if (ClassMiningPoWaCUtility.ComparePoWaCShare(BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject, miningPowShareObject) && BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner == miningPowShareObject.WalletAddress)
                                                                                                             {
-                                                                                                                ClassLog.WriteLine("The block height: " + blockHeight + " is already unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " and accepted by peers already.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
+                                                                                                                if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
+                                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, blockHeight < ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight, ConsoleColor.Cyan);
+                                                                                                                else
+                                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
                                                                                                                 resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
                                                                                                             }
                                                                                                             else
@@ -1124,18 +1075,23 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                             if (ClassMiningPoWaCUtility.ComparePoWaCShare(BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject, miningPowShareObject)
                                                                                             && BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner == miningPowShareObject.WalletAddress)
                                                                                             {
-                                                                                                ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + ", transactions are already pushed and the next block already generated.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Magenta);
+                                                                                                if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
+                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, blockHeight < ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight, ConsoleColor.Cyan);
+                                                                                                else
+                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
                                                                                                 resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
                                                                                             }
                                                                                             else
                                                                                             {
                                                                                                 ClassLog.WriteLine("The block height: " + blockHeight + " is already found by " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.DarkRed);
-
                                                                                                 resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ALREADY_FOUND;
                                                                                             }
                                                                                         }
                                                                                     }
                                                                                 }
+
+                                                                                #endregion
+
                                                                                 else
                                                                                 {
                                                                                     if (!unlockTest)
@@ -1145,7 +1101,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                             await InsertWholeMemPoolTransactionFromBlockHeight(blockHeight, cancellation);
                                                                                             long newBlockHeight = blockHeight + 1;
 
-                                                                                            if (await GenerateNewMiningBlockObject(blockHeight, newBlockHeight, miningPowShareObject.Timestamp, miningPowShareObject.WalletAddress, false, cancellation))
+                                                                                            if (await GenerateNewMiningBlockObject(blockHeight, newBlockHeight, miningPowShareObject.Timestamp, miningPowShareObject.WalletAddress, false, false, cancellation))
                                                                                             {
 
                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].TimestampFound = miningPowShareObject.Timestamp;
@@ -1154,10 +1110,12 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].BlockStatus = ClassBlockEnumStatus.UNLOCKED;
                                                                                                 BlockchainMemoryManagement[blockHeight, cancellation].BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
-                                                                                                ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
+                                                                                                if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
+                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, blockHeight < ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight, ConsoleColor.Cyan);
+                                                                                                else
+                                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " push transaction reward to Mem Pool.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
 
                                                                                                 resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
-                                                                                                await ClassPeerNetworkBroadcastFunction.BroadcastMiningShareAsync(apiServerIp, apiServerOpenNatIp, string.Empty, miningPowShareObject, peerNetworkSetting, peerFirewallSettingObject);
                                                                                             }
                                                                                             else
                                                                                             {
@@ -1169,7 +1127,6 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                                 {
                                                                                                     ClassLog.WriteLine("The block height: " + blockHeight + " is already unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + " and accepted by peers already.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Cyan);
                                                                                                     resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
-
                                                                                                 }
                                                                                                 else
                                                                                                 {
@@ -1185,9 +1142,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                         }
                                                                                     }
                                                                                     else
-                                                                                    {
                                                                                         resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
-                                                                                    }
                                                                                 }
                                                                             }
                                                                             else
@@ -1196,15 +1151,10 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                                                     && ClassMiningPoWaCUtility.ComparePoWaCShare(BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject, miningPowShareObject)
                                                                                     && BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner == miningPowShareObject.WalletAddress)
                                                                                 {
-                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " has been unlocked by the wallet address: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner + ", transactions are already pushed and the next block already generated.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
                                                                                     resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
                                                                                 }
                                                                                 else
-                                                                                {
-                                                                                    ClassLog.WriteLine("The block height: " + blockHeight + " is already found by: " + BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-
                                                                                     resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ALREADY_FOUND;
-                                                                                }
                                                                             }
                                                                         }
                                                                         catch (Exception error)
@@ -1214,15 +1164,10 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                                                                     }
                                                                     else
-                                                                    {
                                                                         ClassLog.WriteLine("The mining share from: " + miningPowShareObject.WalletAddress + " who target block height: " + blockHeight + " is not valid because the share compatibility is not the same translated: " + jobCompatibilityValue + "/" + previousTransactionCount, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                                                                    }
                                                                 }
                                                                 else
-                                                                {
                                                                     ClassLog.WriteLine("The mining share from: " + miningPowShareObject.WalletAddress + " who target block height: " + blockHeight + " is not valid because the share difficulty is not the same translated: " + jobDifficulty + "/" + miningPowShareObject.PoWaCShareDifficulty, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-
-                                                                }
                                                             }
                                                             else
                                                             {
@@ -1256,8 +1201,10 @@ namespace SeguraChain_Lib.Blockchain.Database
                                                     && ClassMiningPoWaCUtility.ComparePoWaCShare(BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject, miningPowShareObject)
                                                         && BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner == miningPowShareObject.WalletAddress)
                                                 {
-
-                                                    resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
+                                                    if (await GenerateNewMiningBlockObject(blockHeight, blockHeight + 1, miningPowShareObject.Timestamp, miningPowShareObject.WalletAddress, false, false, cancellation))
+                                                        resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ACCEPTED;
+                                                    else
+                                                        resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_ALREADY_FOUND;
                                                 }
                                                 else
                                                 {
@@ -1267,14 +1214,10 @@ namespace SeguraChain_Lib.Blockchain.Database
                                             }
                                         }
                                         else
-                                        {
                                             ClassLog.WriteLine("The mining share from: " + miningPowShareObject.WalletAddress + " who target block height: " + blockHeight + " is not right on the blockchain data.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                                        }
                                     }
                                     else
-                                    {
                                         ClassLog.WriteLine("The mining share from: " + miningPowShareObject.WalletAddress + " who target block height: " + blockHeight + " have an invalid share difficulty. " + miningPowShareObject.PoWaCShareDifficulty + "/" + BlockchainMemoryManagement[blockHeight, cancellation].BlockDifficulty, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                                    }
                                 }
                                 else
                                 {
@@ -1284,9 +1227,7 @@ namespace SeguraChain_Lib.Blockchain.Database
                                 }
                             }
                             else
-                            {
                                 ClassLog.WriteLine("The mining share from: " + miningPowShareObject.WalletAddress + " who target block height: " + blockHeight + " cannot be used to unlock the current block, the previous block have not indexed his block reward tx yet.", ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, true);
-                            }
                         }
                         else
                             resultUnlock = ClassBlockEnumMiningShareVoteStatus.MINING_SHARE_VOTE_NOT_SYNCED;
@@ -1296,7 +1237,6 @@ namespace SeguraChain_Lib.Blockchain.Database
                         ClassLog.WriteLine("Error from a received attempt to unlock the Block Height: " + blockHeight + ". | Exception: " + error.Message, ClassEnumLogLevelType.LOG_LEVEL_MINING, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 #if DEBUG
                         Debug.WriteLine("Error from a received attempt to unlock the Block Height: " + blockHeight + ". | Exception: " + error.Message);
-
 #endif
                     }
                 }
@@ -1365,7 +1305,9 @@ namespace SeguraChain_Lib.Blockchain.Database
                     if (BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner.IsNullOrEmpty(out _) &&
                         BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject == null ||
                         fromSync)
+                    {
                         doBlockReward = true;
+                    }
                     else if (BlockchainMemoryManagement[blockHeight, cancellation].BlockWalletAddressWinner == walletAddress)
                         doBlockReward = true;
                     else if (BlockchainMemoryManagement[blockHeight, cancellation].BlockMiningPowShareUnlockObject != null)
@@ -1486,13 +1428,13 @@ namespace SeguraChain_Lib.Blockchain.Database
         /// <param name="walletAddressWinner"></param>
         /// <param name="isGenesis"></param>
         /// <param name="cancellation"></param>
-        public static async Task<bool> GenerateNewMiningBlockObject(long blockHeight, long newBlockHeight, long timestampFound, string walletAddressWinner, bool isGenesis, CancellationTokenSource cancellation)
+        public static async Task<bool> GenerateNewMiningBlockObject(long blockHeight, long newBlockHeight, long timestampFound, string walletAddressWinner, bool isGenesis, bool remakeBlockHeight, CancellationTokenSource cancellation)
         {
             if (BlockchainMemoryManagement.ContainsKey(blockHeight))
             {
-                if (BlockchainMemoryManagement[blockHeight, cancellation].TimestampCreate <= timestampFound && timestampFound >= BlockchainMemoryManagement[blockHeight, cancellation].TimestampCreate)
+                if (BlockchainMemoryManagement[blockHeight, cancellation].TimestampCreate <= timestampFound)
                 {
-                    if (!BlockchainMemoryManagement.ContainsKey(newBlockHeight))
+                    if (!BlockchainMemoryManagement.ContainsKey(newBlockHeight) || remakeBlockHeight)
                     {
                         BlockchainMemoryManagement[blockHeight, cancellation].BlockFinalHashTransaction = ClassBlockUtility.GetFinalTransactionHashList(BlockchainMemoryManagement[blockHeight, cancellation].BlockTransactions.Keys.ToList(), BlockchainMemoryManagement[blockHeight, cancellation].BlockHash);
 
@@ -1505,20 +1447,35 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                         string newBlockHash = ClassBlockUtility.GenerateBlockHash(newBlockHeight, newBlockDifficulty, BlockchainMemoryManagement[blockHeight, cancellation].BlockTransactions.Count, BlockchainMemoryManagement[blockHeight, cancellation].BlockFinalHashTransaction, walletAddressWinner);
 
-                        if (await BlockchainMemoryManagement.Add(newBlockHeight, new ClassBlockObject(newBlockHeight, newBlockDifficulty, newBlockHash, timestampFound, 0, ClassBlockEnumStatus.LOCKED, false, false), CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, cancellation))
+                        if (!remakeBlockHeight)
                         {
-                            if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
-                                ClassLog.WriteLine("New block " + newBlockHeight + "/" + ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
 
+                            if (await BlockchainMemoryManagement.Add(newBlockHeight, new ClassBlockObject(newBlockHeight, newBlockDifficulty, newBlockHash, timestampFound, 0, ClassBlockEnumStatus.LOCKED, false, false), CacheBlockMemoryInsertEnumType.INSERT_IN_ACTIVE_MEMORY_OBJECT, cancellation))
+                            {
+                                if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
+                                    ClassLog.WriteLine("New block " + newBlockHeight + "/" + ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight > newBlockHeight, ConsoleColor.Green);
+                                else
+                                    ClassLog.WriteLine("New block " + newBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+
+                                return true;
+                            }
+
+                            ClassLog.WriteLine("Can't generate the next block height " + newBlockHeight + " because this one is already inserted just before.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+                        }
+                        else
+                        {
+                            BlockchainMemoryManagement[newBlockHeight, cancellation] = new ClassBlockObject(newBlockHeight, newBlockDifficulty, newBlockHash, timestampFound, 0, ClassBlockEnumStatus.LOCKED, false, false);
+
+                            if (ClassBlockchainStats.BlockchainNetworkStatsObject != null)
+                                ClassLog.WriteLine("Regenerated block height " + newBlockHeight + "/" + ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, ClassBlockchainStats.BlockchainNetworkStatsObject.LastNetworkBlockHeight > newBlockHeight, ConsoleColor.Green);
                             else
-                                ClassLog.WriteLine("New block " + newBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+                                ClassLog.WriteLine("Regenerated block height " + newBlockHeight + " | Difficulty: " + newBlockDifficulty + " | Hash: " + newBlockHash + " generated.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
                             return true;
                         }
-
-                        ClassLog.WriteLine("Can't generate the next block height " + newBlockHeight + " because this one is already inserted just before.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
                     }
-                    else
+                    /*else
                         ClassLog.WriteLine("Can't generate the next block height " + newBlockHeight + " because this one already exist.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Green);
+                    */
                 }
             }
             return false;
@@ -1543,17 +1500,13 @@ namespace SeguraChain_Lib.Blockchain.Database
             if (checkTxHash)
             {
                 if (await CheckIfTransactionHashAlreadyExist(transactionObject.TransactionHash, transactionObject.BlockHeightTransaction, cancellation))
-                {
                     return ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_HASH_ALREADY_EXIST;
-                }
             }
 
             if (!isBlockReward && !fromOutside)
             {
                 if (transactionObject.BlockHeightTransaction < BlockchainMemoryManagement.GetLastBlockHeight)
-                {
                     return ClassBlockTransactionInsertEnumStatus.BLOCK_TRANSACTION_INVALID;
-                }
 
                 if (BlockchainMemoryManagement.ContainsKey(transactionObject.BlockHeightTransaction))
                 {
@@ -1563,19 +1516,13 @@ namespace SeguraChain_Lib.Blockchain.Database
                     if (blockObjectInformations != null)
                     {
                         if (blockObjectInformations.TotalTransaction + 1 >= BlockchainSetting.MaxTransactionPerBlock)
-                        {
                             return ClassBlockTransactionInsertEnumStatus.MAX_BLOCK_TRANSACTION_PER_BLOCK_HEIGHT_TARGET_REACH;
-                        }
                     }
                     else
-                    {
                         return ClassBlockTransactionInsertEnumStatus.BLOCK_HEIGHT_NOT_EXIST;
-                    }
                 }
                 if (await ClassMemPoolDatabase.GetCountMemPoolTxFromBlockHeight(transactionObject.BlockHeightTransaction, false, cancellation) + 1 >= BlockchainSetting.MaxTransactionPerBlock)
-                {
                     return ClassBlockTransactionInsertEnumStatus.MAX_BLOCK_TRANSACTION_PER_BLOCK_HEIGHT_TARGET_REACH;
-                }
             }
  
             if (ClassMemPoolDatabase.InsertTxToMemPool(transactionObject))
@@ -1676,145 +1623,149 @@ namespace SeguraChain_Lib.Blockchain.Database
             long lastBlockHeightUnlockedChecked = await BlockchainMemoryManagement.GetLastBlockHeightConfirmationNetworkChecked(_cancellationTokenStopBlockchain);
 
             // Check data integrity and transactions confirmations.
-            foreach (var blockHeight in BlockchainMemoryManagement.ListBlockHeight)
+
+            using (DisposableList<long> listBlockHeight = BlockchainMemoryManagement.ListBlockHeight)
             {
-                if (needConfirmAgainTx)
-                    break;
-
-                ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
-
-                if (blockObject == null)
+                foreach (var blockHeight in listBlockHeight.GetList)
                 {
-                    ClassLog.WriteLine("[Warning] The block height " + blockHeight + " is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                    return false;
-                }
+                    if (needConfirmAgainTx)
+                        break;
 
-                if (blockObject.BlockHeight == BlockchainSetting.GenesisBlockHeight)
-                {
-                    if (blockObject.BlockTransactions.Count != BlockchainSetting.GenesisBlockTransactionCount)
+                    ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
+
+                    if (blockObject == null)
                     {
-                        ClassLog.WriteLine("[Warning] The genesis block is not correct, the amount of tx expected is not the right one.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-
+                        ClassLog.WriteLine("[Warning] The block height " + blockHeight + " is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
                         return false;
                     }
 
-                    if (!CheckBlockObjectTransactionConfirmationsProgressDone(blockObject, lastBlockHeightUnlockedChecked))
+                    if (blockObject.BlockHeight == BlockchainSetting.GenesisBlockHeight)
                     {
-                        needConfirmAgainTx = true;
-                        break;
-                    }
-
-                    foreach (var tx in blockObject.BlockTransactions)
-                    {
-                        if (tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                        if (blockObject.BlockTransactions.Count != BlockchainSetting.GenesisBlockTransactionCount)
                         {
-                            ClassLog.WriteLine("[Warning] The genesis block is not correct, the type expected has not the right one.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-
-                            return false;
-                        }
-                        if (tx.Value.TransactionObject.Amount != BlockchainSetting.GenesisBlockAmount)
-                        {
-                            ClassLog.WriteLine("[Warning] The genesis block is not correct, the amount expected has not the right one. " + tx.Value.TransactionObject.Amount + "/" + BlockchainSetting.GenesisBlockAmount, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
-
-                            return false;
-                        }
-                        if (tx.Value.TransactionObject.WalletAddressReceiver != BlockchainSetting.WalletAddressDev(tx.Value.TransactionObject.TimestampSend))
-                        {
-                            ClassLog.WriteLine("[Warning] The genesis block is not correct, the receiver expected has not the right one. " + tx.Value.TransactionObject.WalletAddressReceiver + "/" + BlockchainSetting.WalletAddressDev(tx.Value.TransactionObject.TimestampSend), ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+                            ClassLog.WriteLine("[Warning] The genesis block is not correct, the amount of tx expected is not the right one.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
 
                             return false;
                         }
 
-                        if (!CheckBlockTransactionConfirmationDone(blockObject.BlockStatus, tx.Value, blockObject.BlockHeight, lastBlockHeightUnlockedChecked))
+                        if (!CheckBlockObjectTransactionConfirmationsProgressDone(blockObject, lastBlockHeightUnlockedChecked))
                         {
                             needConfirmAgainTx = true;
                             break;
                         }
-                    }
-                }
-                else
-                {
-
-                    ClassBlockEnumCheckStatus blockCheckStatus = ClassBlockUtility.CheckBlockHash(blockObject.BlockHash, blockObject.BlockHeight, blockObject.BlockDifficulty, previousBlockObject.TotalTransaction, previousBlockObject.BlockFinalHashTransaction);
-
-                    if (blockCheckStatus != ClassBlockEnumCheckStatus.VALID_BLOCK_HASH)
-                    {
-                        if (blockCheckStatus == ClassBlockEnumCheckStatus.INVALID_BLOCK_TRANSACTION_COUNT)
-                        {
-                            if (!previousBlockObject.IsConfirmedByNetwork && !previousBlockObject.IsChecked)
-                            {
-                                ClassLog.WriteLine("[Warning] The block hash from the block height: " + blockObject.BlockHeight + " is not valid. Result: " + blockCheckStatus + ". A resync from the scratch is necessary.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                                return false;
-                            }
-                        }
-                    }
-
-                    if (!CheckBlockObjectTransactionConfirmationsProgressDone(blockObject, lastBlockHeightUnlockedChecked))
-                        needConfirmAgainTx = true;
-                    else
-                    {
-                        BigInteger totalConfirmed = 0;
-                        BigInteger totalFee = 0;
-                        BigInteger totalPending = 0;
 
                         foreach (var tx in blockObject.BlockTransactions)
                         {
+                            if (tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION)
+                            {
+                                ClassLog.WriteLine("[Warning] The genesis block is not correct, the type expected has not the right one.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+
+                                return false;
+                            }
+                            if (tx.Value.TransactionObject.Amount != BlockchainSetting.GenesisBlockAmount)
+                            {
+                                ClassLog.WriteLine("[Warning] The genesis block is not correct, the amount expected has not the right one. " + tx.Value.TransactionObject.Amount + "/" + BlockchainSetting.GenesisBlockAmount, ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+
+                                return false;
+                            }
+                            if (tx.Value.TransactionObject.WalletAddressReceiver != BlockchainSetting.WalletAddressDev(tx.Value.TransactionObject.TimestampSend))
+                            {
+                                ClassLog.WriteLine("[Warning] The genesis block is not correct, the receiver expected has not the right one. " + tx.Value.TransactionObject.WalletAddressReceiver + "/" + BlockchainSetting.WalletAddressDev(tx.Value.TransactionObject.TimestampSend), ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY);
+
+                                return false;
+                            }
+
                             if (!CheckBlockTransactionConfirmationDone(blockObject.BlockStatus, tx.Value, blockObject.BlockHeight, lastBlockHeightUnlockedChecked))
                             {
                                 needConfirmAgainTx = true;
                                 break;
                             }
-                            else
-                            {
-                                if (tx.Value.TransactionStatus)
-                                {
-                                    if (tx.Value.IsConfirmed)
-                                        totalConfirmed += (tx.Value.TransactionObject.Amount - tx.Value.TotalSpend);
-                                    else
-                                        totalPending += tx.Value.TransactionObject.Amount;
+                        }
+                    }
+                    else
+                    {
 
-                                    if (tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
-                                        tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
-                                        totalPending += tx.Value.TransactionObject.Fee;
+                        ClassBlockEnumCheckStatus blockCheckStatus = ClassBlockUtility.CheckBlockHash(blockObject.BlockHash, blockObject.BlockHeight, blockObject.BlockDifficulty, previousBlockObject.TotalTransaction, previousBlockObject.BlockFinalHashTransaction);
+
+                        if (blockCheckStatus != ClassBlockEnumCheckStatus.VALID_BLOCK_HASH)
+                        {
+                            if (blockCheckStatus == ClassBlockEnumCheckStatus.INVALID_BLOCK_TRANSACTION_COUNT)
+                            {
+                                if (!previousBlockObject.IsConfirmedByNetwork && !previousBlockObject.IsChecked)
+                                {
+                                    ClassLog.WriteLine("[Warning] The block hash from the block height: " + blockObject.BlockHeight + " is not valid. Result: " + blockCheckStatus + ". A resync from the scratch is necessary.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                                    return false;
                                 }
                             }
                         }
 
-                        if (!needConfirmAgainTx)
+                        if (!CheckBlockObjectTransactionConfirmationsProgressDone(blockObject, lastBlockHeightUnlockedChecked))
+                            needConfirmAgainTx = true;
+                        else
                         {
-                            blockObject.TotalCoinConfirmed = totalConfirmed;
-                            blockObject.TotalCoinPending = totalPending;
-                            blockObject.TotalFee = totalFee;
-                            blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
+                            BigInteger totalConfirmed = 0;
+                            BigInteger totalFee = 0;
+                            BigInteger totalPending = 0;
+
+                            foreach (var tx in blockObject.BlockTransactions)
+                            {
+                                if (!CheckBlockTransactionConfirmationDone(blockObject.BlockStatus, tx.Value, blockObject.BlockHeight, lastBlockHeightUnlockedChecked))
+                                {
+                                    needConfirmAgainTx = true;
+                                    break;
+                                }
+                                else
+                                {
+                                    if (tx.Value.TransactionStatus)
+                                    {
+                                        if (tx.Value.IsConfirmed)
+                                            totalConfirmed += (tx.Value.TransactionObject.Amount - tx.Value.TotalSpend);
+                                        else
+                                            totalPending += tx.Value.TransactionObject.Amount;
+
+                                        if (tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.BLOCK_REWARD_TRANSACTION &&
+                                            tx.Value.TransactionObject.TransactionType != ClassTransactionEnumType.DEV_FEE_TRANSACTION)
+                                            totalPending += tx.Value.TransactionObject.Fee;
+                                    }
+                                }
+                            }
+
+                            if (!needConfirmAgainTx)
+                            {
+                                blockObject.TotalCoinConfirmed = totalConfirmed;
+                                blockObject.TotalCoinPending = totalPending;
+                                blockObject.TotalFee = totalFee;
+                                blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
+                            }
                         }
                     }
-                }
 
-                if (blockObject.BlockStatus == ClassBlockEnumStatus.LOCKED)
-                {
-                    blockObject.BlockLastHeightTransactionConfirmationDone = 0;
-                    blockObject.BlockTotalTaskTransactionConfirmationDone = 0;
-                    blockObject.BlockNetworkAmountConfirmations = 0;
-                    blockObject.BlockUnlockValid = false;
-                    blockObject.BlockTransactions?.Clear();
-                    blockObject.TotalTransaction = 0;
-                    blockObject.TotalCoinConfirmed = 0;
-                    blockObject.TotalCoinPending = 0;
-                    blockObject.TotalFee = 0;
-                    blockObject.TimestampFound = 0;
-                    blockObject.BlockTransactionFullyConfirmed = false;
-                    blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
-                    blockObject.BlockTransactionConfirmationCheckTaskDone = false;
-                    blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
-                    blockObject.BlockMiningPowShareUnlockObject = null;
-                    if (!await BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, _cancellationTokenStopBlockchain))
+                    if (blockObject.BlockStatus == ClassBlockEnumStatus.LOCKED)
                     {
-                        ClassLog.WriteLine("[Warning] Failed to save corrections provided on a block who failed to checker.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                        return false;
+                        blockObject.BlockLastHeightTransactionConfirmationDone = 0;
+                        blockObject.BlockTotalTaskTransactionConfirmationDone = 0;
+                        blockObject.BlockNetworkAmountConfirmations = 0;
+                        blockObject.BlockUnlockValid = false;
+                        blockObject.BlockTransactions?.Clear();
+                        blockObject.TotalTransaction = 0;
+                        blockObject.TotalCoinConfirmed = 0;
+                        blockObject.TotalCoinPending = 0;
+                        blockObject.TotalFee = 0;
+                        blockObject.TimestampFound = 0;
+                        blockObject.BlockTransactionFullyConfirmed = false;
+                        blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
+                        blockObject.BlockTransactionConfirmationCheckTaskDone = false;
+                        blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
+                        blockObject.BlockMiningPowShareUnlockObject = null;
+                        if (!await BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, true, _cancellationTokenStopBlockchain))
+                        {
+                            ClassLog.WriteLine("[Warning] Failed to save corrections provided on a block who failed to checker.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                            return false;
+                        }
                     }
-                }
 
-                blockObject.DeepCloneBlockObject(false, out previousBlockObject);
+                    blockObject.DeepCloneBlockObject(false, out previousBlockObject);
+                }
             }
 
             #region Reset transactions confirmations done and network confirmations.
@@ -1832,43 +1783,46 @@ namespace SeguraChain_Lib.Blockchain.Database
 
                 ClassLog.WriteLine("All checkpoints removed.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
 
-                foreach (var blockHeight in BlockchainMemoryManagement.ListBlockHeight)
+                using (DisposableList<long> listBlockHeight = BlockchainMemoryManagement.ListBlockHeight)
                 {
-                    ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
-
-                    if (blockObject == null)
+                    foreach (var blockHeight in listBlockHeight.GetList)
                     {
-                        ClassLog.WriteLine("[Warning] The block height " + blockHeight + " is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                        return false;
-                    }
+                        ClassBlockObject blockObject = await BlockchainMemoryManagement.GetBlockDataStrategy(blockHeight, false, false, _cancellationTokenStopBlockchain);
 
-                    blockObject.BlockLastHeightTransactionConfirmationDone = 0;
-                    blockObject.BlockTotalTaskTransactionConfirmationDone = 0;
-                    blockObject.BlockNetworkAmountConfirmations = 0;
-                    blockObject.BlockUnlockValid = false;
-                    blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
-                    blockObject.TotalCoinConfirmed = 0;
-                    blockObject.TotalCoinPending = 0;
-                    blockObject.TotalFee = 0;
-                    blockObject.BlockTransactionFullyConfirmed = false;
-                    blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
-                    blockObject.BlockTransactionConfirmationCheckTaskDone = false;
-                    blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
+                        if (blockObject == null)
+                        {
+                            ClassLog.WriteLine("[Warning] The block height " + blockHeight + " is empty.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                            return false;
+                        }
 
-                    foreach (var txHash in blockObject.BlockTransactions.Keys)
-                    {
-                        blockObject.BlockTransactions[txHash].TotalSpend = 0;
-                        blockObject.BlockTransactions[txHash].TransactionInvalidStatus = ClassTransactionEnumStatus.VALID_TRANSACTION;
-                        blockObject.BlockTransactions[txHash].TransactionStatus = true;
-                        blockObject.BlockTransactions[txHash].TransactionTotalConfirmation = 0;
-                    }
+                        blockObject.BlockLastHeightTransactionConfirmationDone = 0;
+                        blockObject.BlockTotalTaskTransactionConfirmationDone = 0;
+                        blockObject.BlockNetworkAmountConfirmations = 0;
+                        blockObject.BlockUnlockValid = false;
+                        blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
+                        blockObject.TotalCoinConfirmed = 0;
+                        blockObject.TotalCoinPending = 0;
+                        blockObject.TotalFee = 0;
+                        blockObject.BlockTransactionFullyConfirmed = false;
+                        blockObject.TotalTransaction = blockObject.BlockTransactions.Count;
+                        blockObject.BlockTransactionConfirmationCheckTaskDone = false;
+                        blockObject.BlockLastChangeTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
 
-                    bool blockIsCached = await BlockchainMemoryManagement.BlockHeightIsCached(blockHeight, _cancellationTokenStopBlockchain);
+                        foreach (var txHash in blockObject.BlockTransactions.Keys)
+                        {
+                            blockObject.BlockTransactions[txHash].TotalSpend = 0;
+                            blockObject.BlockTransactions[txHash].TransactionInvalidStatus = ClassTransactionEnumStatus.VALID_TRANSACTION;
+                            blockObject.BlockTransactions[txHash].TransactionStatus = true;
+                            blockObject.BlockTransactions[txHash].TransactionTotalConfirmation = 0;
+                        }
 
-                    if (!await BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, !blockIsCached, _cancellationTokenStopBlockchain))
-                    {
-                        ClassLog.WriteLine("[Warning] Can't save reset block height " + blockObject.BlockHeight + " confirmations done.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
-                        return false;
+                        bool blockIsCached = await BlockchainMemoryManagement.BlockHeightIsCached(blockHeight, _cancellationTokenStopBlockchain);
+
+                        if (!await BlockchainMemoryManagement.InsertOrUpdateBlockObjectToCache(blockObject, !blockIsCached, _cancellationTokenStopBlockchain))
+                        {
+                            ClassLog.WriteLine("[Warning] Can't save reset block height " + blockObject.BlockHeight + " confirmations done.", ClassEnumLogLevelType.LOG_LEVEL_GENERAL, ClassEnumLogWriteLevel.LOG_WRITE_LEVEL_MANDATORY_PRIORITY, false, ConsoleColor.Red);
+                            return false;
+                        }
                     }
                 }
             }

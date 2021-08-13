@@ -24,14 +24,16 @@ namespace SeguraChain_Desktop_Wallet
             if (ClassLog.InitializeWriteLog())
             {
                 ClassLog.EnableWriteLogTask();
+
+#if NET5_0_OR_GREATER
+                Application.SetHighDpiMode(HighDpiMode.DpiUnawareGdiScaled);
+#endif
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new ClassWalletStartupInternalForm());
             }
             else
-            {
                 MessageBox.Show("Error, can't initialize the log system, the desktop wallet can't be started", "Log system error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
 
         }
 

@@ -112,7 +112,7 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <returns></returns>
         public static bool ContainsBlockHeight(long blockHeight)
         {
-            return ClassBlockchainDatabase.BlockchainMemoryManagement.ContainsKey(blockHeight);
+            return blockHeight >= BlockchainSetting.GenesisBlockHeight && blockHeight <= ClassBlockchainDatabase.BlockchainMemoryManagement.GetLastBlockHeight;
         }
 
         /// <summary>
@@ -200,9 +200,9 @@ namespace SeguraChain_Lib.Blockchain.Stats.Function
         /// <param name="isGenesis"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        public static async Task<bool> GenerateNewMiningBlock(long blockHeight, long newBlockHeight, long timestampFound, string walletAddressWinner, bool isGenesis, CancellationTokenSource cancellation)
+        public static async Task<bool> GenerateNewMiningBlock(long blockHeight, long newBlockHeight, long timestampFound, string walletAddressWinner, bool isGenesis, bool remakeBlockHeight, CancellationTokenSource cancellation)
         {
-            return await ClassBlockchainDatabase.GenerateNewMiningBlockObject(blockHeight, newBlockHeight, timestampFound, walletAddressWinner, isGenesis, cancellation);
+            return await ClassBlockchainDatabase.GenerateNewMiningBlockObject(blockHeight, newBlockHeight, timestampFound, walletAddressWinner, isGenesis, remakeBlockHeight, cancellation);
         }
 
         /// <summary>

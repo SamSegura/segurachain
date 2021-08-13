@@ -31,17 +31,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="cancellation"></param>
         /// <param name="peerNetworkSettingObject"></param>
         /// <param name="forceUpdate"></param>
-        /// 
-        public static async Task<bool> UpdatePeerInternalKeys(string peerIp, int peerPort, string peerUniqueId, CancellationTokenSource cancellation, ClassPeerNetworkSettingObject peerNetworkSettingObject, bool forceUpdate)
+        public static bool UpdatePeerInternalKeys(string peerIp, int peerPort, string peerUniqueId, CancellationTokenSource cancellation, ClassPeerNetworkSettingObject peerNetworkSettingObject, bool forceUpdate)
         {
             bool result = false;
 
             long currentTimestamp = ClassUtility.GetCurrentTimestampInSecond();
 
             if (!ClassPeerDatabase.DictionaryPeerDataObject.ContainsKey(peerIp))
-            {
                 ClassPeerDatabase.DictionaryPeerDataObject.Add(peerIp, new ConcurrentDictionary<string, ClassPeerObject>());
-            }
+
             if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp].ContainsKey(peerUniqueId))
             {
                 if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternTimestampKeyGenerated + peerNetworkSettingObject.PeerMaxAuthKeysExpire < currentTimestamp || forceUpdate)
@@ -54,24 +52,10 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort = peerPort;
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternTimestampKeyGenerated = currentTimestamp;
 
-                        bool semaphoreUsed = false;
-                        try
-                        {
-                            if (cancellation != null)
-                            {
-                                await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-                                semaphoreUsed = true;
-                            }
-                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject == null)
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject = new ClassPeerCryptoStreamObject(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                            else
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject.UpdateEncryptionStream(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                        }
-                        finally
-                        {
-                            if (semaphoreUsed)
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.Release();
-                        }
+                        if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject == null)
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject = new ClassPeerCryptoStreamObject(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
+                        else
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject.UpdateEncryptionStream(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
                     }
                 }
                 result = true;
@@ -93,21 +77,8 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey = GeneratePeerPublicKeyFromPrivateKey(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey);
                         ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternTimestampKeyGenerated = currentTimestamp;
 
-                        bool semaphoreUsed = false;
-                        try
-                        {
-                            if (cancellation != null)
-                            {
-                                await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-                                semaphoreUsed = true;
-                            }
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject = new ClassPeerCryptoStreamObject(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                        }
-                        finally
-                        {
-                            if (semaphoreUsed)
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.Release();
-                        }
+                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetInternCryptoStreamObject = new ClassPeerCryptoStreamObject(ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPacketEncryptionKeyIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
+
                         result = true;
                     }
                 }
@@ -148,7 +119,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="peerUniqueId"></param>
         /// <param name="sendAskPeerAuthKeysObject"></param>
         /// <param name="cancellation"></param>
-        public static async Task<bool> UpdatePeerKeysReceivedNetworkServer(string peerIp, string peerUniqueId, ClassPeerPacketSendAskPeerAuthKeys sendAskPeerAuthKeysObject, CancellationTokenSource cancellation)
+        public static bool UpdatePeerKeysReceivedNetworkServer(string peerIp, string peerUniqueId, ClassPeerPacketSendAskPeerAuthKeys sendAskPeerAuthKeysObject, CancellationTokenSource cancellation)
         {
             bool peerUniqueIdExist = false;
 
@@ -169,26 +140,12 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerNumericPublicKey = sendAskPeerAuthKeysObject.NumericPublicKey;
                     ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket = ClassUtility.GetCurrentTimestampInSecond();
 
-                    bool useSemaphore = false;
-
-                    try
+                    if (sendAskPeerAuthKeysObject.AesEncryptionKey != null && sendAskPeerAuthKeysObject.AesEncryptionIv != null)
                     {
-                        await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-
-
-                        useSemaphore = true;
-                        if (sendAskPeerAuthKeysObject.AesEncryptionKey != null && sendAskPeerAuthKeysObject.AesEncryptionIv != null)
-                        {
-                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject == null)
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendAskPeerAuthKeysObject.AesEncryptionKey, sendAskPeerAuthKeysObject.AesEncryptionIv, sendAskPeerAuthKeysObject.PublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                            else
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject.UpdateEncryptionStream(sendAskPeerAuthKeysObject.AesEncryptionKey, sendAskPeerAuthKeysObject.AesEncryptionIv, sendAskPeerAuthKeysObject.PublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                        }
-                    }
-                    finally
-                    {
-                        if (useSemaphore)
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.Release();
+                        if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject == null)
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendAskPeerAuthKeysObject.AesEncryptionKey, sendAskPeerAuthKeysObject.AesEncryptionIv, sendAskPeerAuthKeysObject.PublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
+                        else
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject.UpdateEncryptionStream(sendAskPeerAuthKeysObject.AesEncryptionKey, sendAskPeerAuthKeysObject.AesEncryptionIv, sendAskPeerAuthKeysObject.PublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
                     }
                 }
             }
@@ -214,23 +171,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                 {
                     if (sendAskPeerAuthKeysObject.AesEncryptionKey != null && sendAskPeerAuthKeysObject.AesEncryptionIv != null)
                     {
-                        bool useSemaphore = false;
                         peerUniqueIdExist = true;
 
-                        try
-                        {
-                            await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-
-
-                            useSemaphore = true;
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendAskPeerAuthKeysObject.AesEncryptionKey, sendAskPeerAuthKeysObject.AesEncryptionIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-
-                        }
-                        finally
-                        {
-                            if (useSemaphore)
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.Release();
-                        }
+                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendAskPeerAuthKeysObject.AesEncryptionKey, sendAskPeerAuthKeysObject.AesEncryptionIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
                     }
                 }
             }
@@ -247,7 +190,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         /// <param name="sendPeerAuthKeysObject"></param>
         /// <param name="cancellation"></param>
         /// <param name="peerNetworkSetting"></param>
-        public static async Task UpdatePeerKeysReceiveTaskSync(string peerIp, string peerUniqueId, ClassPeerPacketSendPeerAuthKeys sendPeerAuthKeysObject, CancellationTokenSource cancellation, ClassPeerNetworkSettingObject peerNetworkSetting)
+        public static void UpdatePeerKeysReceiveTaskSync(string peerIp, string peerUniqueId, ClassPeerPacketSendPeerAuthKeys sendPeerAuthKeysObject, CancellationTokenSource cancellation, ClassPeerNetworkSettingObject peerNetworkSetting)
         {
             bool peerUniqueIdExist = false;
 
@@ -257,42 +200,29 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                 {
                     peerUniqueIdExist = true;
 
-                    bool useSemaphore = false;
 
-                    try
+
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKey = sendPeerAuthKeysObject.AesEncryptionKey;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKeyIv = sendPeerAuthKeysObject.AesEncryptionIv;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey = sendPeerAuthKeysObject.PublicKey;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIp = peerIp;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId = peerUniqueId;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort = sendPeerAuthKeysObject.PeerPort;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerNumericPublicKey = sendPeerAuthKeysObject.NumericPublicKey;
+                    ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket = ClassUtility.GetCurrentTimestampInSecond();
+
+                    if (sendPeerAuthKeysObject.AesEncryptionKey != null && sendPeerAuthKeysObject.AesEncryptionIv != null)
                     {
-                        await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-                        useSemaphore = true;
-
-
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKey = sendPeerAuthKeysObject.AesEncryptionKey;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPacketEncryptionKeyIv = sendPeerAuthKeysObject.AesEncryptionIv;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey = sendPeerAuthKeysObject.PublicKey;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerIp = peerIp;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerUniqueId = peerUniqueId;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerPort = sendPeerAuthKeysObject.PeerPort;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerNumericPublicKey = sendPeerAuthKeysObject.NumericPublicKey;
-                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerLastValidPacket = ClassUtility.GetCurrentTimestampInSecond();
-
-                        if (sendPeerAuthKeysObject.AesEncryptionKey != null && sendPeerAuthKeysObject.AesEncryptionIv != null)
-                        {
-                            if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject == null)
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendPeerAuthKeysObject.AesEncryptionKey, sendPeerAuthKeysObject.AesEncryptionIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                            else
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject.UpdateEncryptionStream(sendPeerAuthKeysObject.AesEncryptionKey, sendPeerAuthKeysObject.AesEncryptionIv, sendPeerAuthKeysObject.PublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                        }
+                        if (ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject == null)
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendPeerAuthKeysObject.AesEncryptionKey, sendPeerAuthKeysObject.AesEncryptionIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
+                        else
+                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject.UpdateEncryptionStream(sendPeerAuthKeysObject.AesEncryptionKey, sendPeerAuthKeysObject.AesEncryptionIv, sendPeerAuthKeysObject.PublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
                     }
-                    finally
-                    {
-                        if (useSemaphore)
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.Release();
-                    }
+
                 }
             }
             else
-            {
                 ClassPeerDatabase.DictionaryPeerDataObject.Add(peerIp, new ConcurrentDictionary<string, ClassPeerObject>());
-            }
 
             if (!peerUniqueIdExist)
             {
@@ -310,21 +240,7 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
                 {
 
                     if (sendPeerAuthKeysObject.AesEncryptionKey != null && sendPeerAuthKeysObject.AesEncryptionIv != null)
-                    {
-                        bool useSemaphore = false;
-
-                        try
-                        {
-                            await ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.WaitAsync(cancellation.Token);
-                            useSemaphore = true;
-                            ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendPeerAuthKeysObject.AesEncryptionKey, sendPeerAuthKeysObject.AesEncryptionIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
-                        }
-                        finally
-                        {
-                            if (useSemaphore)
-                                ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].SemaphoreUpdateEncryptionStream.Release();
-                        }
-                    }
+                        ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].GetClientCryptoStreamObject = new ClassPeerCryptoStreamObject(sendPeerAuthKeysObject.AesEncryptionKey, sendPeerAuthKeysObject.AesEncryptionIv, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerClientPublicKey, ClassPeerDatabase.DictionaryPeerDataObject[peerIp][peerUniqueId].PeerInternPrivateKey, cancellation);
                 }
             }
         }
@@ -347,10 +263,9 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         {
             byte[] privateKeyBytes;
             string randomWord = ClassUtility.GetRandomWord(RandomWordKeySize);
+
             using (ClassSha3512DigestDisposable sha512 = new ClassSha3512DigestDisposable())
-            {
                 sha512.Compute(ClassUtility.GetByteArrayFromStringAscii(randomWord), out privateKeyBytes);
-            }
 
             ClassUtility.InsertBlockchainVersionToByteArray(privateKeyBytes, out var privateKeyHex);
 
@@ -365,33 +280,15 @@ namespace SeguraChain_Lib.Instance.Node.Network.Database.Manager
         public static string GeneratePeerPublicKeyFromPrivateKey(string privateKeyWif)
         {
             if (privateKeyWif.IsNullOrEmpty(out _))
-            {
                 return null;
-            }
-
-            /* Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-            Stopwatch watchProcessTimespend = new Stopwatch();
-
-            watchProcessTimespend.Start();
-#endif
-            */
 
             var curve = SecNamedCurves.GetByName(BlockchainSetting.CurveName);
             var domain = new ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H);
 
             ECPoint publicKeyOne = curve.G.Multiply(new BigInteger(ClassBase58.DecodeWithCheckSum(privateKeyWif, true)));
 
-            var publicKey = new ECPublicKeyParameters(publicKeyOne, domain);
 
-            /* Was usefull on testing SECT571R1 signer and ECDSASHA512 performances.
-#if DEBUG
-            watchProcessTimespend.Stop();
-            Debug.WriteLine("Timespend to generate a public key: " + watchProcessTimespend.ElapsedMilliseconds + " ms.");
-#endif
-            */
-
-            return ClassBase58.EncodeWithCheckSum(publicKey.Q.GetEncoded());
+            return ClassBase58.EncodeWithCheckSum(new ECPublicKeyParameters(publicKeyOne, domain).Q.GetEncoded());
         }
 
         #endregion

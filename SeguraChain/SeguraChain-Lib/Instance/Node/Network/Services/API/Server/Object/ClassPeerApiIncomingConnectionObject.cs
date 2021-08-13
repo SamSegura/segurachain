@@ -7,15 +7,13 @@ namespace SeguraChain_Lib.Instance.Node.Network.Services.API.Server.Object
 {
     public class ClassPeerApiIncomingConnectionObject
     {
-        public ConcurrentDictionary<long, ClassPeerApiClientObject> ListeApiClientObject;
-        public bool OnCleanUp;
+        public ConcurrentDictionary<long, ClassPeerApiClientObject> ListApiClientObject;
         public SemaphoreSlim SemaphoreHandleConnection;
 
         public ClassPeerApiIncomingConnectionObject()
         {
-            SemaphoreHandleConnection = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount());
-            ListeApiClientObject = new ConcurrentDictionary<long, ClassPeerApiClientObject>();
-            OnCleanUp = false;
+            SemaphoreHandleConnection = new SemaphoreSlim(1, ClassUtility.GetMaxAvailableProcessorCount() * ClassUtility.GetMaxAvailableProcessorCount());
+            ListApiClientObject = new ConcurrentDictionary<long, ClassPeerApiClientObject>();
         }
     }
 }

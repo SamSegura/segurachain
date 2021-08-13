@@ -222,9 +222,6 @@ namespace SeguraChain_Lib.Utility
                     var result = new byte[BlockchainSetting.BlockchainChecksum];
                     Array.Copy(hash2, 0, result, 0, result.Length);
 
-                    // Clean up.
-                    Array.Clear(hash1, 0, hash1.Length);
-                    Array.Clear(hash2, 0, hash2.Length);
                     return result;
                 }
             }

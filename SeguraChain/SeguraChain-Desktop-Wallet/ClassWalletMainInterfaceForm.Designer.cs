@@ -1140,6 +1140,7 @@ namespace SeguraChain_Desktop_Wallet
             // 
             // panelTransactionHistory
             // 
+            this.panelTransactionHistory.AutoScroll = true;
             this.panelTransactionHistory.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(90)))), ((int)(((byte)(120)))));
             this.panelTransactionHistory.BorderColor = System.Drawing.Color.Transparent;
             this.panelTransactionHistory.BorderSize = 1F;

@@ -49,16 +49,22 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
                                 lock(_blockObject)
                                 {
                                     if (value.BlockFromMemory || value.BlockCloned || !value.BlockFromCache)
+                                    {
+                                        bool isUpdated = _blockObject.BlockLastChangeTimestamp <= value.BlockLastChangeTimestamp;
                                         _blockObject = value.DirectCloneBlockObject();
+                                        _blockObject.BlockIsUpdated = isUpdated;
+                                    }
                                     else
                                     {
                                         if (_blockObject.BlockLastChangeTimestamp <= value.BlockLastChangeTimestamp)
+                                        {
                                             _blockObject = value;
+                                            _blockObject.BlockIsUpdated = true;
+                                        }
                                     }
                                     _blockObject.BlockFromMemory = false;
                                     _blockObject.BlockFromCache = true;
                                     _blockObject.BlockCloned = false;
-                                    _blockObject.BlockIsUpdated = false;
                                     _blockObject.Disposed = false;
                                     LastUpdateTimestamp = ClassUtility.GetCurrentTimestampInMillisecond();
                                 }
@@ -250,14 +256,13 @@ namespace SeguraChain_Lib.Blockchain.Database.Memory.Cache.Object.Systems.IO.Dis
 
 
                         if (exception) return true;
-
-
                     }
                 }
                 catch
                 {
                     return true;
                 }
+
                 return false;
             }
         }

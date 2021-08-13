@@ -154,12 +154,8 @@ namespace SeguraChain_Lib.Utility
 
                 string hashToReturn = hashedInputStringBuilder.ToString();
 
-                #region Clear obsolete objects from memory
-
-                Array.Clear(hashedInputBytes, 0, hashedInputBytes.Length);
                 hashedInputStringBuilder.Clear();
 
-                #endregion
 
 
                 return hashToReturn;
@@ -176,9 +172,7 @@ namespace SeguraChain_Lib.Utility
         public static byte[] GenerateSha512ByteArrayFromByteArray(byte[] source)
         {
             using (var hash = new ClassSha3512DigestDisposable())
-            {
                 return hash.Compute(source);
-            }
         }
 
         #endregion
@@ -355,17 +349,13 @@ namespace SeguraChain_Lib.Utility
             {
                 string[] stringValueArray = stringValue.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries);
                 if (!decimal.TryParse(stringValueArray[0], out value))
-                {
                     value = 0;
-                }
             }
             else if (stringValue.Contains(","))
             {
                 string[] stringValueArray = stringValue.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
                 if (!decimal.TryParse(stringValueArray[0], out value))
-                {
                     value = 0;
-                }
             }
 
             return value;
@@ -407,14 +397,10 @@ namespace SeguraChain_Lib.Utility
         public static bool CheckHexStringFormat(string shaHexString)
         {
             if (shaHexString.IsNullOrEmpty(out string shaHexStringTrimmed))
-            {
                 return false;
-            }
 
             if (shaHexStringTrimmed.ToLower().Count(character => ListOfHexCharacters.Contains(character)) != shaHexStringTrimmed.Length)
-            {
                 return false;
-            }
 
             return true;
         }
@@ -433,9 +419,7 @@ namespace SeguraChain_Lib.Utility
                 foreach (var hexCharacter in hexStringTrimmed.ToLower())
                 {
                     if (ListOfHexCharacters.Contains(hexCharacter))
-                    {
                         newHexString += hexCharacter;
-                    }
                 }
             }
 
@@ -477,9 +461,7 @@ namespace SeguraChain_Lib.Utility
                 var percent3 = GetRandomBetweenLong(1, 100); // Special characters.
 
                 if (percent1 >= percent2 && percent1 >= percent3) // Use numbers.
-                {
                     word += ListOfNumbers[GetRandomBetweenInt(0, ListOfNumbers.Count - 1)];
-                }
                 else
                 {
                     if (percent2 >= percent3) // Use letters.
@@ -487,24 +469,16 @@ namespace SeguraChain_Lib.Utility
                         percent1 = GetRandomBetweenLong(1, 100);
                         percent2 = GetRandomBetweenLong(1, 100);
                         if (percent2 >= percent1) // use Uppercase.
-                        {
                             word += ListOfCharacters[GetRandomBetweenInt(0, ListOfCharacters.Count - 1)].ToUpper();
-                        }
                         else // use normal lowercase.
-                        {
                             word += ListOfCharacters[GetRandomBetweenInt(0, ListOfCharacters.Count - 1)];
-                        }
                     }
                     else
                     {
                         if (percent3 >= percent1) // Use special characters.
-                        {
                             word += ListOfOtherCharacters[GetRandomBetweenInt(0, ListOfOtherCharacters.Count - 1)];
-                        }
                         else // Use numbers.
-                        {
                             word += ListOfNumbers[GetRandomBetweenInt(0, ListOfNumbers.Count - 1)];
-                        }
                     }
                 }
             }
@@ -526,21 +500,15 @@ namespace SeguraChain_Lib.Utility
                 var percent1 = GetRandomBetweenLong(1, 100);
                 var percent2 = GetRandomBetweenLong(1, 100);
                 if (percent1 >= percent2) // Use numbers.
-                {
                     word += ListOfNumbers[GetRandomBetweenInt(0, ListOfNumbers.Count - 1)];
-                }
                 else // Use letters
                 {
                     percent1 = GetRandomBetweenLong(1, 100);
                     percent2 = GetRandomBetweenLong(1, 100);
                     if (percent2 >= percent1) // use Uppercase.
-                    {
                         word += ListOfCharacters[GetRandomBetweenInt(0, ListOfCharacters.Count - 1)].ToUpper();
-                    }
                     else // use normal lowercase.
-                    {
                         word += ListOfCharacters[GetRandomBetweenInt(0, ListOfCharacters.Count - 1)];
-                    }
                 }
             }
 
@@ -653,13 +621,12 @@ namespace SeguraChain_Lib.Utility
                 bool isNull = false;
                 try
                 {
-
                     result = JObject.Parse(contentTrimmed).ToObject<T>();
+
                     if (result == null)
                         isNull = true;
                     else
                         return true;
-
                 }
                 catch
                 {
@@ -719,7 +686,7 @@ namespace SeguraChain_Lib.Utility
         /// </summary>
         public static void CleanGc()
         {
-            GC.Collect();
+            GC.Collect(0, GCCollectionMode.Forced, false, true);
             GC.WaitForPendingFinalizers();
             GC.Collect();
         }
@@ -751,19 +718,7 @@ namespace SeguraChain_Lib.Utility
                 {
                     lock (socket)
                     {
-                        try
-                        {
-                            lock (socket.Client)
-                            {
-                                //return !(socket.Client.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
-
-                                return !((socket.Client.Poll(10, SelectMode.SelectRead) && (socket.Client.Available == 0)) || !socket.Client.Connected);
-                            }
-                        }
-                        catch
-                        {
-                            return false;
-                        }
+                        return !((socket.Client.Poll(10, SelectMode.SelectRead) && (socket.Client.Available == 0)) || !socket.Client.Connected);
                     }
                 }
             }
@@ -783,23 +738,12 @@ namespace SeguraChain_Lib.Utility
         {
             try
             {
-
-                if (socket != null)
-                {
-                    lock (socket)
-                    {
-
-                        return !((socket.Poll(10, SelectMode.SelectRead) && (socket.Available == 0)) || !socket.Connected);
-                    }
-
-                }
-
+                return !((socket.Poll(10, SelectMode.SelectRead) && (socket.Available == 0)) || !socket.Connected);
             }
             catch
             {
                 return false;
             }
-            return false;
         }
 
         /// <summary>
@@ -819,9 +763,7 @@ namespace SeguraChain_Lib.Utility
                 cancellation.Token.ThrowIfCancellationRequested();
 
                 if (packetDataChar != ClassPeerPacketSetting.PacketPeerSplitSeperator)
-                {
                     listPacketDataSplitted[countFilled] += packetDataChar;
-                }
                 else
                 {
                     listPacketDataSplitted.Add(string.Empty);
@@ -1142,6 +1084,7 @@ namespace SeguraChain_Lib.Utility
             strTrimmed = string.Empty;
             if (str == null) return true;
             if (str.Length == 0) return true;
+            if (str == string.Empty) return true;
             if (str == "") return true;
 
             strTrimmed = str.TrimFast();
@@ -1189,6 +1132,8 @@ namespace SeguraChain_Lib.Utility
     public static class ClassUtilityByteArrayExtension
     {
         private static readonly ASCIIEncoding _asciiEncoding = new ASCIIEncoding();
+        private static readonly UTF8Encoding _utf8Encoding = new UTF8Encoding();
+
         /// <summary>
         /// Get a string from a byte array object.
         /// </summary>
@@ -1200,6 +1145,21 @@ namespace SeguraChain_Lib.Utility
             {
                 if (content.Length > 0)
                     return _asciiEncoding.GetString(content);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Get a string from a byte array object.
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public static string GetStringFromByteArrayUtf8(this byte[] content)
+        {
+            if (content != null)
+            {
+                if (content.Length > 0)
+                    return _utf8Encoding.GetString(content);
             }
             return null;
         }
@@ -1243,7 +1203,6 @@ namespace SeguraChain_Lib.Utility
         /// <returns></returns>
         public static async Task<bool> TrySendSplittedPacket(this NetworkStream networkStream, byte[] packetBytesToSend, CancellationTokenSource cancellation, int packetMaxSize, bool singleWrite = false)
         {
-            bool sendStatus = true;
             try
             {
                 if (packetBytesToSend.Length > 0)
@@ -1253,6 +1212,7 @@ namespace SeguraChain_Lib.Utility
                     {
                         int packetLength = packetBytesToSend.Length;
                         int countPacketSendLength = 0;
+
                         while (true)
                         {
                             cancellation?.Token.ThrowIfCancellationRequested();
@@ -1270,7 +1230,6 @@ namespace SeguraChain_Lib.Utility
                             Array.Copy(packetBytesToSend, countPacketSendLength, dataBytes, 0, packetSize);
 
                             await networkStream.WriteAsync(dataBytes, 0, dataBytes.Length, cancellation.Token);
-
                             await networkStream.FlushAsync(cancellation.Token);
 
                             countPacketSendLength += packetSize;
@@ -1282,17 +1241,16 @@ namespace SeguraChain_Lib.Utility
                     else
                     {
                         await networkStream.WriteAsync(packetBytesToSend, 0, packetBytesToSend.Length, cancellation.Token);
-
                         await networkStream.FlushAsync(cancellation.Token);
                     }
                 }
             }
             catch
             {
-                sendStatus = false;
+                return false;
             }
 
-            return sendStatus;
+            return true;
         }
     }
 
